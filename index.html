@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level-Up Gamer | Tienda Online Oficial</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+
+    <!-- Header y Barra de Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top py-2">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="index.html">
+                <img src="img/logo.png" alt="Level-Up Logo" style="max-height: 45px;">
+                <span class="d-none d-sm-inline fw-bold brand-font text-info">LEVEL-UP</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarGamer">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarGamer">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html"><i class="bi bi-house-door me-1"></i>Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="galeria.html"><i class="bi bi-grid me-1"></i>Catálogo</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="comentarios-productos.html"><i class="bi bi-chat-heart me-1"></i>Opiniones</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="carrito.html" class="btn btn-outline-info position-relative">
+                        <i class="bi bi-cart3 fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count-badge d-none">0</span>
+                    </a>
+                    <a href="login.html" class="btn btn-primary px-3"><i class="bi bi-person me-1"></i>Ingresar</a>
+                    <a href="register.html" class="btn btn-outline-light px-3">Registrarse</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Banner Hero Principal -->
+    <main class="container my-4">
+        <section class="hero-banner p-4 p-md-5 mb-5 text-white position-relative">
+            <div class="row align-items-center">
+                <div class="col-lg-7">
+                    <span class="badge badge-category px-3 py-2 rounded-pill mb-3">🔥 Especial Gamers Chile</span>
+                    <h1 class="display-5 fw-bold mb-3">Desafía tus límites con <span class="text-info">Level-Up</span></h1>
+                    <p class="lead text-light mb-4">
+                        Consolas de última generación, PC Master Race, periféricos de alta precisión y juegos de mesa para toda la comunidad.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <a href="galeria.html" class="btn btn-primary btn-lg px-4"><i class="bi bi-controller me-2"></i>Ver Catálogo Completo</a>
+                        <a href="#info-descuento" class="btn btn-outline-info btn-lg px-4">20% Descuento Especial</a>
+                    </div>
+                </div>
+                <div class="col-lg-5 text-center mt-4 mt-lg-0">
+                    <img src="https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=500&q=80" alt="PlayStation 5 Level-Up" class="img-fluid rounded-4 shadow-lg border border-secondary" style="max-height: 280px; object-fit: cover;">
+                </div>
+            </div>
+        </section>
+
+        <!-- Accesos Rápidos por Categoría -->
+        <section class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h2 class="h3 mb-1">Categorías Populares</h2>
+                    <p class="text-muted mb-0">Explora nuestro equipamiento gamer por secciones</p>
+                </div>
+                <a href="galeria.html" class="text-info text-decoration-none">Ver todas <i class="bi bi-arrow-right"></i></a>
+            </div>
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="galeria.html?cat=consolas" class="card gamer-card p-3 text-decoration-none text-white h-100">
+                        <i class="bi bi-controller fs-1 text-info mb-2"></i>
+                        <h6 class="mb-0">Consolas</h6>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="galeria.html?cat=computadores-gamers" class="card gamer-card p-3 text-decoration-none text-white h-100">
+                        <i class="bi bi-pc-display-horizontal fs-1 text-info mb-2"></i>
+                        <h6 class="mb-0">PC Gamers</h6>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="galeria.html?cat=mouse" class="card gamer-card p-3 text-decoration-none text-white h-100">
+                        <i class="bi bi-mouse fs-1 text-info mb-2"></i>
+                        <h6 class="mb-0">Mouse</h6>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="galeria.html?cat=accesorios" class="card gamer-card p-3 text-decoration-none text-white h-100">
+                        <i class="bi bi-headset fs-1 text-info mb-2"></i>
+                        <h6 class="mb-0">Accesorios</h6>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="galeria.html?cat=sillas-gamers" class="card gamer-card p-3 text-decoration-none text-white h-100">
+                        <i class="bi bi-person-workspace fs-1 text-info mb-2"></i>
+                        <h6 class="mb-0">Sillas</h6>
+                    </a>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <a href="galeria.html?cat=juegos-de-mesa" class="card gamer-card p-3 text-decoration-none text-white h-100">
+                        <i class="bi bi-dice-5 fs-1 text-info mb-2"></i>
+                        <h6 class="mb-0">Juegos de Mesa</h6>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Productos Destacados -->
+        <section id="destacados" class="mb-5">
+            <div class="d-flex justify-content-between align-items-end mb-4">
+                <div>
+                    <h2 class="h3 mb-1">🔥 Productos Destacados</h2>
+                    <p class="text-muted mb-0">Los artículos más codiciados por la comunidad</p>
+                </div>
+                <a href="galeria.html" class="btn btn-outline-info btn-sm">Ver Catálogo Completo</a>
+            </div>
+            <div class="row g-4" id="contenedorDestacados">
+                <!-- Se inyecta dinámicamente con JavaScript -->
+            </div>
+        </section>
+
+        <!-- Beneficios y Descuento Especial -->
+        <section id="info-descuento" class="card gamer-card p-4 p-md-5 my-5 border-info">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <span class="badge bg-warning text-dark px-3 py-1 fw-bold mb-2">🎁 Beneficio Exclusivo</span>
+                    <h3 class="fw-bold mb-2">¿Quieres un descuento especial?</h3>
+                    <p class="text-light mb-3">
+                        Obtén un <strong>20% de descuento</strong> en todos tus pedidos usando el cupón <code class="bg-dark text-warning px-2 py-1 rounded">ESTUDIANTE20</code> o <code class="bg-dark text-warning px-2 py-1 rounded">PROMO20</code> al pagar.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <a href="register.html" class="btn btn-primary">Registrarme ahora</a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                    <div class="p-3 bg-dark rounded-3 border border-secondary">
+                        <i class="bi bi-shield-check fs-1 text-info mb-2"></i>
+                        <h5 class="text-white mb-1">Garantía & Despacho</h5>
+                        <p class="text-muted small mb-0">Envíos rápidos y seguros a todo Chile continental.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Botón Flotante de WhatsApp para Soporte Técnico -->
+    <a href="https://wa.me/56912345678?text=Hola%20Level-Up%20Gamer,%20necesito%20soporte%20t%C3%A9cnico" target="_blank" class="whatsapp-float" title="Soporte Técnico por WhatsApp">
+        <i class="bi bi-whatsapp"></i>
+    </a>
+
+    <!-- Footer General Común -->
+    <footer class="gamer-footer py-5 text-light">
+        <div class="container">
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <img src="img/logo.png" alt="Level-Up" style="max-height: 40px;">
+                        <span class="fw-bold brand-font text-info fs-5">LEVEL-UP GAMER</span>
+                    </div>
+                    <p class="text-muted small">
+                        Tu tienda de videojuegos y hardware en Chile. Diseñada por gamers, para gamers. Descubre la mejor tecnología y accesorios.
+                    </p>
+                    <div class="d-flex gap-3 fs-5">
+                        <a href="#" class="text-info"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-info"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-info"><i class="bi bi-discord"></i></a>
+                        <a href="#" class="text-info"><i class="bi bi-youtube"></i></a>
+                    </div>
+                </div>
+                <div class="col-6 col-lg-2">
+                    <h6 class="text-white brand-font mb-3">Navegación</h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-2"><a href="index.html" class="text-muted text-decoration-none">Inicio</a></li>
+                        <li class="mb-2"><a href="galeria.html" class="text-muted text-decoration-none">Catálogo</a></li>
+                        <li class="mb-2"><a href="comentarios-productos.html" class="text-muted text-decoration-none">Opiniones</a></li>
+                        <li class="mb-2"><a href="carrito.html" class="text-muted text-decoration-none">Mi Carrito</a></li>
+                    </ul>
+                </div>
+                <div class="col-6 col-lg-3">
+                    <h6 class="text-white brand-font mb-3">Categorías</h6>
+                    <ul class="list-unstyled small text-muted">
+                        <li class="mb-2"><a href="galeria.html?cat=consolas" class="text-muted text-decoration-none">Consolas</a></li>
+                        <li class="mb-2"><a href="galeria.html?cat=computadores-gamers" class="text-muted text-decoration-none">Computadores</a></li>
+                        <li class="mb-2"><a href="galeria.html?cat=mouse" class="text-muted text-decoration-none">Periféricos & Mouse</a></li>
+                        <li class="mb-2"><a href="galeria.html?cat=juegos-de-mesa" class="text-muted text-decoration-none">Juegos de Mesa</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-3">
+                    <h6 class="text-white brand-font mb-3">Contacto & Soporte</h6>
+                    <p class="text-muted small mb-1"><i class="bi bi-geo-alt me-2 text-info"></i>Despachos a todo Chile</p>
+                    <p class="text-muted small mb-1"><i class="bi bi-envelope me-2 text-info"></i>soporte@levelupgamer.cl</p>
+                    <p class="text-muted small mb-3"><i class="bi bi-whatsapp me-2 text-success"></i>+56 9 1234 5678</p>
+                </div>
+            </div>
+            <hr class="border-secondary">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-muted small">
+                <p class="mb-0">© 2026 Level-Up Gamer SpA. Todos los derechos reservados.</p>
+                <p class="mb-0">Proyecto Front-End - Tienda Online</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts Bootstrap y Lógica -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/products-data.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const destacados = PRODUCTOS_DATA.filter(p => p.destacado).slice(0, 4);
+            const contenedor = document.getElementById('contenedorDestacados');
+            if (contenedor) {
+                contenedor.innerHTML = destacados.map(p => `
+                    <div class="col-sm-6 col-lg-3">
+                        <div class="card gamer-card h-100 d-flex flex-column">
+                            <div class="position-relative">
+                                <img src="${p.imagen}" class="card-img-top" alt="${p.nombre}" style="height: 200px; object-fit: cover;">
+                                ${p.enOferta ? `<span class="badge badge-discount position-absolute top-0 end-0 m-2">-${p.descuento}%</span>` : ''}
+                                <span class="badge badge-category position-absolute bottom-0 start-0 m-2">${p.categoria}</span>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title text-white mb-2">${p.nombre}</h6>
+                                <p class="card-text text-muted small flex-grow-1">${p.descripcionCorta}</p>
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="price-tag fs-5">${formatCLP(p.precio)}</span>
+                                        <span class="text-warning small"><i class="bi bi-star-fill"></i> ${p.rating}</span>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <a href="producto-detalle.html?id=${p.id}" class="btn btn-outline-info btn-sm">Ver Detalle</a>
+                                        <button onclick="addToCart('${p.id}', 1)" class="btn btn-primary btn-sm"><i class="bi bi-cart-plus me-1"></i>Añadir al Carrito</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        });
+    </script>
+</body>
+</html>
