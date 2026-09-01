@@ -229,3 +229,60 @@ footer.gamer-footer a.text-muted:hover {
     /* Mantiene el color blanco del icono */
     color: white;
 }
+
+
+/* ==========================================================================
+   PÁGINAS DE AUTENTICACIÓN (LOGIN Y REGISTRO)
+   ========================================================================== */
+
+/* Fondo para las páginas de login y registro utilizando la imagen fondo.jpg con un overlay oscuro */
+body.auth-page {
+    /* Color de fondo base oscuro de respaldo inmediato para evitar parpadeos blancos */
+    background-color: var(--bg-dark);
+
+    /* Fondo con gradiente oscuro semitransparente sobre la imagen fondo.jpg para asegurar contraste */
+    background: linear-gradient(rgba(10, 12, 15, 0.8), rgba(10, 12, 15, 0.85)), url('../img/fondo.jpg') no-repeat center center fixed;
+
+    /* Ajusta la imagen de fondo para que cubra la totalidad de la ventana */
+    background-size: cover;
+}
+
+/* Estilo para las tarjetas de formulario en las páginas de login y registro */
+.auth-page .card {
+    /* Color de fondo oscuro semi-transparente para la tarjeta */
+    background-color: rgba(20, 24, 31, 0.92);
+
+    /* Borde temático para delimitar el contenedor */
+    border: 1px solid var(--card-border);
+
+    /* Bordes redondeados elegantes */
+    border-radius: 16px;
+
+    /* Desenfoque de fondo detrás de la tarjeta (efecto cristal esmerilado) */
+    backdrop-filter: blur(10px);
+
+    /* Sombra profunda para destacar el formulario del fondo */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+
+    /* Color de texto claro */
+    color: var(--text-main);
+}
+
+/* Enlaces dentro de las tarjetas de autenticación */
+.auth-page .card p a {
+    /* Color cian de acento para los enlaces */
+    color: var(--accent-cyan);
+
+    /* Quita el subrayado predeterminado */
+    text-decoration: none;
+
+    /* Transición suave al pasar el cursor */
+    transition: color 0.2s ease;
+}
+
+/* Efecto hover en los enlaces de autenticación */
+.auth-page .card p a:hover {
+    /* Subraya el enlace al pasar el ratón */
+    text-decoration: underline;
+}
+
