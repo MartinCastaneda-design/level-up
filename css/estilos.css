@@ -2,117 +2,287 @@
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Roboto:wght@300;400;500;700&display=swap');
 @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
 
-/* paleta de colores */
+
 :root {
+    /* Color de fondo principal oscuro de la página web */
     --bg-dark: #0a0c0f;
+    /* Color de fondo para las tarjetas de productos y secciones */
     --card-bg: #14181f;
+    /* Color de los bordes para estructurar y separar secciones/tarjetas */
     --card-border: #222a36;
-    --accent-cyan: darkcyan;
+    /* Color de acento cian brillante representativo de la temática gamer */
+    --accent-cyan: #00d2d3;
+    /* Color de acento azul secundario para botones y degradados */
     --accent-blue: #0d6efd;
+    /* Color de texto principal claro de alto contraste */
     --text-main: #f8f9fa;
-    --text-muted: #adb5bd;
+    /* Color gris claro suave para textos secundarios, subtítulos y descripciones legibles */
+    --text-muted: #cbd5e1;
 }
 
+
+/* Sobrescribe la clase de texto secundario (.text-muted) de Bootstrap para garantizar legibilidad en fondo oscuro */
+.text-muted {
+    /* Asigna el color gris claro definido en las variables CSS con máxima prioridad */
+    color: var(--text-muted) !important;
+}
+
+/* Configuración global para todo el cuerpo del documento HTML */
 body {
+    /* Asigna el fondo general oscuro de la página */
     background-color: var(--bg-dark);
+    /* Asigna el color de texto por defecto */
     color: var(--text-main);
+    /* Establece la fuente Roboto para el texto corrido */
     font-family: 'Roboto', sans-serif;
+    /* Asegura que el alto mínimo sea el 100% del alto de la ventana del navegador */
     min-height: 100vh;
+    /* Activa flexbox para permitir distribuir header, main y footer */
     display: flex;
+    /* Alinea el flujo de los elementos de arriba hacia abajo */
     flex-direction: column;
 }
 
+/* Configuración para todos los títulos y elementos con la clase brand-font */
 h1, h2, h3, h4, h5, h6, .brand-font {
+    /* Aplica la fuente estilizada futurista Orbitron */
     font-family: 'Orbitron', sans-serif;
+    /* Añade separación ligera entre caracteres para un aspecto moderno */
     letter-spacing: 0.5px;
 }
 
-/* Navbar */
+
+/* Estilos de la barra de navegación personalizada */
 .custom-navbar {
+    /* Fondo oscuro casi opaco con 95% de transparencia */
     background-color: rgba(10, 12, 15, 0.95);
+    /* Borde inferior sutil para delimitar la barra */
     border-bottom: 1px solid var(--card-border);
+    /* Efecto de desenfoque de fondo tipo cristal esmerilado (glassmorphism) */
     backdrop-filter: blur(10px);
 }
 
+/* Estilos de los enlaces de la barra de navegación */
 .custom-navbar .nav-link {
+    /* Color gris claro suave para los links inactivos */
     color: #e0e0e0;
+    /* Grosor de texto semi-negrita para mejor lectura */
     font-weight: 500;
+    /* Transición suave de 0.2 segundos al cambiar de color */
     transition: color 0.2s ease;
 }
 
+/* Estado cuando el cursor pasa por encima (hover) o el enlace está activo */
 .custom-navbar .nav-link:hover,
 .custom-navbar .nav-link.active {
+    /* Cambia el color del texto a cian brillante */
     color: var(--accent-cyan);
 }
 
-/* Tarjetas y Contenedores */
+/* Contenedor principal de tarjeta gamer */
 .gamer-card {
+    /* Color de fondo oscuro para la tarjeta */
     background-color: var(--card-bg);
+    /* Borde fino para delimitar el contenedor */
     border: 1px solid var(--card-border);
+    /* Bordes redondeados modernos de 12px */
     border-radius: 12px;
+    /* Transición suave para movimiento, sombra y cambio de color de borde */
     transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    /* Color de texto base claro */
     color: var(--text-main);
 }
 
+/* Efecto hover al pasar el cursor sobre la tarjeta */
 .gamer-card:hover {
+    /* Eleva la tarjeta 4px hacia arriba */
     transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 139, 139, 0.2);
+    /* Agrega un resplandor o sombra de color cian */
+    box-shadow: 0 10px 25px rgba(0, 210, 211, 0.2);
+    /* Cambia el borde a color cian brillante */
     border-color: var(--accent-cyan);
 }
 
-/* Hero */
+/* Estilo para las descripciones cortas dentro de las tarjetas */
+.gamer-card .card-text {
+    /* Color claro legible para el texto de la descripción */
+    color: var(--text-muted);
+}
+
+
+/* Contenedor del banner principal de bienvenida */
 .hero-banner {
+    /* Fondo con degradado diagonal sutil de cian a azul sobre fondo oscuro */
     background: linear-gradient(135deg, rgba(0, 139, 139, 0.2) 0%, rgba(13, 110, 253, 0.2) 100%), #0d1117;
+    /* Bordes redondeados amplios de 16px */
     border-radius: 16px;
+    /* Borde delimitador sutil */
     border: 1px solid var(--card-border);
+    /* Oculta cualquier elemento o imagen que sobresalga de los límites redondeados */
     overflow: hidden;
 }
 
-/* Badges y Acentos */
+
+/* Etiqueta / insignia para mostrar la categoría del producto */
 .badge-category {
+    /* Fondo cian semi-transparente */
     background-color: rgba(0, 139, 139, 0.2);
+    /* Color de texto verde azulado claro */
     color: #20b2aa;
+    /* Borde sutil a juego con la transparencia */
     border: 1px solid rgba(0, 139, 139, 0.4);
 }
 
+/* Etiqueta / insignia para mostrar porcentajes de descuento */
 .badge-discount {
+    /* Fondo rojo para destacar la oferta */
     background-color: #dc3545;
+    /* Texto en color blanco puro */
     color: #fff;
 }
 
+/* Etiqueta de precio formateado */
 .price-tag {
+    /* Color verde azulado claro para resaltar el valor */
     color: #20b2aa;
+    /* Fuente futurista Orbitron */
     font-family: 'Orbitron', sans-serif;
+    /* Texto en negrita marcada */
     font-weight: 700;
 }
 
-/* Footer */
+
+/* Contenedor principal del pie de página */
 footer.gamer-footer {
+    /* Fondo negro muy oscuro */
     background-color: #07080a;
+    /* Línea superior para separar del contenido principal */
     border-top: 1px solid var(--card-border);
+    /* Empuja el footer automáticamente al final de la pantalla si hay poco contenido */
     margin-top: auto;
+    /* Color de texto claro general */
+    color: var(--text-muted);
 }
 
-/* Boton WhatsApp */
+/* Párrafos y elementos secundarios dentro del footer */
+footer.gamer-footer .text-muted,
+footer.gamer-footer p {
+    /* Asegura color claro y legible en todos los textos del footer */
+    color: var(--text-muted) !important;
+}
+
+/* Enlaces de navegación dentro del footer */
+footer.gamer-footer a.text-muted {
+    /* Color claro inicial para los enlaces */
+    color: var(--text-muted) !important;
+
+    /* Transición suave al pasar el cursor */
+    transition: color 0.2s ease;
+}
+
+/* Efecto hover al pasar el cursor sobre los enlaces del footer */
+footer.gamer-footer a.text-muted:hover {
+    /* Cambia el color del enlace a cian brillante */
+    color: var(--accent-cyan) !important;
+}
+
+
+/* Botón flotante whatsapp fijado en la pantalla */
 .whatsapp-float {
+    /* Posición fija que permanece al hacer scroll */
     position: fixed;
+    /* Separación de 25px desde el borde inferior */
     bottom: 25px;
+    /* Separación de 25px desde el borde derecho */
     right: 25px;
+    /* Color verde característico oficial de WhatsApp */
     background-color: #25d366;
+    /* Icono en color blanco */
     color: white;
+    /* Ancho del botón circular */
     width: 54px;
+    /* Alto del botón circular */
     height: 54px;
+    /* Borde redondeado al 50% para hacerlo perfectamente circular */
     border-radius: 50%;
+    /* Activa flexbox para centrar el icono interno */
     display: flex;
+    /* Centra el icono verticalmente */
     align-items: center;
+    /* Centra el icono horizontalmente */
     justify-content: center;
+    /* Tamaño de la fuente del icono */
     font-size: 28px;
+    /* Sombra verde brillante para dar profundidad */
     box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4);
+    /* Nivel de capa alto para mantenerse por encima del resto del contenido */
     z-index: 1050;
+    /* Transición suave al interactuar con el botón */
     transition: transform 0.2s ease;
 }
 
+/* Efecto hover al pasar el cursor sobre el botón flotante de WhatsApp */
 .whatsapp-float:hover {
+    /* Agranda el botón un 10% adicional */
     transform: scale(1.1);
+
+    /* Mantiene el color blanco del icono */
     color: white;
 }
+
+
+/* ==========================================================================
+   PÁGINAS DE AUTENTICACIÓN (LOGIN Y REGISTRO)
+   ========================================================================== */
+
+/* Fondo para las páginas de login y registro utilizando la imagen fondo.jpg con un overlay oscuro */
+body.auth-page {
+    /* Color de fondo base oscuro de respaldo inmediato para evitar parpadeos blancos */
+    background-color: var(--bg-dark);
+
+    /* Fondo con gradiente oscuro semitransparente sobre la imagen fondo.jpg para asegurar contraste */
+    background: linear-gradient(rgba(10, 12, 15, 0.8), rgba(10, 12, 15, 0.85)), url('../img/fondo.jpg') no-repeat center center fixed;
+
+    /* Ajusta la imagen de fondo para que cubra la totalidad de la ventana */
+    background-size: cover;
+}
+
+/* Estilo para las tarjetas de formulario en las páginas de login y registro */
+.auth-page .card {
+    /* Color de fondo oscuro semi-transparente para la tarjeta */
+    background-color: rgba(20, 24, 31, 0.92);
+
+    /* Borde temático para delimitar el contenedor */
+    border: 1px solid var(--card-border);
+
+    /* Bordes redondeados elegantes */
+    border-radius: 16px;
+
+    /* Desenfoque de fondo detrás de la tarjeta (efecto cristal esmerilado) */
+    backdrop-filter: blur(10px);
+
+    /* Sombra profunda para destacar el formulario del fondo */
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+
+    /* Color de texto claro */
+    color: var(--text-main);
+}
+
+/* Enlaces dentro de las tarjetas de autenticación */
+.auth-page .card p a {
+    /* Color cian de acento para los enlaces */
+    color: var(--accent-cyan);
+
+    /* Quita el subrayado predeterminado */
+    text-decoration: none;
+
+    /* Transición suave al pasar el cursor */
+    transition: color 0.2s ease;
+}
+
+/* Efecto hover en los enlaces de autenticación */
+.auth-page .card p a:hover {
+    /* Subraya el enlace al pasar el ratón */
+    text-decoration: underline;
+}
+
