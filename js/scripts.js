@@ -124,16 +124,28 @@ function loginUsuario(event) {
     }
 }
 
-function listar(){
-  const usuarios= JSON.parse(localStorage.getItem("registros")) || [];
-  let tabla="<table border=1>";
-  tabla+= "<tr> <td>Nombre</td> <td>Apellido</td> </tr>";
-  usuarios.forEach(element => {
-    let nombre= element.nombre;
-    let apellido=element.apellido;
-    let fila= "<tr> <td>"+nombre+"</td> <td>"+apellido+"</td> </tr>";
-    tabla+=fila;
-  });
-  tabla+="</table>";
-  document.getElementById("salida").innerHTML=tabla;
-}
+//cambiar iconos del header segun si el usuario esta activo
+document.addEventListener("DOMContentLoaded", () => {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"))
+    const autenticacionBotones = document.getElementById("autenticacion-buttons")
+    const perfilContenedor = document.getElementById("perfil-container")
+    const txtNombre = document.getElementById("txtNombre");
+
+    if (usuarioActivo) {
+        //Si hay sesion activa, se ocultan los botones controlando el estado de "d-none"
+        autenticacionBotones.classList.add("d-none")
+        perfilContenedor.classList.remove("d-none")
+
+        //mostrar nombre del usuario e icono
+        if (txtNombre) {
+            txtNombre.textContent = usuarioActivo.nombre;
+        }
+    } else {
+        // si no hay sesion activa, todo el proceso del d-none al revez
+        autenticacionBotones.classList.remove("d-none")
+        perfilContenedor.classList.add("d-none")
+    }
+});
+
+
+
