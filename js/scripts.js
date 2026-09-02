@@ -147,5 +147,68 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+//funcion para cargar los datos actuales del usuario en el formulario y menu
+function cargarDatosUsuario() {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
 
+    //Rellenar los campos del formulario con los datos del usuario activo
+    if (usuarioActivo) {
+        if (document.getElementById("txtNombre")) document.getElementById("txtNombre").value = usuarioActivo.nombre || "";
+        if (document.getElementById("txtApellido")) document.getElementById("txtApellido").value = usuarioActivo.apellido || "";
+        if (document.getElementById("txtEmail")) document.getElementById("txtEmail").value = usuarioActivo.correo || "";
+    
+
+        //Rellenar el nombre en el navbar si existe el elemento
+        const nombreNav = document.getElementById("nombreNav");
+        if (nombreNav) {
+            nombreNav.textContent = usuarioActivo.nombre || "Mi cuenta";
+        }
+    } else {
+        // Si no hay usuario activo, redirigir al login
+        window.location.href = "login.html";
+    }
+}
+
+//funcion para actualizar perfil
+function actualizarPerfil(event) {
+    if (event) {
+        event.preventDefault();
+    }
+    //valores para el nuevo formulario
+    const nuevoNombre = document.getElementById("txtNombre").value();
+    const nuevoApellido = document.getElementById("txtApellido").value();
+    const nuevoEmail = document.getElementById("txtEmail").value();
+    const nuevaContrasena = document.getElementById("txtContrasena").value();
+
+    //objeto usuario actual de localStorage
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+
+    //actualizar los datos del usuario activo
+    usuario.nombre = nuevoNombre;
+    usuario.apellido = nuevoApellido;
+    usuario.correo = nuevoEmail;
+
+    //actualizacion de contraseña solo si el usuario escribio una
+    if (nuevaContrasena.trim() !== "") {
+        usuario.contrasena = nuevaContrasena;
+    }
+
+    //guardar los cambios en localStorage
+    localStorage.setItem("usuario_activo", JSON.stringify(usuarioActivo));
+    alert("Datos actualizados correctamente.");
+    //recargar la pagina para reflejar los cambios en el navbar
+    window.location.reload();
+    //no enviar formulario
+    return false; 
+}
+
+//funcion para cerrar sesion
+function cerrarSesion() {
+    if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
+        //Eliminar los datos de la sesion activa del localStorage
+        localStorage.removeItem("usuario_activo");
+        alert("Has cerrado sesión correctamente.");
+        window.location.href = "login.html";
+    }
+}
 
