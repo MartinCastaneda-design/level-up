@@ -9,6 +9,7 @@ function envioFormulario(event) {
     const selectSexo = document.getElementById("selectSexo");
     const txtEmail = document.getElementById("txtEmail");
     const txtContrasena = document.getElementById("txtContrasena");
+    const txtCodigoReferido = document.getElementById("txtCodigoReferido");
 
     if (!txtNombre || !txtApellido || !dateEdad || !selectSexo || !txtEmail || !txtContrasena) {
         alert("Error al cargar los campos del formulario.");
@@ -21,6 +22,7 @@ function envioFormulario(event) {
     const sexo = selectSexo.value;
     const email = txtEmail.value.trim();
     const contrasena = txtContrasena.value;
+    const codigoIngresado = txtCodigoReferido ? txtCodigoReferido.value.trim(): "";
 
     if (!nombre || !apellido || !fecha || !sexo || !email || !contrasena) {
         alert("Favor de rellenar todos los campos obligatorios.");
@@ -55,8 +57,29 @@ function envioFormulario(event) {
         return false;
     }
 
+    let registroUsuarios = JSON.parse(localStorage.getItem("registros")) || [];
+
+    //logica de puntos y codigos
+    let mensajePuntos = "";
+    if (codigoIngresado !== "") {
+        //buscar si existe un usuario con el codigo referido
+        const usuarioReferido = registroUsuarios.find(u => u.codigo === codigoIngresado);
+
+        if (usuarioReferido) {
+            //sumar 50 puntos al usuario referido
+            usuarioReferido.puntosLevelUp = (usuarioReferido.puntosLevelUp || 0) + 50;
+            localStorage.setItem("registros", JSON.stringify(registroUsuarios));
+            mensajePuntos = `¡Se han sumado 50 puntos Level-Up al usuario que te invitó!`;
+        } else {
+            alert("El código ingresado no es válido.");
+            return false;
+        }
+    }
+
+    const nuevoCodigo = generarCodigoUnico(registroUsuarios);
+
     // Detección de beneficio de descuento para miembros
-    const esBeneficiario = email.toLowerCase().endsWith(".edu") || email.toLowerCase().includes("estudiante");
+    const esBeneficiario = email.toLowerCase().endsWith("@duocuc.cl");
 
     const nuevoUsuario = {
         id: Date.now(),
@@ -66,10 +89,11 @@ function envioFormulario(event) {
         sexo: sexo,
         correo: email,
         esBeneficiario: esBeneficiario,
-        contrasena: contrasena
+        contrasena: contrasena,
+        codigo: nuevoCodigo,
+        puntosLevelUp: 0
     };
 
-    const registroUsuarios = JSON.parse(localStorage.getItem("registros")) || [];
     registroUsuarios.push(nuevoUsuario);
     localStorage.setItem("registros", JSON.stringify(registroUsuarios));
 
@@ -82,6 +106,7 @@ function envioFormulario(event) {
     window.location.href = "login.html";
     return true;
 }
+
 
 function loginUsuario(event) {
     if (event) {
@@ -175,22 +200,22 @@ function actualizarPerfil(event) {
         event.preventDefault();
     }
     //valores para el nuevo formulario
-    const nuevoNombre = document.getElementById("txtNombre").value();
-    const nuevoApellido = document.getElementById("txtApellido").value();
-    const nuevoEmail = document.getElementById("txtEmail").value();
-    const nuevaContrasena = document.getElementById("txtContrasena").value();
+    const nuevoNombre = document.getElementById("txtNombre").value;
+    const nuevoApellido = document.getElementById("txtApellido").value;
+    const nuevoEmail = document.getElementById("txtEmail").value;
+    const nuevaContrasena = document.getElementById("txtContrasena").value;
 
     //objeto usuario actual de localStorage
     const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
 
     //actualizar los datos del usuario activo
-    usuario.nombre = nuevoNombre;
-    usuario.apellido = nuevoApellido;
-    usuario.correo = nuevoEmail;
+    usuarioActivo.nombre = nuevoNombre;
+    usuarioActivo.apellido = nuevoApellido;
+    usuarioActivo.correo = nuevoEmail;
 
     //actualizacion de contraseña solo si el usuario escribio una
     if (nuevaContrasena.trim() !== "") {
-        usuario.contrasena = nuevaContrasena;
+        usuarioActivo.contrasena = nuevaContrasena;
     }
 
     //guardar los cambios en localStorage
@@ -211,4 +236,26 @@ function cerrarSesion() {
         window.location.href = "login.html";
     }
 }
+
+//funcion para crear un codigo de 6 caracteres para invitar a otros usuarios
+function generarCodigoUnico(usuariosExistentes) {
+    const caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let codigo = "";
+    let esUnico = false;
+
+    while (!esUnico) {
+        codigo = "";
+        for (let i = 0; i < 6; i++) {
+            const aleatorio = Math.floor(Math.random() * caracteres.length);
+            codigo += caracteres.charAt(aleatorio);
+        }
+
+        const existe = usuariosExistentes.some(usuario => usuario.codigo === codigo);
+        if (!existe) {
+            esUnico = true;
+        }
+    }
+    return codigo;
+}
+
 
