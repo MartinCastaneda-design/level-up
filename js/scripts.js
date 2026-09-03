@@ -68,7 +68,6 @@ function envioFormulario(event) {
         if (usuarioReferido) {
             //sumar 50 puntos al usuario referido
             usuarioReferido.puntosLevelUp = (usuarioReferido.puntosLevelUp || 0) + 50;
-            localStorage.setItem("registros", JSON.stringify(registroUsuarios));
             mensajePuntos = `¡Se han sumado 50 puntos Level-Up al usuario que te invitó!`;
         } else {
             alert("El código ingresado no es válido.");
@@ -126,6 +125,7 @@ function loginUsuario(event) {
 
     if (usuarioEncontrado) {
         localStorage.setItem("usuario_activo", JSON.stringify({
+            id: usuarioEncontrado.id,
             nombre: usuarioEncontrado.nombre,
             apellido: usuarioEncontrado.apellido,
             correo: usuarioEncontrado.correo,
@@ -155,20 +155,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const autenticacionBotones = document.getElementById("autenticacion-buttons")
     const perfilContenedor = document.getElementById("perfil-container")
     const txtNombre = document.getElementById("txtNombre");
+    const navPuntos = document.getElementById("navPuntos");
 
     if (usuarioActivo) {
         //Si hay sesion activa, se ocultan los botones controlando el estado de "d-none"
-        autenticacionBotones.classList.add("d-none")
-        perfilContenedor.classList.remove("d-none")
+        if (autenticacionBotones) autenticacionBotones.classList.add("d-none");
+        if (perfilContenedor) perfilContenedor.classList.remove("d-none");
 
         //mostrar nombre del usuario e icono
         if (txtNombre) {
             txtNombre.textContent = usuarioActivo.nombre;
         }
+        //mostrar los puntos levelUp actuales del usuario
+        if (navPuntos) {
+            //Buscar los puntos actualizados de la lista por si se han añadido puntos recientemente
+            const registros = JSON.parse(localStorage.getItem("registros")) || [];
+            const usuarioReal = registros.find(u => u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+
+            const puntosActuales = usuarioReal ? (usuarioReal.puntosLevelUp || 0) : (usuarioActivo.puntosLevelUp || 0);
+            navPuntos.textContent = puntosActuales;
+        }
     } else {
         // si no hay sesion activa, todo el proceso del d-none al revez
-        autenticacionBotones.classList.remove("d-none")
-        perfilContenedor.classList.add("d-none")
+        if (autenticacionBotones) autenticacionBotones.classList.remove("d-none")
+        if (perfilContenedor) perfilContenedor.classList.add("d-none");
     }
 });
 
@@ -207,19 +217,34 @@ function actualizarPerfil(event) {
 
     //objeto usuario actual de localStorage
     const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    let registros = JSON.parse(localStorage.getItem("registros")) || [];
+
+    if (!usuarioActivo) {
+        alert("No hay una sesión activa.");
+        window.location.href = "login.html";
+        return false;
+    }
+
+    //buscar al usuario dentro de la lista mediante su id o correo anterior
+    const usuarioIndex = registros.findIndex(u => u.id === usuarioActivo.id || u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+    if (usuarioIndex !== -1) {
+        registros[usuarioIndex].nombre = nuevoNombre;
+        registros[usuarioIndex].apellido = nuevoApellido;
+        registros[usuarioIndex].correo = nuevoEmail;
+
+        if (nuevaContrasena.trim() !== "") {
+            registros[usuarioIndex].contrasena = nuevaContrasena;
+        }
+        //guardar los cambios en en la lista de registros
+        localStorage.setItem("registros", JSON.stringify(registros));
+    }
 
     //actualizar los datos del usuario activo
     usuarioActivo.nombre = nuevoNombre;
     usuarioActivo.apellido = nuevoApellido;
     usuarioActivo.correo = nuevoEmail;
-
-    //actualizacion de contraseña solo si el usuario escribio una
-    if (nuevaContrasena.trim() !== "") {
-        usuarioActivo.contrasena = nuevaContrasena;
-    }
-
-    //guardar los cambios en localStorage
     localStorage.setItem("usuario_activo", JSON.stringify(usuarioActivo));
+
     alert("Datos actualizados correctamente.");
     //recargar la pagina para reflejar los cambios en el navbar
     window.location.reload();
