@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level-Up Gammer | Panel de productos </title>
+     <!-- 1. Bootstrap CSS (El framework para maquetar rápido y responsivo) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- 2. CSS Global del grupo (el fondo negro y tipografías Orbitron/Roboto) -->
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <!-- 1. CABECERA SEMÁNTICA -->
+    <header class="py-3">
+        <div class="logo-container d-flex justify-content-center align-items-center">
+            <!-- Usamos la clase brand-font (fuente Orbitron) y el color cian-->
+            <h1 class="brand-font m-0 text-uppercase" style="color: var(--accent-cyan);">Level-Up Gamer</h1>
+        </div>
+        <small class="text-muted text-uppercase" style="font-family: 'Orbitron', sans-serif; letter-spacing: 1px;">
+            Panel de Control
+        </small>
+        <!-- 2. MENU DE NAVEGACION RESPONSIVO (BOOTSTRAP + ESTILOS DE TU GRUPO) -->
+    <nav class="navbar navbar-expand-lg custom-navbar">
+        <div class="container-fluid">
+            <!-- Botón de hamburguesa visible solo en celulares (Mobile First) -->
+            <button class="navbar-toggler border-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <!-- Filtro para que el icono se vea blanco en fondo oscuro -->
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+
+            <!-- Contenedor de enlaces que se colapsa en celulares -->
+            <div class="collapse navbar-collapse justify-content-center" id="navbarNav">
+                <ul class="navbar-nav gap-3 text-center py-2 py-lg-0">
+                    <!-- Enlace para volver a la tienda -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">Volver a la Tienda</a>
+                    </li>
+
+                    <!-- Paginas administrativas obligatorias asignadas -->
+
+                    <!-- INVENTARIO (Pagina activa) -->
+                    <li class="nav-item">
+                        <a class="nav-link active" href="admin-producto.html">Inventario</a>
+                    </li>
+
+                    <!-- USUARIOS(GESTION DE USUARIOS) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin-usuario.html">Usuarios</a>
+                    </li>
+
+                    <!-- RESPALDOS (COPIAS DE SEGURIDAD)  -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="admin-respaldo.html">Respaldos</a>
+                    </li>
+
+                    <!-- NOTICIAS/BLOG -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="blog-lista.html">Noticias/Blog</a>
+                    </li>
+
+                    <!-- COMUNIDAD/GUIAS(MURO CON TODAS LAS GUIAS DE LA COMUNIDAD) -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="guias-lista.html">Comunidad/Guias</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+         </nav>
+    </header>
+     <main class="container my-5">
+        
+        <!-- Encabezado de la Gestión de Inventario -->
+        <section class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="h3 brand-font text-white m-0">Gestión de Inventario</h2>
+            <button class="btn btn-outline-info brand-font text-uppercase" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                <i class="bi bi-plus-circle me-1"></i> Nuevo Producto
+            </button>
+        </section>
+
+        <!-- Tarjeta Gamer con la Tabla de Inventario -->
+        <section class="gamer-card p-4">
+            <div class="table-responsive">
+                <table class="table table-dark table-striped table-hover align-middle m-0" id="tablaInventario">
+                    <thead>
+                        <tr class="brand-font" style="color: var(--accent-cyan); border-bottom: 2px solid var(--card-border);">
+                            <th>ID</th>
+                            <th>Categoría</th>
+                            <th>Nombre del Producto</th>
+                            <th>Precio (CLP)</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="listaProductosAdmin">
+                        <!-- Filas de productos de ejemplo -->
+                        <tr>
+                            <td class="brand-font text-info">JM001</td>
+                            <td><span class="badge badge-category">Juegos de Mesa</span></td>
+                            <td><strong>Catan</strong></td>
+                            <td class="price-tag">$29.990</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-warning me-1"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+
+    <!-- 4. VENTANA EMERGENTE (MODAL DE BOOTSTRAP PARA NUEVO PRODUCTO) -->
+    <div class="modal fade" id="modalProducto" tabindex="-1" aria-labelledby="modalProductoLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <!-- Usamos la variable de fondo oscuro de tu grupo para mantener la estética gamer -->
+            <div class="modal-content text-white" style="background-color: var(--card-bg); border: 1px solid var(--card-border);">
+
+             <!-- Encabezado del Modal -->
+                <div class="modal-header" style="border-bottom: 1px solid var(--card-border);">
+                    <h5 class="modal-title brand-font" id="modalProductoLabel" style="color: var(--accent-cyan);">Registrar Producto</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+            <!-- Cuerpo del Modal (El Formulario) -->
+                <div class="modal-body">
+                    <form id="formProducto">
+                        <!-- ID del Producto -->
+                        <div class="mb-3">
+                            <label for="prodId" class="form-label brand-font text-muted small">Código / ID</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" id="prodId" placeholder="Ej: JM003" required>
+                        </div>
+            <!-- Categoría del Catálogo Oficial -->
+                        <div class="mb-3">
+                            <label for="prodCategoria" class="form-label brand-font text-muted small">Categoría</label>
+                            <select class="form-select bg-dark text-white border-secondary" id="prodCategoria" required>
+                                <option value="" selected disabled>Selecciona una categoría</option>
+                                <option value="Juegos de Mesa">Juegos de Mesa</option>
+                                <option value="Accesorios">Accesorios</option>
+                                <option value="Consolas">Consolas</option>
+                                <option value="Computadores Gamers">Computadores Gamers</option>
+                                <option value="Sillas Gamers">Sillas Gamers</option>
+                                <option value="Mouse">Mouse</option>
+                                <option value="Mousepad">Mousepad</option>
+                                <option value="Poleras Personalizadas">Poleras Personalizadas</option>
+                                <option value="Polerones Gamers Personalizados">Polerones Gamers</option>
+                                <option value="Servicio Técnico">Servicio Técnico</option>
+                            </select>
+                        </div>
+            <!-- Nombre del Producto -->
+                        <div class="mb-3">
+                            <label for="prodNombre" class="form-label brand-font text-muted small">Nombre del Producto</label>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" id="prodNombre" placeholder="Ej: Catan" required>
+                        </div>
+            <!-- Precio -->
+                        <div class="mb-3">
+                            <label for="prodPrecio" class="form-label brand-font text-muted small">Precio (CLP)</label>
+                            <input type="number" class="form-control bg-dark text-white border-secondary" id="prodPrecio" placeholder="Ej: 29990" min="1" required>
+                        </div>
+                    </form>
+                </div>
+            <!-- Pie del Modal (Botones de Acción) -->
+                <div class="modal-footer" style="border-top: 1px solid var(--card-border);">
+                    <button type="button" class="btn btn-outline-secondary brand-font text-uppercase" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" form="formProducto" class="btn btn-outline-info brand-font text-uppercase">Guardar</button>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+     <!-- Bootstrap JS Bundle (incluye Popper) - necesario para que el modal funcione -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="js/products-data.js"></script>
+    <script src="js/admin.js"></script>
+    
+    
+</body>
+</html>
