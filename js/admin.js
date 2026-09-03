@@ -1,10 +1,13 @@
 let productosAdmin = [];
 let idEnEdicion = null; // null = modo "agregar nuevo", un id = modo "editando ese producto"
 
+//Recibe el array de productos y lo percite en localStorage, para que sobreviva si el usuario recarga
+//o cierra el navegador 
 function guardarProductos(productos) {
     localStorage.setItem('levelup_productos', JSON.stringify(productos));
 }
-
+//Revisa si ya hay productos guardados; si sí, los usa, y si no, copia el catálogo original 
+// y lo guarda por primera vez.
 function inicializarProductos() {
     const datosGuardados = localStorage.getItem('levelup_productos');
     if (datosGuardados !== null) {
@@ -16,6 +19,10 @@ function inicializarProductos() {
     }
 }
 
+// Usar en caso de reinicar la pagina y vuelva a la base de datos:  localStorage.removeItem('levelup_productos');
+
+
+//Actúa como el "puente" entre los datos en memoria y lo que ve el usuario
 function renderizarTabla() {
     const tbody = document.getElementById('listaProductosAdmin');
     tbody.innerHTML = '';
@@ -42,7 +49,7 @@ function renderizarTabla() {
 
 function guardarDesdeFormulario(event) {
     event.preventDefault();
-
+    //Se captura los datos de los inputs del modal
     const producto = {
         id: document.getElementById('prodId').value.trim(),
         categoria: document.getElementById('prodCategoria').value,
@@ -50,6 +57,31 @@ function guardarDesdeFormulario(event) {
         precio: Number(document.getElementById('prodPrecio').value)
     };
 
+    //IDS DUPLICADOS
+    if(idEnEdicion === null){
+        const idExiste = productosAdmin.some(p=> p.id.toLowerCase() === producto.id.toLowerCase());
+        if(idExiste){
+            alert(`Error: El Código/ID "${producto.id}" ya existe en el inventario.`);
+            return
+        }
+    }
+
+    
+
+    //Validar el largo minimo del nombre
+    if(producto.nombre.lenght < 3){
+        alert("El nombre del producto debe tener al menos 3 caracteres");
+        return // se detiene la ejecucion y no guarda nada
+    }
+
+    //Validar el precio mayor a 0
+    if (isNaN(producto.precio) || producto.precio <=0){
+        alert("Por favor, Ingrese un precio valido mayor a 0.")
+        return; //Detiene la ejecucion
+    }
+
+
+    //Si pasa todas las validacion, el codigo continua 
     if (idEnEdicion === null) {
         // Modo agregar: producto nuevo al final del array
         productosAdmin.push(producto);
@@ -59,6 +91,7 @@ function guardarDesdeFormulario(event) {
         productosAdmin[indice] = producto;
         idEnEdicion = null;
     }
+
 
     guardarProductos(productosAdmin);
     renderizarTabla();
