@@ -210,7 +210,7 @@ const PRODUCTOS_DATA = [
     },
     {
         id: 'PP001',
-        nombre: 'Polera Gamer Personalizada ','Level-Up':'',
+        nombre: "Polera Gamer Personalizada 'Level-Up'",
         categoria: 'Poleras Personalizadas',
         categoriaSlug: 'poleras-personalizadas',
         precio: 14990,
@@ -233,7 +233,7 @@ const PRODUCTOS_DATA = [
     },
     {
         id: 'PP002',
-        nombre: 'Polerón Gamer Hoodie ','Level-Up Cyber':'',
+        nombre: "Polerón Gamer Hoodie 'Level-Up Cyber'",
         categoria: 'Polerones Gamers Personalizados',
         categoriaSlug: 'polerones-gamers',
         precio: 29990,

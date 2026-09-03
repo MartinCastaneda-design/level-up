@@ -124,7 +124,7 @@ function eliminarCupon() {
 }
 
 function actualizarContadorCarrito() {
-    const insignias = document.querySelectorAll('.contador-carrito-badge');
+    const insignias = document.querySelectorAll('.contador-carrito-badge, .cart-count-badge');
     const totales = calcularTotalesCarrito();
     insignias.forEach(insignia => {
         insignia.textContent = totales.totalArticulos;

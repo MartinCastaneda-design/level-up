@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -45,15 +45,77 @@
 
     <!-- Contenido Principal -->
     <main class="container my-5 flex-grow-1">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
             <div>
                 <h1 class="h2 mb-1">🎮 Catálogo de Productos</h1>
                 <p class="text-muted mb-0">Explora todo nuestro equipamiento gamer disponible</p>
             </div>
+            <div class="text-muted small">
+                Mostrando <span id="contadorResultados" class="text-info fw-bold">0</span> productos
+            </div>
         </div>
 
+        <!-- Barra de Búsqueda y Filtros -->
+        <section class="card gamer-card p-3 p-md-4 mb-4">
+            <div class="row g-3 align-items-center">
+                <!-- Buscador de Texto -->
+                <div class="col-12 col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark border-secondary text-info"><i class="bi bi-search"></i></span>
+                        <input type="text" id="inputBuscar" class="form-control bg-dark border-secondary text-light" placeholder="Buscar por nombre o descripción...">
+                    </div>
+                </div>
+                <!-- Filtro por Categoría -->
+                <div class="col-12 col-sm-6 col-md-4">
+                    <select id="selectCategoria" class="form-select bg-dark border-secondary text-light">
+                        <option value="todos">Todas las Categorías</option>
+                        <option value="juegos-de-mesa">Juegos de Mesa</option>
+                        <option value="consolas">Consolas</option>
+                        <option value="computadores-gamers">Computadores Gamers</option>
+                        <option value="accesorios">Accesorios</option>
+                        <option value="mouse">Mouse</option>
+                        <option value="mousepad">Mousepad</option>
+                        <option value="sillas-gamers">Sillas Gamers</option>
+                        <option value="poleras-personalizadas">Poleras Personalizadas</option>
+                        <option value="polerones-gamers">Polerones Gamers</option>
+                    </select>
+                </div>
+                <!-- Ordenamiento -->
+                <div class="col-12 col-sm-6 col-md-3">
+                    <select id="selectOrden" class="form-select bg-dark border-secondary text-light">
+                        <option value="destacados">Relevancia / Destacados</option>
+                        <option value="precio-menor">Precio: Menor a Mayor</option>
+                        <option value="precio-mayor">Precio: Mayor a Menor</option>
+                        <option value="nombre">Nombre: A - Z</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Filtros Rápidos (Chips) -->
+            <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top border-secondary align-items-center">
+                <span class="text-muted small me-2"><i class="bi bi-funnel me-1"></i>Filtros rápidos:</span>
+                <button type="button" class="btn btn-sm btn-outline-info active chip-filtro" data-filtro="todos">Todos</button>
+                <button type="button" class="btn btn-sm btn-outline-danger chip-filtro" data-filtro="ofertas">🔥 En Oferta</button>
+                <button type="button" class="btn btn-sm btn-outline-warning chip-filtro" data-filtro="destacados">⭐ Destacados</button>
+                <button type="button" class="btn btn-sm btn-outline-light chip-filtro" data-filtro="consolas">Consolas</button>
+                <button type="button" class="btn btn-sm btn-outline-light chip-filtro" data-filtro="computadores-gamers">PC Gamers</button>
+                <button type="button" class="btn btn-sm btn-outline-light chip-filtro" data-filtro="juegos-de-mesa">Juegos de Mesa</button>
+            </div>
+        </section>
+
+        <!-- Cuadrícula de Productos -->
         <div id="contenedorProductos" class="row g-4">
             <!-- Espacio para la galería de productos -->
+        </div>
+
+        <!-- Mensaje de Sin Resultados -->
+        <div id="sinResultados" class="card gamer-card p-5 text-center my-4 d-none">
+            <i class="bi bi-emoji-frown fs-1 text-info mb-3"></i>
+            <h4 class="text-white">No encontramos productos con esos filtros</h4>
+            <p class="text-muted mb-3">Intenta buscar con otros términos o selecciona otra categoría.</p>
+            <div>
+                <button id="btnLimpiarFiltros" class="btn btn-primary btn-sm">Restablecer Filtros</button>
+            </div>
         </div>
     </main>
 
@@ -118,5 +180,148 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/products-data.js"></script>
     <script src="js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const inputBuscar = document.getElementById('inputBuscar');
+            const selectCategoria = document.getElementById('selectCategoria');
+            const selectOrden = document.getElementById('selectOrden');
+            const contenedor = document.getElementById('contenedorProductos');
+            const sinResultados = document.getElementById('sinResultados');
+            const contadorResultados = document.getElementById('contadorResultados');
+            const btnLimpiar = document.getElementById('btnLimpiarFiltros');
+            const chipsFiltro = document.querySelectorAll('.chip-filtro');
+
+            // Leer parámetro de categoría desde la URL (ej: ?cat=consolas)
+            const params = new URLSearchParams(window.location.search);
+            const categoriaUrl = params.get('cat');
+            if (categoriaUrl) {
+                selectCategoria.value = categoriaUrl;
+                actualizarChipActivo(categoriaUrl);
+            }
+
+            function actualizarChipActivo(filtro) {
+                chipsFiltro.forEach(chip => {
+                    if (chip.dataset.filtro === filtro) {
+                        chip.classList.add('active', 'btn-outline-info');
+                        chip.classList.remove('btn-outline-light');
+                    } else if (filtro !== 'ofertas' && filtro !== 'destacados') {
+                        chip.classList.remove('active');
+                    }
+                });
+            }
+
+            function filtrarYRenderizar() {
+                const texto = (inputBuscar.value || '').trim().toLowerCase();
+                const categoria = selectCategoria.value;
+                const orden = selectOrden.value;
+
+                let productos = PRODUCTOS_DATA.filter(prod => {
+                    const coincideTexto = prod.nombre.toLowerCase().includes(texto) ||
+                                          prod.descripcionCorta.toLowerCase().includes(texto) ||
+                                          prod.categoria.toLowerCase().includes(texto);
+
+                    let coincideCategoria = true;
+                    if (categoria === 'ofertas') {
+                        coincideCategoria = prod.enOferta;
+                    } else if (categoria === 'destacados') {
+                        coincideCategoria = prod.destacado;
+                    } else if (categoria !== 'todos') {
+                        coincideCategoria = prod.categoriaSlug === categoria;
+                    }
+
+                    return coincideTexto && coincideCategoria;
+                });
+
+                // Ordenar productos
+                if (orden === 'precio-menor') {
+                    productos.sort((a, b) => a.precio - b.precio);
+                } else if (orden === 'precio-mayor') {
+                    productos.sort((a, b) => b.precio - a.precio);
+                } else if (orden === 'nombre') {
+                    productos.sort((a, b) => a.nombre.localeCompare(b.nombre));
+                } else if (orden === 'destacados') {
+                    productos.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
+                }
+
+                // Renderizar
+                contadorResultados.textContent = productos.length;
+
+                if (productos.length === 0) {
+                    contenedor.innerHTML = '';
+                    sinResultados.classList.remove('d-none');
+                    return;
+                }
+
+                sinResultados.classList.add('d-none');
+                contenedor.innerHTML = productos.map(prod => `
+                    <div class="col-sm-6 col-md-4 col-lg-3">
+                        <div class="card gamer-card h-100 d-flex flex-column">
+                            <div class="position-relative">
+                                <a href="producto-detalle.html?id=${prod.id}">
+                                    <img src="${prod.imagen}" class="card-img-top" alt="${prod.nombre}" style="height: 200px; object-fit: cover;">
+                                </a>
+                                ${prod.enOferta ? `<span class="badge badge-discount position-absolute top-0 end-0 m-2">-${prod.descuento}%</span>` : ''}
+                                <span class="badge badge-category position-absolute bottom-0 start-0 m-2">${prod.categoria}</span>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                                <h6 class="card-title text-white mb-2">
+                                    <a href="producto-detalle.html?id=${prod.id}" class="text-white text-decoration-none hover-info">${prod.nombre}</a>
+                                </h6>
+                                <p class="card-text text-muted small flex-grow-1">${prod.descripcionCorta}</p>
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span class="price-tag fs-5">${formatCLP(prod.precio)}</span>
+                                        <span class="text-warning small"><i class="bi bi-star-fill"></i> ${prod.rating}</span>
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <a href="producto-detalle.html?id=${prod.id}" class="btn btn-outline-info btn-sm">Ver Detalle</a>
+                                        <button onclick="agregarAlCarrito('${prod.id}', 1)" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-cart-plus me-1"></i>Añadir al Carrito
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Eventos de interacción
+            inputBuscar.addEventListener('input', filtrarYRenderizar);
+            selectCategoria.addEventListener('change', () => {
+                actualizarChipActivo(selectCategoria.value);
+                filtrarYRenderizar();
+            });
+            selectOrden.addEventListener('change', filtrarYRenderizar);
+
+            chipsFiltro.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const filtro = chip.dataset.filtro;
+                    chipsFiltro.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+
+                    if (filtro === 'todos' || filtro === 'ofertas' || filtro === 'destacados') {
+                        selectCategoria.value = filtro;
+                    } else {
+                        selectCategoria.value = filtro;
+                    }
+                    filtrarYRenderizar();
+                });
+            });
+
+            if (btnLimpiar) {
+                btnLimpiar.addEventListener('click', () => {
+                    inputBuscar.value = '';
+                    selectCategoria.value = 'todos';
+                    selectOrden.value = 'destacados';
+                    actualizarChipActivo('todos');
+                    filtrarYRenderizar();
+                });
+            }
+
+            // Carga inicial
+            filtrarYRenderizar();
+        });
+    </script>
 </body>
 </html>
