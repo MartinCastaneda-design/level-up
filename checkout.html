@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -59,15 +59,59 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <h1 class="h2 mb-1">💳 Finalizar Compra</h1>
-                <p class="text-muted mb-0">Completa tus datos de envío y pago de forma segura</p>
+                <p class="text-muted mb-0">Completa tus datos de despacho y método de pago</p>
             </div>
             <a href="carrito.html" class="btn btn-outline-info btn-sm"><i class="bi bi-arrow-left me-1"></i>Volver al Carrito</a>
         </div>
 
-        <div id="contenedorCheckout" class="row g-4">
-            <!-- Espacio para el formulario de despacho y pago -->
+        <div id="contenedorCheckout">
+            <!-- Se inyecta dinámicamente con JavaScript -->
         </div>
     </main>
+
+    <!-- Modal de Confirmación de Compra Exitosa -->
+    <div class="modal fade" id="modalExitoCompra" tabindex="-1" aria-labelledby="modalExitoLabel" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-white" style="background-color: var(--card-bg); border: 1px solid var(--card-border);">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title brand-font text-info" id="modalExitoLabel">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>¡Compra Realizada con Éxito!
+                    </h5>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div class="mb-3">
+                        <i class="bi bi-controller text-info" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="text-white fw-bold mb-2">¡Gracias por tu compra en Level-Up Gamer!</h4>
+                    <p class="text-muted small mb-3">
+                        Hemos recibido tu pedido correctamente. En breve recibirás un correo con el comprobante y el seguimiento de tu despacho.
+                    </p>
+                    <div class="p-3 bg-dark rounded-3 border border-secondary text-start mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Número de Orden:</span>
+                            <strong class="text-info" id="modalNumeroOrden">#LVL-99881</strong>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Destinatario:</span>
+                            <span class="text-light small" id="modalDestinatario">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted small">Total Pagado:</span>
+                            <strong class="price-tag" id="modalTotalPagado">$0</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Método de Pago:</span>
+                            <span class="text-light small" id="modalMetodoPago">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top border-secondary justify-content-center">
+                    <a href="index.html" class="btn btn-primary px-4">Volver al Inicio</a>
+                    <a href="galeria.html" class="btn btn-outline-info px-4">Seguir Explorando</a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Botón Flotante de WhatsApp -->
     <a href="https://wa.me/56912345678?text=Hola%20Level-Up%20Gamer,%20necesito%20soporte%20t%C3%A9cnico" target="_blank" class="whatsapp-float" title="Soporte Técnico por WhatsApp">
@@ -131,5 +175,263 @@
     <script src="js/products-data.js"></script>
     <script src="js/cart.js"></script>
     <script src="js/scripts.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contenedor = document.getElementById('contenedorCheckout');
+            const carrito = obtenerCarrito();
+            const totales = calcularTotalesCarrito();
+            const usuarioActivo = JSON.parse(localStorage.getItem('usuario_activo')) || null;
+
+            if (!carrito || carrito.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="card gamer-card p-5 text-center my-4">
+                        <i class="bi bi-cart-x fs-1 text-info mb-3"></i>
+                        <h3 class="text-white fw-bold">No hay productos por pagar</h3>
+                        <p class="text-muted mb-4">Tu carrito está vacío. Agrega artículos antes de proceder al checkout.</p>
+                        <div>
+                            <a href="galeria.html" class="btn btn-primary btn-lg px-4">
+                                <i class="bi bi-controller me-2"></i>Ir al Catálogo de Productos
+                            </a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Lista compacta de items para el resumen
+            const listaItemsHtml = carrito.map(item => `
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                    <div class="d-flex align-items-center gap-2">
+                        <img src="${item.imagen}" alt="${item.nombre}" class="rounded-2" style="width: 45px; height: 45px; object-fit: cover;">
+                        <div>
+                            <h6 class="text-white mb-0 small text-truncate" style="max-width: 170px;">${item.nombre}</h6>
+                            <span class="text-muted small">Cant: ${item.cantidad}</span>
+                        </div>
+                    </div>
+                    <span class="text-light small fw-bold">${formatCLP(item.precio * item.cantidad)}</span>
+                </div>
+            `).join('');
+
+            contenedor.innerHTML = `
+                <div class="row g-4">
+                    <!-- Formulario de Despacho y Pago -->
+                    <div class="col-lg-7">
+                        <form id="formCheckout" onsubmit="return procesarPagoCheckout(event);">
+                            <!-- 1. Datos Personales -->
+                            <div class="card gamer-card p-4 mb-4">
+                                <h4 class="h5 text-white brand-font mb-3"><i class="bi bi-person-lines-fill text-info me-2"></i>1. Datos de Contacto y Facturación</h4>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="checkNombre" class="form-label text-muted small">Nombre *</label>
+                                        <input type="text" class="form-control bg-dark border-secondary text-light" id="checkNombre" value="${usuarioActivo ? usuarioActivo.nombre : ''}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="checkApellido" class="form-label text-muted small">Apellido *</label>
+                                        <input type="text" class="form-control bg-dark border-secondary text-light" id="checkApellido" value="${usuarioActivo ? (usuarioActivo.apellido || '') : ''}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="checkEmail" class="form-label text-muted small">Correo Electrónico *</label>
+                                        <input type="email" class="form-control bg-dark border-secondary text-light" id="checkEmail" value="${usuarioActivo ? usuarioActivo.correo : ''}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="checkTelefono" class="form-label text-muted small">Teléfono de Contacto *</label>
+                                        <input type="tel" class="form-control bg-dark border-secondary text-light" id="checkTelefono" placeholder="+56 9 1234 5678" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Dirección de Envío -->
+                            <div class="card gamer-card p-4 mb-4">
+                                <h4 class="h5 text-white brand-font mb-3"><i class="bi bi-geo-alt-fill text-info me-2"></i>2. Dirección de Despacho (Chile)</h4>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="checkDireccion" class="form-label text-muted small">Calle, Número, Depto / Casa *</label>
+                                        <input type="text" class="form-control bg-dark border-secondary text-light" id="checkDireccion" placeholder="Ej: Av. Providencia 1234, Depto 502" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="checkRegion" class="form-label text-muted small">Región *</label>
+                                        <select class="form-select bg-dark border-secondary text-light" id="checkRegion" required>
+                                            <option value="" selected disabled>Selecciona Región</option>
+                                            <option value="Metropolitana">Región Metropolitana</option>
+                                            <option value="Valparaiso">Región de Valparaíso</option>
+                                            <option value="Biobio">Región del Biobío</option>
+                                            <option value="Antofagasta">Región de Antofagasta</option>
+                                            <option value="Araucania">Región de La Araucanía</option>
+                                            <option value="Coquimbo">Región de Coquimbo</option>
+                                            <option value="LosLagos">Región de Los Lagos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="checkComuna" class="form-label text-muted small">Comuna / Ciudad *</label>
+                                        <input type="text" class="form-control bg-dark border-secondary text-light" id="checkComuna" placeholder="Ej: Santiago / Providencia / Viña" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Selección de Método de Pago -->
+                            <div class="card gamer-card p-4 mb-4">
+                                <h4 class="h5 text-white brand-font mb-3"><i class="bi bi-wallet2 text-info me-2"></i>3. Método de Pago Simulado</h4>
+                                <div class="d-flex flex-column gap-3">
+                                    <div class="form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3">
+                                        <input class="form-check-input ms-0 me-2" type="radio" name="metodoPago" id="pagoWebpay" value="Webpay Plus (Débito/Crédito)" checked onchange="cambiarMetodoPagoVista()">
+                                        <label class="form-check-label text-white w-100 cursor-pointer d-flex justify-content-between align-items-center" for="pagoWebpay">
+                                            <span><strong>Webpay Plus</strong> (Tarjetas de Débito y Crédito)</span>
+                                            <i class="bi bi-credit-card-2-front text-info fs-4"></i>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3">
+                                        <input class="form-check-input ms-0 me-2" type="radio" name="metodoPago" id="pagoTransferencia" value="Transferencia Bancaria" onchange="cambiarMetodoPagoVista()">
+                                        <label class="form-check-label text-white w-100 cursor-pointer d-flex justify-content-between align-items-center" for="pagoTransferencia">
+                                            <span><strong>Transferencia Electrónica</strong> (Banco Estado / Santander / Chile)</span>
+                                            <i class="bi bi-bank text-info fs-4"></i>
+                                        </label>
+                                    </div>
+
+                                    <div class="form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3">
+                                        <input class="form-check-input ms-0 me-2" type="radio" name="metodoPago" id="pagoPuntos" value="Puntos LevelUp" onchange="cambiarMetodoPagoVista()">
+                                        <label class="form-check-label text-white w-100 cursor-pointer d-flex justify-content-between align-items-center" for="pagoPuntos">
+                                            <span><strong>Puntos LevelUp</strong> (Canje Gamer)</span>
+                                            <i class="bi bi-star-fill text-warning fs-4"></i>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Detalle del Pago Simulado -->
+                                <div id="panelDetallePago" class="p-3 bg-dark rounded-3 border border-secondary mt-3">
+                                    <div class="small text-muted mb-2"><i class="bi bi-info-circle text-info me-1"></i>Ingreso de tarjeta de prueba:</div>
+                                    <div class="row g-2">
+                                        <div class="col-8">
+                                            <input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="1234 5678 9101 1121" maxlength="19">
+                                        </div>
+                                        <div class="col-4">
+                                            <input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="MM/AA" maxlength="5">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold">
+                                <i class="bi bi-lock-fill me-2"></i>Confirmar y Realizar Pedido (${formatCLP(totales.total)})
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Resumen del Pedido -->
+                    <div class="col-lg-5">
+                        <div class="card gamer-card p-4 sticky-top" style="top: 90px;">
+                            <h4 class="h5 text-white brand-font mb-3 pb-2 border-bottom border-secondary">Resumen de la Compra</h4>
+                            
+                            <div class="mb-3" style="max-height: 250px; overflow-y: auto;">
+                                ${listaItemsHtml}
+                            </div>
+
+                            <div class="d-flex justify-content-between text-muted mb-2">
+                                <span>Subtotal:</span>
+                                <span class="text-light">${formatCLP(totales.subtotal)}</span>
+                            </div>
+
+                            ${totales.montoDescuento > 0 ? `
+                                <div class="d-flex justify-content-between text-warning mb-2">
+                                    <span>Descuento aplicado (${totales.porcentajeDescuento}%):</span>
+                                    <span>-${formatCLP(totales.montoDescuento)}</span>
+                                </div>
+                            ` : ''}
+
+                            <div class="d-flex justify-content-between text-muted mb-3">
+                                <span>Costo de Despacho:</span>
+                                <span class="text-success fw-bold">Gratis</span>
+                            </div>
+
+                            <hr class="border-secondary my-3">
+
+                            <div class="d-flex justify-content-between align-items-baseline mb-4">
+                                <span class="text-white fw-bold fs-5">Total a Pagar:</span>
+                                <span class="price-tag fs-2">${formatCLP(totales.total)}</span>
+                            </div>
+
+                            <div class="p-3 bg-dark rounded-3 border border-secondary text-muted small">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <i class="bi bi-shield-check text-success fs-5"></i>
+                                    <strong class="text-white">Transacción 100% Protegida</strong>
+                                </div>
+                                <span>Tus datos de compra viajan encriptados de extremo a extremo.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        function cambiarMetodoPagoVista() {
+            const panel = document.getElementById('panelDetallePago');
+            const radios = document.getElementsByName('metodoPago');
+            let seleccionado = 'Webpay';
+            radios.forEach(r => { if (r.checked) seleccionado = r.value; });
+
+            if (seleccionado.includes('Webpay')) {
+                panel.innerHTML = `
+                    <div class="small text-muted mb-2"><i class="bi bi-info-circle text-info me-1"></i>Ingreso de tarjeta de prueba:</div>
+                    <div class="row g-2">
+                        <div class="col-8"><input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="1234 5678 9101 1121" maxlength="19"></div>
+                        <div class="col-4"><input type="text" class="form-control form-control-sm bg-dark border-secondary text-light" placeholder="MM/AA" maxlength="5"></div>
+                    </div>
+                `;
+            } else if (seleccionado.includes('Transferencia')) {
+                panel.innerHTML = `
+                    <div class="small text-light">
+                        <strong>Datos para transferencia:</strong><br>
+                        Banco: Banco Estado / Santander<br>
+                        Cuenta Corriente: 99882233-1<br>
+                        RUT: 76.889.000-K - Level-Up Gamer SpA<br>
+                        Correo: pagos@levelupgamer.cl
+                    </div>
+                `;
+            } else {
+                panel.innerHTML = `
+                    <div class="small text-warning">
+                        <i class="bi bi-star-fill me-1"></i>Se descontarán tus puntos LevelUp acumulados como método de pago de esta orden.
+                    </div>
+                `;
+            }
+        }
+
+        function procesarPagoCheckout(event) {
+            event.preventDefault();
+            const nombre = document.getElementById('checkNombre').value.trim();
+            const apellido = document.getElementById('checkApellido').value.trim();
+            const email = document.getElementById('checkEmail').value.trim();
+            const direccion = document.getElementById('checkDireccion').value.trim();
+            const comuna = document.getElementById('checkComuna').value.trim();
+            const region = document.getElementById('checkRegion').value;
+
+            if (!nombre || !apellido || !email || !direccion || !comuna || !region) {
+                alert('Por favor completa todos los campos obligatorios del despacho.');
+                return false;
+            }
+
+            const radios = document.getElementsByName('metodoPago');
+            let metodo = 'Webpay Plus';
+            radios.forEach(r => { if (r.checked) metodo = r.value; });
+
+            const totales = calcularTotalesCarrito();
+            const numOrden = '#LVL-' + Math.floor(100000 + Math.random() * 900000);
+
+            // Cargar datos en el modal de éxito
+            document.getElementById('modalNumeroOrden').textContent = numOrden;
+            document.getElementById('modalDestinatario').textContent = `${nombre} ${apellido} (${comuna}, ${region})`;
+            document.getElementById('modalTotalPagado').textContent = formatCLP(totales.total);
+            document.getElementById('modalMetodoPago').textContent = metodo;
+
+            // Limpiar carrito en LocalStorage
+            vaciarCarrito();
+
+            // Mostrar Modal de confirmación
+            const modal = new bootstrap.Modal(document.getElementById('modalExitoCompra'));
+            modal.show();
+
+            return false;
+        }
+    </script>
 </body>
 </html>
