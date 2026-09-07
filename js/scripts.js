@@ -106,7 +106,7 @@ function envioFormulario(event) {
     return true;
 }
 
-
+// crear una sesion para usuario_activo y redirigir a index.html
 function loginUsuario(event) {
     if (event) {
         event.preventDefault();
@@ -281,6 +281,111 @@ function generarCodigoUnico(usuariosExistentes) {
         }
     }
     return codigo;
+}
+
+//control para las reseñas de los productos, se guarda en localStorage y se muestra en la pagina del producto
+document.addEventListener('DOMContentLoaded', () => {
+    const selectProducto = document.getElementById('selectProductoResena');
+    const listaResenas = document.getElementById('listaResenas');
+
+    // Comprobar si se esta en la vista de comentarios
+    if (selectProducto && listaResenas) {
+        //Llenar el select con los productos disponibles de PRODUCTOS_DATA
+        PRODUCTOS_DATA.forEach(prod => {
+            const option = document.createElement('option');
+            option.value = prod.id;
+            option.textContent = prod.nombre;
+            selectProducto.appendChild(option);
+        });
+
+        //Mostrar reseñas guardadas al cargar la página
+        cargarResenas();
+    }    
+});
+
+function guardarResena(event) {
+    if (event) {
+        event.preventDefault();
+    }
+
+    const idProducto = document.getElementById('selectProductoResena').value;
+    const comentario = document.getElementById('txtComentario').value.trim();
+    const calificacion = parseInt(document.getElementById('selectCalificacion').value);
+
+    //validar que el usuario este logueado
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    if (!usuarioActivo) {
+        alert("Debes estar logueado para poder dejar una reseña.");
+        window.location.href = "login.html";
+        return false;
+    }
+
+    const nombreUsuario = `${usuarioActivo.nombre} ${usuarioActivo.apellido}`;
+    const productoInfo = PRODUCTOS_DATA.find(prod => prod.id === idProducto);
+
+    //Crear el objeto de la nueva reseña
+    const nuevaResena = {
+        id: Date.now(),
+        idProducto: idProducto,
+        nombreProducto: productoInfo.nombre,
+        usuario: nombreUsuario,
+        comentario: comentario,
+        calificacion: calificacion,
+        fecha: new Date().toLocaleDateString('es-CL')
+    };
+
+    // Guardar la reseña en localStorage obteniendo el historial de reseñas existentes
+    let resenasGuardadas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
+    resenasGuardadas.unshift(nuevaResena);
+    localStorage.setItem('levelup_resenas', JSON.stringify(resenasGuardadas));
+
+    // Limpiar el formulario, cargar la lista actualizada y guardar la nueva reseña al principio de la lista
+    document.getElementById('formResena').reset();
+    cargarResenas();
+    alert("¡Gracias por tu reseña! Tu opinión es muy valiosa para la comunidad.");
+}
+
+function cargarResenas() {
+    const contenedor = document.getElementById('listaResenas');
+    if (!contenedor) return;
+
+    let resenas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
+
+    // mostrar el siguiente mensaje si no hay reseñas
+    if (resenas.length === 0) {
+        contenedor.innerHTML = `
+            <div class="card gamer-card p-5 text-center h-100 d-flex justify-content-center align-items-center">
+                <div>
+                    <i class="bi bi-chat-square-text fs-1 text-muted mb-3 d-block"></i>
+                    <h5 class="text-white">No existen reseñas aún</h5>
+                    <p class="text-muted">¡Sé el primero en compartir tu experiencia!</p>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // hacer inyeccion de HTML para cada reseña utilizando .map()
+    contenedor.innerHTML = resenas.map(resena => {
+        //usar emojis interactivos dinamicos para que las estrellas se vean mejor
+        const estrellasActivas = '⭐'.repeat(resena.calificacion);
+        return `
+        <div class="card gamer-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="text-info mb-1"><i class="bi bi-person-circle me-2"></i>${resena.usuario}</h6>
+                        <small class="text-muted">Reseña sobre: <strong class="text-white">${resena.nombreProducto}</strong></small>
+                    </div>
+                    <div class="text-end">
+                        <div class="mb-1">${estrellasActivas}</div>
+                        <small class="text-muted">${resena.fecha}</small>
+                    </div>
+                </div>
+                <hr class="border-secondary my-2">
+                <p class="text-light mb-0 mt-2">"${resena.comentario}"</p>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 
