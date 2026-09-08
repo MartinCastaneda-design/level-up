@@ -21,15 +21,15 @@
 
             <h3 class="text-center mb-4">Iniciar sesión</h3>
             
-            <form onsubmit="return loginUsuario(event);">
+            <form onsubmit="return loginUsuario(event);" novalidate>
                 <div class="mb-3">
                     <label for="txtEmail" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="txtEmail" required>
+                    <input type="email" class="form-control" id="txtEmail">
                 </div>
                 
                 <div class="mb-3">
                     <label for="txtContrasena" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" id="txtContrasena" required>
+                    <input type="password" class="form-control" id="txtContrasena">
                 </div>
                 
                 <div class="mb-3 form-check">
