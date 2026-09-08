@@ -43,12 +43,15 @@
                     <a href="register.html" class="btn btn-outline-light px-3">Registrarse</a>
                 </div>
                 <!--Si el usuario ha iniciado sesion, los dos iconos para iniciar o crear cuenta se reemplazan por un boton que redirecciona a la informacion de la cuenta + puntosLevelUp-->
-                <div id ="perfil-container" class="d-none" d-flex align-items-center gap-2>
-                    <a href="perfil.html" class="btn btn-outline-info position-relative d-flex align-items-center gap-2"><i class="bi bi-person-circle fs-5"></i> <span id="txtNombre">Mi cuenta</span>
+                <div id ="perfil-container" class="d-none d-flex align-items-center gap-3">
+                    <a href="perfil.html" class="btn btn-outline-info d-flex align-items-center gap-2 px-3">
+                        <i class="bi bi-person-circle fs-5"></i> 
+                        <span id="txtNombre">Mi cuenta</span>
                     </a>
-                    <a href="perfil.html" class="btn btn-outline-info d-flex align-items-center gap-1 text-decoration-none fw-bold" title="Tus puntos LevelUp">
-                        <span id="navPuntos">0</span> pts
-                    </a>
+                    <div class="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm" title="Tus puntos LevelUp">
+                        <span id="navPuntos" class="fw-bold">0</span>
+                        <i class="bi bi-coin text-warning"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -414,8 +417,58 @@
             let metodo = 'Webpay Plus';
             radios.forEach(r => { if (r.checked) metodo = r.value; });
 
+            const carritoActual = obtenerCarrito();
             const totales = calcularTotalesCarrito();
             const numOrden = '#LVL-' + Math.floor(100000 + Math.random() * 900000);
+            
+            //manejo de puntos
+            let usuarioActivo = JSON.parse(localStorage.getItem('usuario_activo'));
+            let registros = JSON.parse(localStorage.getItem('registros')) || [];
+
+            if (usuarioActivo) {
+                let indexUsuario = registros.findIndex(u => u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+                let puntosActuales = usuarioActivo.puntosLevelUp || 0;
+
+                // Si elige pagar con puntos
+                if (metodo === 'Puntos LevelUp') {
+                    const puntosNecesarios = Math.ceil(totales.total / 10); // 1 punto vale $10
+                    if (puntosActuales < puntosNecesarios) {
+                        alert(`No tienes suficientes puntos.\nNecesitas: ${puntosNecesarios} pts.\nTienes: ${puntosActuales} pts.`);
+                        return false; // Se detiene la compra por saldo insuficiente
+                    }
+                    // Si tiene saldo, se le descuentan
+                    usuarioActivo.puntosLevelUp = puntosActuales - puntosNecesarios;
+                } else {
+                    // Si paga con dinero normal, GANA puntos (1 punto por cada $1000 gastados)
+                    const puntosGanados = Math.floor(totales.total / 1000);
+                    usuarioActivo.puntosLevelUp = puntosActuales + puntosGanados;
+                }
+
+                // Actualizamos las bases de datos (activo y general)
+                localStorage.setItem('usuario_activo', JSON.stringify(usuarioActivo));
+                if (indexUsuario > -1) {
+                    registros[indexUsuario].puntosLevelUp = usuarioActivo.puntosLevelUp;
+                    localStorage.setItem('registros', JSON.stringify(registros));
+                }
+            } else if (metodo === 'Puntos LevelUp') {
+                alert("Debes iniciar sesión para pagar con puntos.");
+                return false;
+            }
+            //termino de manejo de puntos
+
+            const nuevaCompra = {
+                idOrden: numOrden,
+                fecha: new Date().toLocaleDateString('es-CL'),
+                correo: email.toLowerCase(), // Lo pasamos a minúscula para evitar errores de búsqueda luego
+                metodo: metodo,
+                totalPagado: totales.total,
+                cantidadItems: totales.totalArticulos,
+                productos: carritoActual
+            };
+
+            let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+            historialCompras.unshift(nuevaCompra);
+            localStorage.setItem('levelup_compras', JSON.stringify(historialCompras));
 
             // Cargar datos en el modal de éxito
             document.getElementById('modalNumeroOrden').textContent = numOrden;
