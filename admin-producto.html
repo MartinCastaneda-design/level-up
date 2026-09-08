@@ -124,16 +124,16 @@
                 </div>
             <!-- Cuerpo del Modal (El Formulario) -->
                 <div class="modal-body">
-                    <form id="formProducto">
+                    <form id="formProducto" novalidate>
                         <!-- ID del Producto -->
                         <div class="mb-3">
                             <label for="prodId" class="form-label brand-font text-muted small">Código / ID</label>
-                            <input type="text" class="form-control bg-dark text-white border-secondary" id="prodId" placeholder="Ej: JM003" required>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" id="prodId" placeholder="Ej: JM003">
                         </div>
             <!-- Categoría del Catálogo Oficial -->
                         <div class="mb-3">
                             <label for="prodCategoria" class="form-label brand-font text-muted small">Categoría</label>
-                            <select class="form-select bg-dark text-white border-secondary" id="prodCategoria" required>
+                            <select class="form-select bg-dark text-white border-secondary" id="prodCategoria">
                                 <option value="" selected disabled>Selecciona una categoría</option>
                                 <option value="Juegos de Mesa">Juegos de Mesa</option>
                                 <option value="Accesorios">Accesorios</option>
@@ -150,12 +150,12 @@
             <!-- Nombre del Producto -->
                         <div class="mb-3">
                             <label for="prodNombre" class="form-label brand-font text-muted small">Nombre del Producto</label>
-                            <input type="text" class="form-control bg-dark text-white border-secondary" id="prodNombre" placeholder="Ej: Catan" required>
+                            <input type="text" class="form-control bg-dark text-white border-secondary" id="prodNombre" placeholder="Ej: Catan">
                         </div>
             <!-- Precio -->
                         <div class="mb-3">
                             <label for="prodPrecio" class="form-label brand-font text-muted small">Precio (CLP)</label>
-                            <input type="number" class="form-control bg-dark text-white border-secondary" id="prodPrecio" placeholder="Ej: 29990" min="1" required>
+                            <input type="number" class="form-control bg-dark text-white border-secondary" id="prodPrecio" placeholder="Ej: 29990" min="1">
                         </div>
                     </form>
                 </div>
@@ -172,8 +172,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script src="js/products-data.js"></script>
+    <script src="js/scripts.js"></script>
     <script src="js/admin.js"></script>
-    
     
 </body>
 </html>
