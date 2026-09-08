@@ -19,12 +19,29 @@ function agregarAlCarrito(idProducto, cantidad = 1) {
     const cant = parseInt(cantidad, 10) || 1;
     const producto = getProductById(idProducto);
     if (!producto) {
-        alert('Producto no encontrado');
+        mostrarAvisoFlotante('Producto no encontrado en el catálogo', 'danger');
+        return false;
+    }
+
+    if (producto.stock <= 0) {
+        mostrarAvisoFlotante(`Lo sentimos, el producto "${producto.nombre}" está agotado.`, 'danger');
         return false;
     }
 
     const carrito = obtenerCarrito();
     const indiceExiste = carrito.findIndex(item => item.id === idProducto);
+    const cantidadActual = indiceExiste > -1 ? carrito[indiceExiste].cantidad : 0;
+    const cantidadTotalPropuesta = cantidadActual + cant;
+
+    if (cantidadTotalPropuesta > producto.stock) {
+        const disponiblesParaAgregar = Math.max(0, producto.stock - cantidadActual);
+        if (disponiblesParaAgregar === 0) {
+            mostrarAvisoFlotante(`⚠️ Stock máximo alcanzado: Ya tienes las ${producto.stock} unidades disponibles de "${producto.nombre}" en tu carrito.`, 'warning');
+        } else {
+            mostrarAvisoFlotante(`⚠️ Stock insuficiente: Solo puedes agregar ${disponiblesParaAgregar} unidad(es) más de "${producto.nombre}" (Stock total: ${producto.stock}).`, 'warning');
+        }
+        return false;
+    }
 
     if (indiceExiste > -1) {
         carrito[indiceExiste].cantidad += cant;
@@ -35,12 +52,13 @@ function agregarAlCarrito(idProducto, cantidad = 1) {
             precio: producto.precio,
             imagen: producto.imagen,
             categoria: producto.categoria,
-            cantidad: cant
+            cantidad: cant,
+            stock: producto.stock
         });
     }
 
     guardarCarrito(carrito);
-    mostrarAvisoFlotante(producto.nombre + ' añadido al carrito (' + cant + ')');
+    mostrarAvisoFlotante(`✅ ¡${producto.nombre} añadido al carrito! (${cant} un.)`, 'success');
     return true;
 }
 
@@ -52,6 +70,18 @@ function actualizarCantidadCarrito(idProducto, cantidad) {
         return;
     }
     const item = carrito.find(i => i.id === idProducto);
+    const producto = getProductById(idProducto);
+    const stockMaximo = (producto && producto.stock) ? producto.stock : (item && item.stock ? item.stock : 999);
+
+    if (cant > stockMaximo) {
+        if (item) {
+            item.cantidad = stockMaximo;
+            guardarCarrito(carrito);
+        }
+        mostrarAvisoFlotante(`⚠️ Cantidad ajustada: Solo hay ${stockMaximo} unidades disponibles en stock de este producto.`, 'warning');
+        return;
+    }
+
     if (item) {
         item.cantidad = cant;
         guardarCarrito(carrito);
@@ -136,7 +166,7 @@ function actualizarContadorCarrito() {
     });
 }
 
-function mostrarAvisoFlotante(mensaje) {
+function mostrarAvisoFlotante(mensaje, tipo = 'info') {
     let contenedorAvisos = document.getElementById('contenedorAvisos');
     if (!contenedorAvisos) {
         contenedorAvisos = document.createElement('div');
@@ -146,15 +176,36 @@ function mostrarAvisoFlotante(mensaje) {
         document.body.appendChild(contenedorAvisos);
     }
 
+    let bordeClase = 'border-info';
+    let iconoHtml = '<i class="bi bi-cart-check-fill text-info fs-5"></i>';
+    if (tipo === 'warning') {
+        bordeClase = 'border-warning';
+        iconoHtml = '<i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>';
+    } else if (tipo === 'danger') {
+        bordeClase = 'border-danger';
+        iconoHtml = '<i class="bi bi-x-circle-fill text-danger fs-5"></i>';
+    } else if (tipo === 'success') {
+        bordeClase = 'border-success';
+        iconoHtml = '<i class="bi bi-check-circle-fill text-success fs-5"></i>';
+    }
+
     const elementoAviso = document.createElement('div');
-    elementoAviso.className = 'toast align-items-center text-bg-dark border-info show shadow-lg';
+    elementoAviso.className = `toast align-items-center text-bg-dark ${bordeClase} show shadow-lg mb-2`;
     elementoAviso.setAttribute('role', 'alert');
-    elementoAviso.innerHTML = '<div class="d-flex"><div class="toast-body d-flex align-items-center gap-2"><i class="bi bi-cart-check-fill text-info fs-5"></i><div>' + mensaje + '</div></div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>';
+    elementoAviso.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center gap-2">
+                ${iconoHtml}
+                <div class="text-light small">${mensaje}</div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar" onclick="this.closest('.toast').remove()"></button>
+        </div>
+    `;
     contenedorAvisos.appendChild(elementoAviso);
     setTimeout(() => {
         elementoAviso.classList.remove('show');
         setTimeout(() => elementoAviso.remove(), 400);
-    }, 2800);
+    }, 3800);
 }
 
 // Compatibilidad de nombres de funciones

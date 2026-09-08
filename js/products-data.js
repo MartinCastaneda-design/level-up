@@ -6,7 +6,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Juegos de Mesa',
         categoriaSlug: 'juegos-de-mesa',
         precio: 29990,
-        imagen: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: false,
         descuento: 0,
@@ -29,7 +29,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Juegos de Mesa',
         categoriaSlug: 'juegos-de-mesa',
         precio: 24990,
-        imagen: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1632501641765-e568d28b0015?auto=format&fit=crop&w=800&q=80',
         destacado: false,
         enOferta: true,
         descuento: 10,
@@ -52,7 +52,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Accesorios',
         categoriaSlug: 'accesorios',
         precio: 59990,
-        imagen: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: false,
         descuento: 0,
@@ -75,7 +75,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Accesorios',
         categoriaSlug: 'accesorios',
         precio: 79990,
-        imagen: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: true,
         descuento: 15,
@@ -98,7 +98,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Consolas',
         categoriaSlug: 'consolas',
         precio: 549990,
-        imagen: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: false,
         descuento: 0,
@@ -121,7 +121,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Computadores Gamers',
         categoriaSlug: 'computadores-gamers',
         precio: 1299990,
-        imagen: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: true,
         descuento: 10,
@@ -145,7 +145,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Sillas Gamers',
         categoriaSlug: 'sillas-gamers',
         precio: 349990,
-        imagen: 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1598550476439-6847785fcea6?auto=format&fit=crop&w=800&q=80',
         destacado: false,
         enOferta: false,
         descuento: 0,
@@ -168,7 +168,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Mouse',
         categoriaSlug: 'mouse',
         precio: 49990,
-        imagen: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: false,
         descuento: 0,
@@ -191,7 +191,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Mousepad',
         categoriaSlug: 'mousepad',
         precio: 29990,
-        imagen: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1629429408209-1f912961dbd8?auto=format&fit=crop&w=800&q=80',
         destacado: false,
         enOferta: true,
         descuento: 15,
@@ -214,7 +214,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Poleras Personalizadas',
         categoriaSlug: 'poleras-personalizadas',
         precio: 14990,
-        imagen: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=800&q=80',
         destacado: true,
         enOferta: false,
         descuento: 0,
@@ -237,7 +237,7 @@ const PRODUCTOS_DATA = [
         categoria: 'Polerones Gamers Personalizados',
         categoriaSlug: 'polerones-gamers',
         precio: 29990,
-        imagen: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=600&q=80',
+        imagen: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
         destacado: false,
         enOferta: true,
         descuento: 10,
@@ -266,4 +266,117 @@ function formatCLP(valor) {
 
 function getProductById(id) {
     return PRODUCTOS_DATA.find(p => p.id === id);
+}
+
+// Reseñas base iniciales por producto
+const RESENAS_BASE = [
+    {
+        id: 101,
+        idProducto: 'JM001',
+        nombreProducto: 'Catan',
+        usuario: 'Matías González',
+        calificacion: 5,
+        comentario: '¡El mejor juego de mesa para jugar con amigos! La calidad de las piezas y el tablero es excelente.',
+        fecha: '02/03/2026'
+    },
+    {
+        id: 102,
+        idProducto: 'JM001',
+        nombreProducto: 'Catan',
+        usuario: 'Camila Rojas',
+        calificacion: 5,
+        comentario: 'Muy entretenido y estratégico. Llegó súper rápido a Concepción en perfectas condiciones.',
+        fecha: '28/02/2026'
+    },
+    {
+        id: 103,
+        idProducto: 'CO001',
+        nombreProducto: 'PlayStation 5',
+        usuario: 'Sebastián Silva',
+        calificacion: 5,
+        comentario: 'Una bestia de consola. Gráficos brutales y el mando DualSense es de otra dimensión.',
+        fecha: '04/03/2026'
+    },
+    {
+        id: 104,
+        idProducto: 'CO001',
+        nombreProducto: 'PlayStation 5',
+        usuario: 'Felipe Araya',
+        calificacion: 5,
+        comentario: '100% original con sello de garantía. Despacho impecable en menos de 48 horas.',
+        fecha: '01/03/2026'
+    },
+    {
+        id: 105,
+        idProducto: 'CG001',
+        nombreProducto: 'PC Gamer ASUS ROG Strix',
+        usuario: 'Rodrigo Vega',
+        calificacion: 5,
+        comentario: 'Rendimiento espectacular en 4K. Corre cualquier juego competitivo al máximo sin sobrecalentarse.',
+        fecha: '03/03/2026'
+    },
+    {
+        id: 106,
+        idProducto: 'AC001',
+        nombreProducto: 'Controlador Inalámbrico Xbox Series X',
+        usuario: 'Diego Morales',
+        calificacion: 5,
+        comentario: 'El agarre y la ergonomía del mando Xbox Series son insuperables. Se conecta al instante en PC vía bluetooth.',
+        fecha: '02/03/2026'
+    },
+    {
+        id: 107,
+        idProducto: 'AC002',
+        nombreProducto: 'Auriculares Gamer HyperX Cloud II',
+        usuario: 'Valentina Soto',
+        calificacion: 5,
+        comentario: 'El sonido 7.1 y la comodidad de las almohadillas valen totalmente la pena para jugar horas.',
+        fecha: '04/03/2026'
+    },
+    {
+        id: 108,
+        idProducto: 'MS001',
+        nombreProducto: 'Mouse Gamer Logitech G502 HERO',
+        usuario: 'Ignacio Fuentes',
+        calificacion: 5,
+        comentario: 'Sensor sumamente preciso y la personalización de las pesas es perfecta.',
+        fecha: '05/03/2026'
+    },
+    {
+        id: 109,
+        idProducto: 'JM002',
+        nombreProducto: 'Carcassonne',
+        usuario: 'Francisca Valdés',
+        calificacion: 4,
+        comentario: 'Fácil de aprender y muy dinámico para jugar en familia.',
+        fecha: '01/03/2026'
+    }
+];
+
+// Obtener todas las reseñas combinadas (base + creadas por usuarios en localStorage)
+function obtenerTodasLasResenas() {
+    let guardadas = [];
+    try {
+        guardadas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
+    } catch(e) {
+        guardadas = [];
+    }
+    return [...guardadas, ...RESENAS_BASE];
+}
+
+// Obtener reseñas y métricas reales de un producto
+function getProductReviewsInfo(idProducto) {
+    const todas = obtenerTodasLasResenas();
+    const resenasProd = todas.filter(r => r.idProducto === idProducto);
+    const count = resenasProd.length;
+    let avg = 5.0;
+    if (count > 0) {
+        const suma = resenasProd.reduce((acc, r) => acc + (Number(r.calificacion) || 5), 0);
+        avg = Math.round((suma / count) * 10) / 10;
+    }
+    return {
+        resenas: resenasProd,
+        count: count,
+        rating: avg
+    };
 }

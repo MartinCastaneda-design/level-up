@@ -1,8 +1,48 @@
+
 //registro de usuarios y validaciones de formulario
+
+// Utilidades para mostrar y limpiar errores inline en formularios
+function mostrarErrorCampo(input, mensaje) {
+    if (!input) return;
+    input.classList.add("is-invalid");
+    input.classList.remove("is-valid");
+
+    let feedback = input.parentElement.querySelector(".invalid-feedback-custom");
+    if (!feedback) {
+        feedback = document.createElement("div");
+        feedback.className = "invalid-feedback-custom text-danger small mt-1 d-flex align-items-center gap-1";
+        input.parentElement.appendChild(feedback);
+    }
+    feedback.innerHTML = `<i class="bi bi-exclamation-circle"></i> ${mensaje}`;
+}
+
+function limpiarErrorCampo(input) {
+    if (!input) return;
+    input.classList.remove("is-invalid");
+    const feedback = input.parentElement.querySelector(".invalid-feedback-custom");
+    if (feedback) {
+        feedback.remove();
+    }
+}
+
+function limpiarTodosLosErrores(form) {
+    if (!form) return;
+    const inputs = form.querySelectorAll(".is-invalid");
+    inputs.forEach(input => input.classList.remove("is-invalid"));
+    const feedbacks = form.querySelectorAll(".invalid-feedback-custom");
+    feedbacks.forEach(fb => fb.remove());
+    const alertBox = form.querySelector(".alert-box-status");
+    if (alertBox) alertBox.remove();
+}
+
+// Envío y validación del formulario de Registro
 function envioFormulario(event) {
     if (event) {
         event.preventDefault();
     }
+
+    const form = document.getElementById("registroForm") || (event ? event.target : null);
+    limpiarTodosLosErrores(form);
 
     const txtNombre = document.getElementById("txtNombre");
     const txtApellido = document.getElementById("txtApellido");
@@ -12,73 +52,108 @@ function envioFormulario(event) {
     const txtContrasena = document.getElementById("txtContrasena");
     const txtCodigoReferido = document.getElementById("txtCodigoReferido");
 
-    if (!txtNombre || !txtApellido || !dateEdad || !selectSexo || !txtEmail || !txtContrasena) {
-        alert("Error al cargar los campos del formulario.");
-        return false;
+    let hayErrores = false;
+
+    // Validación Nombre
+    const nombre = txtNombre ? txtNombre.value.trim() : "";
+    if (!nombre) {
+        mostrarErrorCampo(txtNombre, "Por favor ingresa tu nombre.");
+        hayErrores = true;
+    } else if (nombre.length < 3) {
+        mostrarErrorCampo(txtNombre, "El nombre debe tener como mínimo 3 caracteres.");
+        hayErrores = true;
     }
 
-    const nombre = txtNombre.value.trim();
-    const apellido = txtApellido.value.trim();
-    const fecha = dateEdad.value;
-    const sexo = selectSexo.value;
-    const email = txtEmail.value.trim();
-    const contrasena = txtContrasena.value;
-    const codigoIngresado = txtCodigoReferido ? txtCodigoReferido.value.trim(): "";
-
-    if (!nombre || !apellido || !fecha || !sexo || !email || !contrasena) {
-        alert("Favor de rellenar todos los campos obligatorios.");
-        return false;
+    // Validación Apellido
+    const apellido = txtApellido ? txtApellido.value.trim() : "";
+    if (!apellido) {
+        mostrarErrorCampo(txtApellido, "Por favor ingresa tu apellido.");
+        hayErrores = true;
     }
 
-    if (nombre.length < 3) {
-        alert("El nombre debe tener como mínimo 3 caracteres.");
-        return false;
-    }
-
-    // Cálculo de la diferencia de edad con la fecha actual
-    const fechaNacimiento = new Date(fecha);
-    const fechaActual = new Date();
-
-    if (isNaN(fechaNacimiento.getTime())) {
-        alert("Por favor ingresa una fecha de nacimiento válida.");
-        return false;
-    }
-
-    let difEdad = fechaActual.getFullYear() - fechaNacimiento.getFullYear();
-    const mesActual = fechaActual.getMonth();
-    const mesNacimiento = fechaNacimiento.getMonth();
-
-    if (mesActual < mesNacimiento || (mesActual === mesNacimiento && fechaActual.getDate() < fechaNacimiento.getDate())) {
-        difEdad--;
-    }
-
-    // Validación de mayoría de edad (+18 años)
-    if (difEdad < 18) {
-        alert(`Tienes ${difEdad} años. Debes ser mayor de 18 años para registrarte en Level-Up Gamer.`);
-        return false;
-    }
-
-    let registroUsuarios = JSON.parse(localStorage.getItem("registros")) || [];
-
-    //logica de puntos y codigos
-    let mensajePuntos = "";
-    if (codigoIngresado !== "") {
-        //buscar si existe un usuario con el codigo referido
-        const usuarioReferido = registroUsuarios.find(u => u.codigo === codigoIngresado);
-
-        if (usuarioReferido) {
-            //sumar 50 puntos al usuario referido
-            usuarioReferido.puntosLevelUp = (usuarioReferido.puntosLevelUp || 0) + 50;
-            mensajePuntos = `¡Se han sumado 50 puntos Level-Up al usuario que te invitó!`;
+    // Validación Fecha de Nacimiento / Edad (+18)
+    const fecha = dateEdad ? dateEdad.value : "";
+    let difEdad = 0;
+    if (!fecha) {
+        mostrarErrorCampo(dateEdad, "Por favor selecciona tu fecha de nacimiento.");
+        hayErrores = true;
+    } else {
+        const fechaNacimiento = new Date(fecha);
+        const fechaActual = new Date();
+        if (isNaN(fechaNacimiento.getTime())) {
+            mostrarErrorCampo(dateEdad, "Ingresa una fecha de nacimiento válida.");
+            hayErrores = true;
         } else {
-            alert("El código ingresado no es válido.");
-            return false;
+            difEdad = fechaActual.getFullYear() - fechaNacimiento.getFullYear();
+            const mesActual = fechaActual.getMonth();
+            const mesNacimiento = fechaNacimiento.getMonth();
+            if (mesActual < mesNacimiento || (mesActual === mesNacimiento && fechaActual.getDate() < fechaNacimiento.getDate())) {
+                difEdad--;
+            }
+            if (difEdad < 18) {
+                mostrarErrorCampo(dateEdad, `Tienes ${difEdad} años. Debes ser mayor de 18 años para registrarte.`);
+                hayErrores = true;
+            }
         }
     }
 
-    const nuevoCodigo = generarCodigoUnico(registroUsuarios);
+    // Validación Sexo
+    const sexo = selectSexo ? selectSexo.value : "";
+    if (!sexo) {
+        mostrarErrorCampo(selectSexo, "Por favor selecciona una opción de sexo.");
+        hayErrores = true;
+    }
 
-    // Detección de beneficio de descuento para miembros
+    // Validación Email
+    const email = txtEmail ? txtEmail.value.trim() : "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+        mostrarErrorCampo(txtEmail, "Por favor ingresa tu correo electrónico.");
+        hayErrores = true;
+    } else if (!emailRegex.test(email)) {
+        mostrarErrorCampo(txtEmail, "El formato del correo electrónico no es válido.");
+        hayErrores = true;
+    }
+
+    // Validación Contraseña
+    const contrasena = txtContrasena ? txtContrasena.value : "";
+    if (!contrasena) {
+        mostrarErrorCampo(txtContrasena, "Por favor define una contraseña.");
+        hayErrores = true;
+    } else if (contrasena.length < 4) {
+        mostrarErrorCampo(txtContrasena, "La contraseña debe tener al menos 4 caracteres.");
+        hayErrores = true;
+    }
+
+    // Validación Código Referido (opcional)
+    let registroUsuarios = JSON.parse(localStorage.getItem("registros")) || [];
+    const codigoIngresado = txtCodigoReferido ? txtCodigoReferido.value.trim().toUpperCase() : "";
+    let usuarioReferido = null;
+
+    if (codigoIngresado !== "") {
+        usuarioReferido = registroUsuarios.find(u => u.codigo === codigoIngresado);
+        if (!usuarioReferido) {
+            mostrarErrorCampo(txtCodigoReferido, "El código de referido ingresado no existe.");
+            hayErrores = true;
+        }
+    }
+
+    // Comprobar si correo ya existe
+    if (email && registroUsuarios.some(u => u.correo.toLowerCase() === email.toLowerCase())) {
+        mostrarErrorCampo(txtEmail, "Ya existe una cuenta registrada con este correo electrónico.");
+        hayErrores = true;
+    }
+
+    if (hayErrores) {
+        return false;
+    }
+
+    // Aplicar puntos a quien refirió
+    if (usuarioReferido) {
+        usuarioReferido.puntosLevelUp = (usuarioReferido.puntosLevelUp || 0) + 50;
+    }
+
+    const nuevoCodigo = generarCodigoUnico(registroUsuarios);
     const esBeneficiario = email.toLowerCase().endsWith("@duocuc.cl");
 
     const nuevoUsuario = {
@@ -97,29 +172,51 @@ function envioFormulario(event) {
     registroUsuarios.push(nuevoUsuario);
     localStorage.setItem("registros", JSON.stringify(registroUsuarios));
 
-    if (esBeneficiario) {
-        alert(`¡Registro exitoso, ${nombre}! Cuentas con un 20% de descuento especial en tus compras.`);
-    } else {
-        alert(`¡Registro exitoso, ${nombre}! Bienvenido a Level-Up Gamer.`);
-    }
+    // Mostrar banner de éxito inline en la tarjeta
+    let alertBox = document.createElement("div");
+    alertBox.className = "alert alert-success alert-box-status mt-3 d-flex align-items-center gap-2";
+    alertBox.innerHTML = `
+        <i class="bi bi-check-circle-fill fs-5"></i>
+        <div>
+            <strong>¡Registro exitoso, ${nombre}!</strong> ${esBeneficiario ? 'Cuentas con un 20% de descuento especial en tus compras.' : 'Bienvenido a Level-Up Gamer.'}
+            <div class="small text-muted mt-1">Redirigiendo a iniciar sesión...</div>
+        </div>
+    `;
+    if (form) form.appendChild(alertBox);
 
-    window.location.href = "login.html";
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 1800);
+
     return true;
 }
 
-// crear una sesion para usuario_activo y redirigir a index.html
+// Iniciar sesión con validaciones inline
 function loginUsuario(event) {
     if (event) {
         event.preventDefault();
     }
 
-    const email = document.getElementById("txtEmail").value.trim();
-    const contrasena = document.getElementById("txtContrasena").value;
+    const form = event ? event.target : document.querySelector("form");
+    limpiarTodosLosErrores(form);
 
-    if (!email || !contrasena) {
-        alert("Por favor ingresa tu correo y contraseña.");
-        return false;
+    const txtEmail = document.getElementById("txtEmail");
+    const txtContrasena = document.getElementById("txtContrasena");
+
+    const email = txtEmail ? txtEmail.value.trim() : "";
+    const contrasena = txtContrasena ? txtContrasena.value : "";
+
+    let hayErrores = false;
+    if (!email) {
+        mostrarErrorCampo(txtEmail, "Por favor ingresa tu correo electrónico.");
+        hayErrores = true;
     }
+    if (!contrasena) {
+        mostrarErrorCampo(txtContrasena, "Por favor ingresa tu contraseña.");
+        hayErrores = true;
+    }
+
+    if (hayErrores) return false;
 
     const usuarios = JSON.parse(localStorage.getItem("registros")) || [];
     const usuarioEncontrado = usuarios.find(u => u.correo.toLowerCase() === email.toLowerCase() && u.contrasena === contrasena);
@@ -130,7 +227,8 @@ function loginUsuario(event) {
             nombre: usuarioEncontrado.nombre,
             apellido: usuarioEncontrado.apellido,
             correo: usuarioEncontrado.correo,
-            esBeneficiario: usuarioEncontrado.esBeneficiario
+            esBeneficiario: usuarioEncontrado.esBeneficiario,
+            puntosLevelUp: usuarioEncontrado.puntosLevelUp || 0
         }));
 
         if (usuarioEncontrado.esBeneficiario) {
@@ -141,60 +239,80 @@ function loginUsuario(event) {
             }));
         }
 
-        alert(`¡Bienvenido de nuevo, ${usuarioEncontrado.nombre}!`);
-        window.location.href = "index.html";
+        let alertBox = document.createElement("div");
+        alertBox.className = "alert alert-success alert-box-status mt-3 d-flex align-items-center gap-2";
+        alertBox.innerHTML = `
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>
+                <strong>¡Bienvenido de nuevo, ${usuarioEncontrado.nombre}!</strong>
+                <div class="small">Iniciando sesión...</div>
+            </div>
+        `;
+        if (form) form.appendChild(alertBox);
+
+        setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirectUrl = urlParams.get('redirect');
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                window.location.href = "index.html";
+            }
+        }, 800);
         return true;
     } else {
-        alert("Credenciales incorrectas. Verifica tu correo y contraseña o regístrate si aún no tienes cuenta.");
+        mostrarErrorCampo(txtEmail, "Credenciales incorrectas.");
+        mostrarErrorCampo(txtContrasena, "Verifica tu correo y contraseña o regístrate si no tienes cuenta.");
         return false;
     }
 }
 
-//cambiar iconos del header segun si el usuario esta activo
-document.addEventListener("DOMContentLoaded", () => {
-    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"))
-    const autenticacionBotones = document.getElementById("autenticacion-buttons")
-    const perfilContenedor = document.getElementById("perfil-container")
+// Sincronizar de forma inmediata los botones de sesión y perfil en el navbar (evitando parpadeos)
+function sincronizarEstadoNavbar() {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    const autenticacionBotones = document.getElementById("autenticacion-buttons");
+    const perfilContenedor = document.getElementById("perfil-container");
     const txtNombre = document.getElementById("txtNombre");
     const navPuntos = document.getElementById("navPuntos");
 
     if (usuarioActivo) {
-        //Si hay sesion activa, se ocultan los botones controlando el estado de "d-none"
         if (autenticacionBotones) autenticacionBotones.classList.add("d-none");
         if (perfilContenedor) perfilContenedor.classList.remove("d-none");
 
-        //mostrar nombre del usuario e icono
         if (txtNombre) {
             txtNombre.textContent = usuarioActivo.nombre;
         }
-        //mostrar los puntos levelUp actuales del usuario
         if (navPuntos) {
-            //Buscar los puntos actualizados de la lista por si se han añadido puntos recientemente
             const registros = JSON.parse(localStorage.getItem("registros")) || [];
-            const usuarioReal = registros.find(u => u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
-
+            const usuarioReal = registros.find(u => u.correo && u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
             const puntosActuales = usuarioReal ? (usuarioReal.puntosLevelUp || 0) : (usuarioActivo.puntosLevelUp || 0);
             navPuntos.textContent = puntosActuales;
         }
     } else {
-        // si no hay sesion activa, todo el proceso del d-none al revez
-        if (autenticacionBotones) autenticacionBotones.classList.remove("d-none")
+        if (autenticacionBotones) autenticacionBotones.classList.remove("d-none");
         if (perfilContenedor) perfilContenedor.classList.add("d-none");
     }
+}
+
+// Ejecutar sincronización tanto de inmediato como en DOMContentLoaded
+document.addEventListener("DOMContentLoaded", () => {
+    sincronizarEstadoNavbar();
+
+    // Agregar listeners para limpiar errores al escribir
+    document.querySelectorAll("input, select, textarea").forEach(elemento => {
+        elemento.addEventListener("input", () => limpiarErrorCampo(elemento));
+        elemento.addEventListener("change", () => limpiarErrorCampo(elemento));
+    });
 });
 
-//funcion para cargar los datos actuales del usuario en el formulario y menu
+// Cargar datos actuales del usuario en el formulario de perfil
 function cargarDatosUsuario() {
     const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
-
-    //Rellenar los campos del formulario con los datos del usuario activo
     if (usuarioActivo) {
         if (document.getElementById("txtNombre")) document.getElementById("txtNombre").value = usuarioActivo.nombre || "";
         if (document.getElementById("txtApellido")) document.getElementById("txtApellido").value = usuarioActivo.apellido || "";
         if (document.getElementById("txtEmail")) document.getElementById("txtEmail").value = usuarioActivo.correo || "";
-    
 
-        //Rellenar el nombre en el navbar si existe el elemento
         const nombreNav = document.getElementById("nombreNav");
         if (nombreNav) {
             nombreNav.textContent = usuarioActivo.nombre || "Mi cuenta";
@@ -220,33 +338,52 @@ function cargarDatosUsuario() {
         }
     
     } else {
-        // Si no hay usuario activo, redirigir al login
         window.location.href = "login.html";
     }
 }
 
-//funcion para actualizar perfil
+// Actualizar perfil sin alert nativo
 function actualizarPerfil(event) {
     if (event) {
         event.preventDefault();
     }
-    //valores para el nuevo formulario
-    const nuevoNombre = document.getElementById("txtNombre").value;
-    const nuevoApellido = document.getElementById("txtApellido").value;
-    const nuevoEmail = document.getElementById("txtEmail").value;
-    const nuevaContrasena = document.getElementById("txtContrasena").value;
+    const form = document.getElementById("formPerfil") || (event ? event.target : null);
+    limpiarTodosLosErrores(form);
 
-    //objeto usuario actual de localStorage
+    const txtNombre = document.getElementById("txtNombre");
+    const txtApellido = document.getElementById("txtApellido");
+    const txtEmail = document.getElementById("txtEmail");
+    const txtContrasena = document.getElementById("txtContrasena");
+
+    const nuevoNombre = txtNombre ? txtNombre.value.trim() : "";
+    const nuevoApellido = txtApellido ? txtApellido.value.trim() : "";
+    const nuevoEmail = txtEmail ? txtEmail.value.trim() : "";
+    const nuevaContrasena = txtContrasena ? txtContrasena.value : "";
+
+    let hayErrores = false;
+    if (!nuevoNombre) {
+        mostrarErrorCampo(txtNombre, "El nombre es obligatorio.");
+        hayErrores = true;
+    }
+    if (!nuevoApellido) {
+        mostrarErrorCampo(txtApellido, "El apellido es obligatorio.");
+        hayErrores = true;
+    }
+    if (!nuevoEmail) {
+        mostrarErrorCampo(txtEmail, "El email es obligatorio.");
+        hayErrores = true;
+    }
+
+    if (hayErrores) return false;
+
     const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
     let registros = JSON.parse(localStorage.getItem("registros")) || [];
 
     if (!usuarioActivo) {
-        alert("No hay una sesión activa.");
         window.location.href = "login.html";
         return false;
     }
 
-    //buscar al usuario dentro de la lista mediante su id o correo anterior
     const usuarioIndex = registros.findIndex(u => u.id === usuarioActivo.id || u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
     if (usuarioIndex !== -1) {
         registros[usuarioIndex].nombre = nuevoNombre;
@@ -256,34 +393,35 @@ function actualizarPerfil(event) {
         if (nuevaContrasena.trim() !== "") {
             registros[usuarioIndex].contrasena = nuevaContrasena;
         }
-        //guardar los cambios en en la lista de registros
         localStorage.setItem("registros", JSON.stringify(registros));
     }
 
-    //actualizar los datos del usuario activo
     usuarioActivo.nombre = nuevoNombre;
     usuarioActivo.apellido = nuevoApellido;
     usuarioActivo.correo = nuevoEmail;
     localStorage.setItem("usuario_activo", JSON.stringify(usuarioActivo));
 
-    alert("Datos actualizados correctamente.");
-    //recargar la pagina para reflejar los cambios en el navbar
-    window.location.reload();
-    //no enviar formulario
-    return false; 
+    let alertBox = document.createElement("div");
+    alertBox.className = "alert alert-success alert-box-status mt-3 d-flex align-items-center gap-2";
+    alertBox.innerHTML = `<i class="bi bi-check-circle-fill text-success fs-5"></i><div>Datos actualizados correctamente.</div>`;
+    if (form) form.appendChild(alertBox);
+
+    setTimeout(() => {
+        window.location.reload();
+    }, 1000);
+    return false;
 }
 
-//funcion para cerrar sesion
+// Cerrar sesión
 function cerrarSesion() {
-    if (confirm("¿Estás seguro de que deseas cerrar sesión?")) {
-        //Eliminar los datos de la sesion activa del localStorage
-        localStorage.removeItem("usuario_activo");
-        alert("Has cerrado sesión correctamente.");
-        window.location.href = "login.html";
+    localStorage.removeItem("usuario_activo");
+    if (typeof mostrarAvisoFlotante === 'function') {
+        mostrarAvisoFlotante("Has cerrado sesión correctamente.", "info");
     }
+    window.location.href = "login.html";
 }
 
-//funcion para crear un codigo de 6 caracteres para invitar a otros usuarios
+// Generar código único para referidos
 function generarCodigoUnico(usuariosExistentes) {
     const caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let codigo = "";
@@ -296,7 +434,7 @@ function generarCodigoUnico(usuariosExistentes) {
             codigo += caracteres.charAt(aleatorio);
         }
 
-        const existe = usuariosExistentes.some(usuario => usuario.codigo === codigo);
+        const existe = (usuariosExistentes || []).some(usuario => usuario.codigo === codigo);
         if (!existe) {
             esUnico = true;
         }
@@ -304,7 +442,7 @@ function generarCodigoUnico(usuariosExistentes) {
     return codigo;
 }
 
-//control para las reseñas de los productos, se guarda en localStorage y se muestra en la pagina del producto
+// Control de reseñas en comentarios-productos.html
 document.addEventListener('DOMContentLoaded', () => {
     const selectProducto = document.getElementById('selectProductoResena');
     const listaResenas = document.getElementById('listaResenas');
@@ -349,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         //Mostrar reseñas guardadas al cargar la página
         cargarResenas();
-    }    
+    }
 });
 
 function guardarResena(event) {
@@ -357,50 +495,80 @@ function guardarResena(event) {
         event.preventDefault();
     }
 
-    const idProducto = document.getElementById('selectProductoResena').value;
-    const comentario = document.getElementById('txtComentario').value.trim();
-    const calificacion = parseInt(document.getElementById('selectCalificacion').value);
+    const form = document.getElementById('formResena') || (event ? event.target : null);
+    limpiarTodosLosErrores(form);
 
-    //validar que el usuario este logueado
+    const selectProducto = document.getElementById('selectProductoResena');
+    const txtComentario = document.getElementById('txtComentario');
+    const selectCalificacion = document.getElementById('selectCalificacion');
+
+    const idProducto = selectProducto ? selectProducto.value : "";
+    const comentario = txtComentario ? txtComentario.value.trim() : "";
+    const calificacion = selectCalificacion ? parseInt(selectCalificacion.value, 10) : 5;
+
+    let hayErrores = false;
+    if (!idProducto) {
+        mostrarErrorCampo(selectProducto, "Por favor selecciona un producto.");
+        hayErrores = true;
+    }
+    if (!comentario) {
+        mostrarErrorCampo(txtComentario, "Por favor escribe tu comentario u opinión.");
+        hayErrores = true;
+    } else if (comentario.length < 5) {
+        mostrarErrorCampo(txtComentario, "El comentario debe tener al menos 5 caracteres.");
+        hayErrores = true;
+    }
+
+    if (hayErrores) return false;
+
     const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
     if (!usuarioActivo) {
-        alert("Debes estar logueado para poder dejar una reseña.");
-        window.location.href = "login.html";
+        let alertBox = document.createElement("div");
+        alertBox.className = "alert alert-warning alert-box-status mt-3 d-flex align-items-center gap-2";
+        alertBox.innerHTML = `<i class="bi bi-person-lock fs-5"></i><div>Debes <a href="login.html" class="text-info fw-bold">iniciar sesión</a> para dejar una reseña.</div>`;
+        if (form) form.appendChild(alertBox);
         return false;
     }
 
-    const nombreUsuario = `${usuarioActivo.nombre} ${usuarioActivo.apellido}`;
-    const productoInfo = PRODUCTOS_DATA.find(prod => prod.id === idProducto);
+    const nombreUsuario = `${usuarioActivo.nombre} ${usuarioActivo.apellido || ''}`.trim();
+    const productoInfo = (typeof PRODUCTOS_DATA !== 'undefined') ? PRODUCTOS_DATA.find(prod => prod.id === idProducto) : null;
+    const nombreProd = productoInfo ? productoInfo.nombre : idProducto;
 
-    //Crear el objeto de la nueva reseña
     const nuevaResena = {
         id: Date.now(),
         idProducto: idProducto,
-        nombreProducto: productoInfo.nombre,
+        nombreProducto: nombreProd,
         usuario: nombreUsuario,
         comentario: comentario,
         calificacion: calificacion,
         fecha: new Date().toLocaleDateString('es-CL')
     };
 
-    // Guardar la reseña en localStorage obteniendo el historial de reseñas existentes
     let resenasGuardadas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
     resenasGuardadas.unshift(nuevaResena);
     localStorage.setItem('levelup_resenas', JSON.stringify(resenasGuardadas));
 
-    // Limpiar el formulario, cargar la lista actualizada y guardar la nueva reseña al principio de la lista
-    document.getElementById('formResena').reset();
+    if (form) form.reset();
     cargarResenas();
-    alert("¡Gracias por tu reseña! Tu opinión es muy valiosa para la comunidad.");
+
+    let alertBox = document.createElement("div");
+    alertBox.className = "alert alert-success alert-box-status mt-3 d-flex align-items-center gap-2";
+    alertBox.innerHTML = `<i class="bi bi-check-circle-fill fs-5"></i><div>¡Gracias por tu reseña! Tu opinión ha sido publicada con éxito.</div>`;
+    if (form) form.appendChild(alertBox);
+
+    setTimeout(() => {
+        if (alertBox) alertBox.remove();
+    }, 4000);
+
+    return true;
 }
 
 function cargarResenas() {
     const contenedor = document.getElementById('listaResenas');
     if (!contenedor) return;
 
-    let resenas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
+    let resenas = (typeof obtenerTodasLasResenas === 'function') ? obtenerTodasLasResenas() : (JSON.parse(localStorage.getItem('levelup_resenas')) || []);
 
-    // mostrar el siguiente mensaje si no hay reseñas
     if (resenas.length === 0) {
         contenedor.innerHTML = `
             <div class="card gamer-card p-5 text-center h-100 d-flex justify-content-center align-items-center">
@@ -414,25 +582,22 @@ function cargarResenas() {
         return;
     }
 
-    // hacer inyeccion de HTML para cada reseña utilizando .map()
     contenedor.innerHTML = resenas.map(resena => {
-        //usar emojis interactivos dinamicos para que las estrellas se vean mejor
-        const estrellasActivas = '⭐'.repeat(resena.calificacion);
+        const estrellasActivas = '⭐'.repeat(resena.calificacion || 5);
         return `
         <div class="card gamer-card p-4">
             <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                        <h6 class="text-info mb-1"><i class="bi bi-person-circle me-2"></i>${resena.usuario}</h6>
-                        <small class="text-muted">Reseña sobre: <strong class="text-white">${resena.nombreProducto}</strong></small>
-                    </div>
-                    <div class="text-end">
-                        <div class="mb-1">${estrellasActivas}</div>
-                        <small class="text-muted">${resena.fecha}</small>
-                    </div>
+                <div>
+                    <h6 class="text-info mb-1"><i class="bi bi-person-circle me-2"></i>${resena.usuario}</h6>
+                    <small class="text-muted">Reseña sobre: <strong class="text-white">${resena.nombreProducto}</strong></small>
                 </div>
-                <hr class="border-secondary my-2">
-                <p class="text-light mb-0 mt-2">"${resena.comentario}"</p>
+                <div class="text-end">
+                    <div class="mb-1">${estrellasActivas}</div>
+                    <small class="text-muted">${resena.fecha || 'Reciente'}</small>
+                </div>
             </div>
+            <hr class="border-secondary my-2">
+            <p class="text-light mb-0 mt-2">"${resena.comentario}"</p>
         </div>`;
     }).join('');
 }
