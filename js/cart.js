@@ -220,3 +220,103 @@ function applyCoupon(c) { return aplicarCupon(c); }
 document.addEventListener('DOMContentLoaded', () => {
     actualizarContadorCarrito();
 });
+
+//logica para el chektout junto con el procesamiento de la compra 
+document.addEventListener('DOMContentLoaded', () => {
+//validar si se esta en la ivsta checkout
+    if (document.getElementById('formCheckout')) {
+        const carrito = obtenerCarrito();
+
+        if (!carrito || carrito.length === 0) {
+            alert("Tu carrito está vacío. Agrega productos antes de pagar.");
+            window.location.href = "galeria.html";
+            return
+        }
+
+        cargarResumen();
+        precompletarDatosUsuario();
+    }
+});
+
+function precompletarDatosUsuario() {
+    const usuarioActivo = JSON.parse(localStorage.getItem('usuario_activo'));
+    if (usuarioActivo) {
+        document.getElementById('checkoutNombre').value = `${usuarioActivo.nombre} ${usuarioActivo.apellido}`;
+        document.getElementById('checkoutEmail').value = usuarioActivo.email || '';    
+    }
+}
+
+function cargarResumen() {
+    const contenedor = document.getElementById('contenedorResumenCheckout');
+    if (!contenedor) return;
+
+    const totales = calcularTotalesCarrito();
+    const carrito = obtenerCarrito();
+
+    let listaHtml = carrito.map(item => `
+        <div class="d-flex justify-content-between mb-2 small text-light">
+            <span>${item.cantidad}x ${item.nombre}</span>
+            <span>${formatCLP(item.precio * item.cantidad)}</span>
+        </div>
+    `).join('');
+
+    contenedor.innerHTML = `
+        <h4 class="h5 text-white brand-font mb-3 pb-2 border-bottom border-secondary">Resumen de tu Orden</h4>
+        
+        <div class="mb-3 pb-3 border-bottom border-secondary">
+            ${listaHtml}
+        </div>
+
+        <div class="d-flex justify-content-between text-muted mb-2">
+            <span>Subtotal:</span>
+            <span class="text-light">${formatCLP(totales.subtotal)}</span>
+        </div>
+
+        ${totales.montoDescuento > 0 ? `
+            <div class="d-flex justify-content-between text-warning mb-2">
+                <span>Descuento (${totales.porcentajeDescuento}%):</span>
+                <span>-${formatCLP(totales.montoDescuento)}</span>
+            </div>
+        ` : ''}
+
+        <div class="d-flex justify-content-between text-muted mb-3">
+            <span>Despacho:</span>
+            <span class="text-success fw-bold">Gratis</span>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-baseline mt-3 pt-3 border-top border-secondary">
+            <span class="text-white fw-bold fs-5">Total a Pagar:</span>
+            <span class="price-tag fs-3">${formatCLP(totales.total)}</span>
+        </div>
+    `;
+}
+
+//funcion para ejecutar luego de confirmar y pagar
+function procesarCompra(event) {
+    event.preventDefault();
+
+    const carrito = obtenerCarrito();
+    const totales = calcularTotalesCarrito();
+
+    const correoComprador = document.getElementById('checkoutEmail').value.trim();
+    const metodoPago = document.getElementById('checkoutMetodoPago').value;
+    const numeroOrden = 'ORD' + Math.floor(Math.random() * 1000000);
+
+    const nuevaCompra = {
+        idOrden: numeroOrden,
+        fecha: new Date().toLocaleDateString('es-CL'),
+        correo: correoComprador,
+        metodo: metodoPago,
+        cantidadItems: totales.totalArticulos,
+        productos: carrito
+    };
+
+    let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+    historialCompras.unshift(nuevaCompra);
+    localStorage.setItem('levelup_compras', JSON.stringify(historialCompras));
+
+    vaciarCarrito();
+
+    alert(`¡Pago exitoso! 🎉\nTu orden ${numeroOrden} ha sido procesada.\n\nSerás redirigido a tu perfil para ver tus compras.`);
+    window.location.href = 'perfil.html';
+}

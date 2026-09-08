@@ -56,13 +56,16 @@
                     <a href="login.html" class="btn btn-primary px-3"><i class="bi bi-person me-1"></i>Ingresar</a>
                     <a href="register.html" class="btn btn-outline-light px-3">Registrarse</a>
                 </div>
-                <!-- Si el usuario ha iniciado sesion -->
-                <div id="perfil-container" class="d-none d-flex align-items-center gap-2">
-                    <a href="perfil.html" class="btn btn-outline-info position-relative d-flex align-items-center gap-2"><i class="bi bi-person-circle fs-5"></i> <span id="txtNombre">Mi cuenta</span>
+                <!--Si el usuario ha iniciado sesion, los dos iconos para iniciar o crear cuenta se reemplazan por un boton que redirecciona a la informacion de la cuenta + puntosLevelUp-->
+                <div id ="perfil-container" class="d-none d-flex align-items-center gap-3">
+                    <a href="perfil.html" class="btn btn-outline-info d-flex align-items-center gap-2 px-3">
+                        <i class="bi bi-person-circle fs-5"></i> 
+                        <span id="txtNombre">Mi cuenta</span>
                     </a>
-                    <a href="perfil.html" class="btn btn-outline-info d-flex align-items-center gap-1 text-decoration-none fw-bold" title="Tus puntos LevelUp">
-                        <span id="navPuntos">0</span> pts
-                    </a>
+                    <div class="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm" title="Tus puntos LevelUp">
+                        <span id="navPuntos" class="fw-bold">0</span>
+                        <i class="bi bi-coin text-warning"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -352,9 +355,12 @@
                                     </div>
                                 </div>
 
-                                <div class="d-grid mb-3">
-                                    <button id="btnComprarAhora" class="btn btn-outline-info py-2 fw-semibold">
+                                <div class="d-grid gap-2 mb-3">
+                                    <button id="btnComprarAhora" class="btn btn-outline-info py-2">
                                         <i class="bi bi-lightning-charge-fill me-1"></i>Comprar Ahora
+                                    </button>
+                                    <button type="button" onclick="productosFavoritos('${producto.id}')" class="btn btn-outline-danger py-2">
+                                        <i class="bi bi-heart-fill me-1"></i>Agregar a Favoritos
                                     </button>
                                 </div>
 

@@ -1,3 +1,6 @@
+
+//registro de usuarios y validaciones de formulario
+
 // Utilidades para mostrar y limpiar errores inline en formularios
 function mostrarErrorCampo(input, mensaje) {
     if (!input) return;
@@ -314,6 +317,26 @@ function cargarDatosUsuario() {
         if (nombreNav) {
             nombreNav.textContent = usuarioActivo.nombre || "Mi cuenta";
         }
+        
+        cargarHistorialCompras(); // Cargar historial de compras
+        cargarFavoritos(); // Cargar productos favoritos
+        //cargar nivel gamer
+        const registros = JSON.parse(localStorage.getItem("registros")) || [];
+        const usuarioReal = registros.find(u => u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+        const puntosActuales = usuarioReal ? (usuarioReal.puntosLevelUp || 0) : (usuarioActivo.puntosLevelUp || 0);
+        
+        const nivel = calcularNivelGamer(puntosActuales);
+        const badgeNivel = document.getElementById('badgeNivel');
+        if (badgeNivel) {
+            badgeNivel.className = `badge fs-6 ${nivel.color} shadow-sm`;
+            badgeNivel.innerHTML = `<i class="bi ${nivel.icono} me-1"></i> Rango: ${nivel.nombre} (${puntosActuales} pts)`;
+        }
+        //inyectar codigo de registro en la vista del perfil
+        const lblCodigo = document.getElementById("lblCodigoReferido");
+        if (lblCodigo && usuarioReal) {
+            lblCodigo.textContent = usuarioReal.codigo || "SIN-CODIGO";
+        }
+    
     } else {
         window.location.href = "login.html";
     }
@@ -424,14 +447,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectProducto = document.getElementById('selectProductoResena');
     const listaResenas = document.getElementById('listaResenas');
 
-    if (selectProducto && listaResenas && typeof PRODUCTOS_DATA !== 'undefined') {
-        PRODUCTOS_DATA.forEach(prod => {
-            const option = document.createElement('option');
-            option.value = prod.id;
-            option.textContent = prod.nombre;
-            selectProducto.appendChild(option);
-        });
+    // Comprobar si se esta en la vista de comentarios
+    if (selectProducto && listaResenas) {
+        const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
 
+        if (usuarioActivo) {
+            //todas las compras registradas del usuario
+            const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+            const misCompras = todasLasCompras.filter(compra => compra.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+
+            const idsProductosComprados = new Set();
+            misCompras.forEach(compra => {
+                compra.productos.forEach(p => {
+                    idsProductosComprados.add(p.id)
+                });
+            });
+
+            //limpiar el select
+            selectProducto.innerHTML = '<option value="" selected disabled>Selecciona un producto que hayas comprado</option>';
+
+            //rellenar el select solo con los productos de el historial del usuario
+            if (idsProductosComprados.size >0) {
+                idsProductosComprados.forEach(idProd => {
+                    const prodInfo = PRODUCTOS_DATA.find(p => p.id === idProd);
+                    if (prodInfo) {
+                        const option = document.createElement('option');
+                        option.value = prodInfo.id;
+                        option.textContent = prodInfo.nombre;
+                        selectProducto.appendChild(option);
+                    }
+                });
+            } else {
+                //opcion si no ha comprado nada
+                const option = document.createElement('option')
+                option.value("");
+                option.textContent = "Aun no tienes compras registradas";
+                selectProducto.appendChild(option);
+            }
+        }
+        //Mostrar reseñas guardadas al cargar la página
         cargarResenas();
     }
 });
@@ -548,4 +602,198 @@ function cargarResenas() {
     }).join('');
 }
 
+//logica para el perfil con el historial de compras y el detalle de cada orden, se guarda en localStorage
+function cargarHistorialCompras() {
+    const contenedor = document.getElementById('contenedorHistorialCompras');
+    // Solo funciona en el perfil
+    if (!contenedor) return; 
+
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    if (!usuarioActivo) return;
+
+    // Obtener todas las compras registradas
+    const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+    
+    // Filtrar solo las compras que coincidan con el correo del usuario activo
+    const misCompras = todasLasCompras.filter(compra => compra.correo === usuarioActivo.correo);
+
+    // Si no tiene compras, dejamos el mensaje de estado vacío que ya está en el HTML
+    if (misCompras.length === 0) {
+        return; 
+    }
+
+    // Si tiene compras, quitamos el centrado del mensaje vacío 
+    contenedor.classList.remove('text-center', 'py-5');
+    let htmlCompras = '<div class="accordion" id="acordeonCompras">';
+    
+    misCompras.forEach((compra, index) => {
+        // Formatear los productos que vienen dentro de esta compra específica
+        const detallesProductos = compra.productos.map(p => `
+            <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
+                <span>${p.cantidad}x ${p.nombre}</span>
+                <span>${formatCLP(p.precio * p.cantidad)}</span>
+            </li>
+        `).join('');
+
+        // Crear la tarjeta desplegable para la orden
+        htmlCompras += `
+            <div class="accordion-item bg-dark border-secondary mb-3 rounded">
+                <h2 class="accordion-header" id="heading${index}">
+                    <button class="accordion-button bg-dark text-white collapsed rounded shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                        <div class="d-flex justify-content-between align-items-center w-100 pe-3">
+                            <span><i class="bi bi-bag-check text-info me-2"></i>Orden: <strong>${compra.idOrden}</strong></span>
+                            <span class="text-muted small d-none d-sm-inline">${compra.fecha}</span>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#acordeonCompras">
+                    <div class="accordion-body text-light border-top border-secondary">
+                        <div class="mb-3 d-flex justify-content-between small text-muted">
+                            <span><strong>Fecha:</strong> ${compra.fecha}</span>
+                            <span><strong>Método de pago:</strong> ${compra.metodo}</span>
+                        </div>
+                        <ul class="list-group list-group-flush border border-secondary rounded mb-3">
+                            ${detallesProductos}
+                        </ul>
+                        <div class="d-flex justify-content-end align-items-baseline">
+                            <span class="me-2 text-muted">Total pagado:</span>
+                            <strong class="text-info fs-5">${formatCLP(compra.totalPagado)}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    htmlCompras += '</div>';
+    
+    // Inyectar el HTML construido en el contenedor de la pestaña
+    contenedor.innerHTML = htmlCompras;
+}
+
+//productos favoritos
+function productosFavoritos(idProducto) {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    
+    // Si no se ha iniciado sesión, avisar de iniciar sesion
+    if (!usuarioActivo) {
+        alert("Debes iniciar sesión para guardar productos en favoritos.");
+        window.location.href = "login.html";
+        return;
+    }
+
+    let favoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+    
+    // Buscar si el producto ya está en los favoritos de este usuario
+    const index = favoritos.findIndex(fav => fav.correo === usuarioActivo.correo && fav.idProducto === idProducto);
+
+    if (index > -1) {
+        // Si ya existe, se saca de la lista
+        favoritos.splice(index, 1);
+        alert("Producto eliminado de tus favoritos 💔");
+    } else {
+        // Si no existe, se agrega
+        favoritos.push({
+            correo: usuarioActivo.correo,
+            idProducto: idProducto
+        });
+        alert("¡Producto agregado a tus favoritos! ❤️");
+    }
+
+    // Guardadado de los cambios
+    localStorage.setItem('levelup_favoritos', JSON.stringify(favoritos));
+    
+    // Si el usuario hace esto estando dentro del perfil, se recarga la vista al instante
+    if (document.getElementById('contenedorFavoritos')) {
+        cargarFavoritos();
+    }
+}
+
+// Función para pintar los favoritos en la pestaña del Perfil
+function cargarFavoritos() {
+    const contenedor = document.getElementById('contenedorFavoritos');
+    if (!contenedor) return;
+
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    if (!usuarioActivo) return;
+
+    // Obtener todos los favoritos y filtrar solo los de este usuario
+    const todosFavoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+    const misFavoritos = todosFavoritos.filter(fav => fav.correo === usuarioActivo.correo);
+
+    // Si no tiene favoritos, deja el mensaje de "vacío"
+    if (misFavoritos.length === 0) {
+        contenedor.innerHTML = `
+            <div class="text-center py-5 w-100">
+                <i class="bi bi-heartbreak fs-1 text-muted mb-3 d-block"></i>
+                <h5 class="text-white">Tu lista de favoritos está vacía</h5>
+                <p class="text-muted">Explora el catálogo y guarda los productos que más te gusten.</p>
+                <a href="galeria.html" class="btn btn-outline-info mt-2">Explorar Productos</a>
+            </div>
+        `;
+        return;
+    }
+
+    // Si tiene favoritos, se quita el centrado y se dejan las tarjetas
+    contenedor.classList.remove('text-center', 'py-5');
+    let htmlFavoritos = '';
+    
+    misFavoritos.forEach(fav => {
+        // se busca la información completa del producto en products_data
+        const prod = PRODUCTOS_DATA.find(p => p.id === fav.idProducto);
+        
+        if (prod) {
+            htmlFavoritos += `
+                <div class="col-sm-6 col-md-4 mb-3">
+                    <div class="card gamer-card h-100 d-flex flex-column">
+                        <div class="position-relative">
+                            <a href="producto-detalle.html?id=${prod.id}">
+                                <img src="${prod.imagen}" class="card-img-top" alt="${prod.nombre}" style="height: 150px; object-fit: cover;">
+                            </a>
+                            <!-- Botón rojo sobre la imagen para quitar de favoritos -->
+                            <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle shadow" onclick="toggleFavorito('${prod.id}')" title="Quitar de favoritos">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                        </div>
+                        <div class="card-body d-flex flex-column p-3">
+                            <h6 class="card-title text-white mb-2 small text-truncate">
+                                <a href="producto-detalle.html?id=${prod.id}" class="text-white text-decoration-none hover-info">${prod.nombre}</a>
+                            </h6>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="price-tag fs-6">${formatCLP(prod.precio)}</span>
+                                </div>
+                                <button onclick="agregarAlCarrito('${prod.id}', 1)" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="bi bi-cart-plus me-1"></i>Al Carrito
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    contenedor.innerHTML = htmlFavoritos;
+}
+
+function calcularNivelGamer(puntos) {
+    if (puntos >= 2000) return { nombre: 'Leyenda', color: 'bg-info text-dark', icono: 'bi-gem' };
+    if (puntos >= 500) return { nombre: 'Oro', color: 'bg-warning text-dark', icono: 'bi-trophy-fill' };
+    if (puntos >= 100) return { nombre: 'Plata', color: 'bg-light text-dark', icono: 'bi-controller' };
+    return { nombre: 'Bronce', color: 'bg-secondary', icono: 'bi-joystick' };
+}
+
+//funcion para copiar el codigo de invitacion
+function copiarCodigoReferido() {
+    const lblCodigo = document.getElementById("lblCodigoReferido");
+    if (!lblCodigo) return;
+
+    const codigo = lblCodigo.textContent.trim();
+    navigator.clipboard.writeText(codigo).then(() => {
+        alert(`¡Código ${codigo} copiado al portapapeles! Compártelo con tus amigos.`);
+    }).catch(err => {
+        console.error("Error al copiar: ", err);
+    });
+}
 
