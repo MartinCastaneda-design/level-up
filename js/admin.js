@@ -49,55 +49,35 @@ function renderizarTabla() {
 
 function guardarDesdeFormulario(event) {
     event.preventDefault();
-    const form = event.target;
-    limpiarTodosLosErrores(form);
-
-    const inputId = document.getElementById('prodId');
-    const selectCat = document.getElementById('prodCategoria');
-    const inputNombre = document.getElementById('prodNombre');
-    const inputPrecio = document.getElementById('prodPrecio');
-
     //Se captura los datos de los inputs del modal
     const producto = {
-        id: inputId.value.trim(),
-        categoria: selectCat.value,
-        nombre: inputNombre.value.trim(),
-        precio: Number(inputPrecio.value)
+        id: document.getElementById('prodId').value.trim(),
+        categoria: document.getElementById('prodCategoria').value,
+        nombre: document.getElementById('prodNombre').value.trim(),
+        precio: Number(document.getElementById('prodPrecio').value)
     };
 
-    let hayError = false;
-
-    if (!producto.id) {
-        mostrarErrorCampo(inputId, 'El código/ID del producto es obligatorio.');
-        hayError = true;
-    } else if (idEnEdicion === null) {
-        //IDS DUPLICADOS
-        const idExiste = productosAdmin.some(p => p.id.toLowerCase() === producto.id.toLowerCase());
-        if (idExiste) {
-            mostrarErrorCampo(inputId, `El Código/ID "${producto.id}" ya existe en el inventario.`);
-            hayError = true;
+    //IDS DUPLICADOS
+    if(idEnEdicion === null){
+        const idExiste = productosAdmin.some(p=> p.id.toLowerCase() === producto.id.toLowerCase());
+        if(idExiste){
+            alert(`Error: El Código/ID "${producto.id}" ya existe en el inventario.`);
+            return
         }
     }
 
-    if (!producto.categoria) {
-        mostrarErrorCampo(selectCat, 'Selecciona una categoría para el producto.');
-        hayError = true;
-    }
+    
 
     //Validar el largo minimo del nombre
-    if (!producto.nombre || producto.nombre.length < 3) {
-        mostrarErrorCampo(inputNombre, 'El nombre del producto debe tener al menos 3 caracteres.');
-        hayError = true;
+    if(producto.nombre.length < 3){
+        alert("El nombre del producto debe tener al menos 3 caracteres");
+        return // se detiene la ejecucion y no guarda nada
     }
 
     //Validar el precio mayor a 0
-    if (isNaN(producto.precio) || producto.precio <= 0) {
-        mostrarErrorCampo(inputPrecio, 'Por favor, ingrese un precio válido mayor a 0.');
-        hayError = true;
-    }
-
-    if (hayError) {
-        return; // se detiene la ejecución
+    if (isNaN(producto.precio) || producto.precio <=0){
+        alert("Por favor, Ingrese un precio valido mayor a 0.")
+        return; //Detiene la ejecucion
     }
 
 

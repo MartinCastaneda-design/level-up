@@ -1,11 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usuarios</title>
-</head>
-<body>
-    
-</body>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Level-Up Gamer | Panel de Usuarios</title>
+    <!-- 1. Bootstrap CSS (El framework para maquetar rápido y responsivo) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- 2. CSS Global del grupo (el fondo negro y tipografías Orbitron/Roboto) -->
+    <link rel="stylesheet" href="css/estilos.css" />
+  </head>
+  <body>
+    <header class="py-3">
+      <div
+        class="logo-container d-flex justify-content-center align-items-center"
+      >
+        <!-- Usamos la clase brand-font (fuente Orbitron) y el color cian-->
+        <h1
+          class="brand-font m-0 text-uppercase"
+          style="color: var(--accent-cyan)"
+        >
+          Level-Up Gamer
+        </h1>
+      </div>
+      <small
+        class="text-muted text-uppercase"
+        style="
+          font-family: &quot;Orbitron&quot;, sans-serif;
+          letter-spacing: 1px;
+        "
+      >
+        Panel de Control
+      </small>
+      <!-- 2. MENU DE NAVEGACION RESPONSIVO (BOOTSTRAP + ESTILOS DE TU GRUPO) -->
+      <nav class="navbar navbar-expand-lg custom-navbar">
+        <div class="container-fluid">
+          <!-- Botón de hamburguesa visible solo en celulares (Mobile First) -->
+          <button
+            class="navbar-toggler border-secondary"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <!-- Filtro para que el icono se vea blanco en fondo oscuro -->
+            <span class="navbar-toggler-icon" style="filter: invert(1)"></span>
+          </button>
+
+          <!-- Contenedor de enlaces que se colapsa en celulares -->
+          <div
+            class="collapse navbar-collapse justify-content-center"
+            id="navbarNav"
+          >
+            <ul class="navbar-nav gap-3 text-center py-2 py-lg-0">
+              <!-- Enlace para volver a la tienda -->
+              <li class="nav-item">
+                <a class="nav-link" href="index.html">Volver a la Tienda</a>
+              </li>
+
+              <!-- Paginas administrativas obligatorias asignadas -->
+
+              <!-- INVENTARIO () -->
+              <li class="nav-item">
+                <a class="nav-link" href="admin-producto.html">Inventario</a>
+              </li>
+
+              <!-- USUARIOS(GESTION DE USUARIOS (Activa)) -->
+              <li class="nav-item">
+                <a class="nav-link active" href="admin-usuario.html"
+                  >Usuarios</a
+                >
+              </li>
+
+              <!-- RESPALDOS (COPIAS DE SEGURIDAD)  -->
+              <li class="nav-item">
+                <a class="nav-link" href="admin-respaldo.html">Respaldos</a>
+              </li>
+
+              <!-- NOTICIAS/BLOG -->
+              <li class="nav-item">
+                <a class="nav-link" href="blog-lista.html">Noticias/Blog</a>
+              </li>
+
+              <!-- COMUNIDAD/GUIAS(MURO CON TODAS LAS GUIAS DE LA COMUNIDAD) -->
+              <li class="nav-item">
+                <a class="nav-link" href="guias-lista.html">Comunidad/Guias</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container my-5">
+      <!-- Encabezado de la Gestión de Usuarios -->
+      <section class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h3 brand-font text-white m-0">Gestion de Usuarios</h2>
+      </section>
+
+      <!-- Tarjeta Gamer con la Tabla de Usuarios -->
+      <section class="gamer-card p-4">
+        <div class="table-responsive">
+          <table
+            class="table table-dark table-striped table-hover align-middle m-0"
+            id="tablaUsuarios"
+          >
+            <thead>
+              <tr
+                class="brand-font"
+                style="
+                  color: var(--accent-cyan);
+                  border-bottom: 2px solid var(--card-border);
+                "
+              >
+                <th scope="col">ID</th>
+                <th scope="col">Nombre Completo</th>
+                <th scope="col">Correo Electronico</th>
+                <th scope="col">Codigo Referido</th>
+                <th scope="col">Puntos Level-Up</th>
+                <th scope="col">Beneficios Duoc</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Estado</th>
+                <th scope="col" class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="listaUsuariosAdmin"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="js/admin-usuario.js"></script>
+
+  </body>
 </html>
