@@ -1,16 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Level-Up Gamer | Panel de Respaldos </title>
-     <!-- 1. Bootstrap CSS (El framework para maquetar rápido y responsivo) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Level-Up Gamer | Panel de Respaldos</title>
+    <!-- 1. Bootstrap CSS (El framework para maquetar rápido y responsivo) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
     <!-- 2. CSS Global del grupo (el fondo negro y tipografías Orbitron/Roboto) -->
-    <link rel="stylesheet" href="css/estilos.css">
-</head>
-<body>
+    <link rel="stylesheet" href="css/estilos.css" />
+  </head>
+  <body>
     <header class="py-3">
       <div
         class="logo-container d-flex justify-content-center align-items-center"
@@ -69,14 +72,14 @@
 
               <!-- USUARIOS(GESTION DE USUARIOS ) -->
               <li class="nav-item">
-                <a class="nav-link" href="admin-usuario.html"
-                  >Usuarios</a
-                >
+                <a class="nav-link" href="admin-usuario.html">Usuarios</a>
               </li>
 
               <!-- RESPALDOS (COPIAS DE SEGURIDAD(activa))  -->
               <li class="nav-item">
-                <a class="nav-link active" href="admin-respaldo.html">Respaldos</a>
+                <a class="nav-link active" href="admin-respaldo.html"
+                  >Respaldos</a
+                >
               </li>
 
               <!-- NOTICIAS/BLOG -->
@@ -94,9 +97,38 @@
       </nav>
     </header>
 
+    <main class="container my-5">
+      <section
+        class="d-flex justify-content-center-between align-items-center mb-4"
+      >
+        <h2 class="h3 brand-font text-white m-0">Copias de Seguridad</h2>
+      </section>
 
+      <section class="gamer-card p-4">
+        <p class="text-muted">
+          Exporta un respaldo completo de los datos de la tienda (productos,
+          usuarios, carrito y cupones) o restaura un respaldo anterior desde un
+          archivo .json.
+        </p>
+        <div class="d-flex gap-3 flex-wrap">
+          <button type="button" id="btnExportar" class="btn btn-outline-info">
+            <i class="bi bi-download"></i> Exportar Respaldo
+          </button>
+
+          <button
+            type="button"
+            id="btnImportar"
+            class="btn btn-outline-warning"
+          >
+            <i class="bi bi-upload"></i> Importar Respaldo
+          </button>
+
+          <input type="file" id="inputArchivo" accept=".json" hidden />
+        </div>
+      </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-</body>
+    <script src="js/admin-respaldo.js"></script>
+  </body>
 </html>
