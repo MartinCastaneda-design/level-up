@@ -1,6 +1,3 @@
-
-//registro de usuarios y validaciones de formulario
-
 // Utilidades para mostrar y limpiar errores inline en formularios
 function mostrarErrorCampo(input, mensaje) {
     if (!input) return;
@@ -317,26 +314,6 @@ function cargarDatosUsuario() {
         if (nombreNav) {
             nombreNav.textContent = usuarioActivo.nombre || "Mi cuenta";
         }
-        
-        cargarHistorialCompras(); // Cargar historial de compras
-        cargarFavoritos(); // Cargar productos favoritos
-        //cargar nivel gamer
-        const registros = JSON.parse(localStorage.getItem("registros")) || [];
-        const usuarioReal = registros.find(u => u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
-        const puntosActuales = usuarioReal ? (usuarioReal.puntosLevelUp || 0) : (usuarioActivo.puntosLevelUp || 0);
-        
-        const nivel = calcularNivelGamer(puntosActuales);
-        const badgeNivel = document.getElementById('badgeNivel');
-        if (badgeNivel) {
-            badgeNivel.className = `badge fs-6 ${nivel.color} shadow-sm`;
-            badgeNivel.innerHTML = `<i class="bi ${nivel.icono} me-1"></i> Rango: ${nivel.nombre} (${puntosActuales} pts)`;
-        }
-        //inyectar codigo de registro en la vista del perfil
-        const lblCodigo = document.getElementById("lblCodigoReferido");
-        if (lblCodigo && usuarioReal) {
-            lblCodigo.textContent = usuarioReal.codigo || "SIN-CODIGO";
-        }
-    
     } else {
         window.location.href = "login.html";
     }
@@ -447,45 +424,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectProducto = document.getElementById('selectProductoResena');
     const listaResenas = document.getElementById('listaResenas');
 
-    // Comprobar si se esta en la vista de comentarios
-    if (selectProducto && listaResenas) {
-        const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    if (selectProducto && listaResenas && typeof PRODUCTOS_DATA !== 'undefined') {
+        PRODUCTOS_DATA.forEach(prod => {
+            const option = document.createElement('option');
+            option.value = prod.id;
+            option.textContent = prod.nombre;
+            selectProducto.appendChild(option);
+        });
 
-        if (usuarioActivo) {
-            //todas las compras registradas del usuario
-            const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
-            const misCompras = todasLasCompras.filter(compra => compra.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
-
-            const idsProductosComprados = new Set();
-            misCompras.forEach(compra => {
-                compra.productos.forEach(p => {
-                    idsProductosComprados.add(p.id)
-                });
-            });
-
-            //limpiar el select
-            selectProducto.innerHTML = '<option value="" selected disabled>Selecciona un producto que hayas comprado</option>';
-
-            //rellenar el select solo con los productos de el historial del usuario
-            if (idsProductosComprados.size >0) {
-                idsProductosComprados.forEach(idProd => {
-                    const prodInfo = PRODUCTOS_DATA.find(p => p.id === idProd);
-                    if (prodInfo) {
-                        const option = document.createElement('option');
-                        option.value = prodInfo.id;
-                        option.textContent = prodInfo.nombre;
-                        selectProducto.appendChild(option);
-                    }
-                });
-            } else {
-                //opcion si no ha comprado nada
-                const option = document.createElement('option')
-                option.value("");
-                option.textContent = "Aun no tienes compras registradas";
-                selectProducto.appendChild(option);
-            }
-        }
-        //Mostrar reseñas guardadas al cargar la página
         cargarResenas();
     }
 });
@@ -614,50 +560,87 @@ function cargarHistorialCompras() {
     // Obtener todas las compras registradas
     const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
     
-    // Filtrar solo las compras que coincidan con el correo del usuario activo
-    const misCompras = todasLasCompras.filter(compra => compra.correo === usuarioActivo.correo);
+    // Filtrar solo las compras que coincidan con el correo del usuario activo (insensible a mayúsculas)
+    const correoActual = (usuarioActivo.correo || '').toLowerCase();
+    const misCompras = todasLasCompras.filter(compra => (compra.correo || '').toLowerCase() === correoActual);
 
     // Si no tiene compras, dejamos el mensaje de estado vacío que ya está en el HTML
     if (misCompras.length === 0) {
+        contenedor.classList.add('text-center', 'py-5');
+        contenedor.innerHTML = `
+            <i class="bi bi-bag-x fs-1 text-muted mb-3 d-block"></i>
+            <h5 class="text-white">Aún no tienes compras registradas</h5>
+            <p class="text-muted">Cuando finalices un pedido, aparecerá aquí.</p>
+            <a href="galeria.html" class="btn btn-outline-info mt-2">Ir al Catálogo</a>
+        `;
         return; 
     }
 
     // Si tiene compras, quitamos el centrado del mensaje vacío 
     contenedor.classList.remove('text-center', 'py-5');
-    let htmlCompras = '<div class="accordion" id="acordeonCompras">';
+    let htmlCompras = '<div class="accordion d-flex flex-column gap-3" id="acordeonCompras">';
     
     misCompras.forEach((compra, index) => {
         // Formatear los productos que vienen dentro de esta compra específica
-        const detallesProductos = compra.productos.map(p => `
-            <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
-                <span>${p.cantidad}x ${p.nombre}</span>
-                <span>${formatCLP(p.precio * p.cantidad)}</span>
+        const detallesProductos = (compra.productos || []).map(p => `
+            <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center py-2">
+                <div class="d-flex align-items-center gap-2">
+                    ${p.imagen ? `<img src="${p.imagen}" alt="${p.nombre}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">` : ''}
+                    <div>
+                        <strong class="small d-block text-white">${p.nombre}</strong>
+                        <span class="text-muted small">Cantidad: ${p.cantidad} x ${formatCLP(p.precio)}</span>
+                    </div>
+                </div>
+                <span class="fw-bold price-tag">${formatCLP(p.precio * p.cantidad)}</span>
             </li>
         `).join('');
 
+        const badgePuntos = compra.puntosGanados > 0 
+            ? `<span class="badge bg-warning text-dark me-2">+${compra.puntosGanados} pts</span>` 
+            : (compra.puntosUsados > 0 ? `<span class="badge bg-danger text-white me-2">-${compra.puntosUsados} pts</span>` : '');
+
         // Crear la tarjeta desplegable para la orden
         htmlCompras += `
-            <div class="accordion-item bg-dark border-secondary mb-3 rounded">
+            <div class="accordion-item gamer-card bg-dark border-secondary rounded overflow-hidden">
                 <h2 class="accordion-header" id="heading${index}">
-                    <button class="accordion-button bg-dark text-white collapsed rounded shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
-                        <div class="d-flex justify-content-between align-items-center w-100 pe-3">
-                            <span><i class="bi bi-bag-check text-info me-2"></i>Orden: <strong>${compra.idOrden}</strong></span>
-                            <span class="text-muted small d-none d-sm-inline">${compra.fecha}</span>
+                    <button class="accordion-button bg-dark text-white collapsed shadow-none p-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center w-100 pe-3 gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-box-seam-fill text-info fs-5"></i>
+                                <span>Orden: <strong class="text-info">${compra.idOrden}</strong></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                ${badgePuntos}
+                                <span class="price-tag fs-6">${formatCLP(compra.totalPagado)}</span>
+                                <span class="text-muted small ps-2 border-start border-secondary d-none d-md-inline">${compra.fecha}</span>
+                            </div>
                         </div>
                     </button>
                 </h2>
                 <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#acordeonCompras">
-                    <div class="accordion-body text-light border-top border-secondary">
-                        <div class="mb-3 d-flex justify-content-between small text-muted">
-                            <span><strong>Fecha:</strong> ${compra.fecha}</span>
-                            <span><strong>Método de pago:</strong> ${compra.metodo}</span>
+                    <div class="accordion-body text-light border-top border-secondary p-3 p-md-4">
+                        <div class="row g-2 mb-3 small text-muted">
+                            <div class="col-sm-6">
+                                <span class="d-block"><strong>Fecha de Orden:</strong> ${compra.fecha}</span>
+                                <span class="d-block"><strong>Método de Pago:</strong> ${compra.metodo}</span>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <span class="d-block"><strong>Comprador:</strong> ${compra.nombreComprador || usuarioActivo.nombre}</span>
+                                ${compra.direccionDespacho ? `<span class="d-block text-truncate"><strong>Despacho:</strong> ${compra.direccionDespacho}</span>` : ''}
+                            </div>
                         </div>
+
+                        <h6 class="text-info small fw-bold mb-2">Artículos comprados:</h6>
                         <ul class="list-group list-group-flush border border-secondary rounded mb-3">
                             ${detallesProductos}
                         </ul>
-                        <div class="d-flex justify-content-end align-items-baseline">
-                            <span class="me-2 text-muted">Total pagado:</span>
-                            <strong class="text-info fs-5">${formatCLP(compra.totalPagado)}</strong>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary">
+                            <span class="text-muted small">Estado: <span class="badge bg-success">En preparación / Pagado</span></span>
+                            <div class="text-end">
+                                <span class="me-2 text-muted small">Total pagado:</span>
+                                <strong class="price-tag fs-5">${formatCLP(compra.totalPagado)}</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -671,36 +654,48 @@ function cargarHistorialCompras() {
     contenedor.innerHTML = htmlCompras;
 }
 
+// Alternar producto favorito (agregar o quitar)
+function toggleFavorito(idProducto) {
+    productosFavoritos(idProducto);
+}
+
 //productos favoritos
 function productosFavoritos(idProducto) {
     const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
     
     // Si no se ha iniciado sesión, avisar de iniciar sesion
     if (!usuarioActivo) {
-        alert("Debes iniciar sesión para guardar productos en favoritos.");
+        if (typeof mostrarAvisoFlotante === 'function') {
+            mostrarAvisoFlotante("Debes iniciar sesión para guardar productos en favoritos.", "warning");
+        }
         window.location.href = "login.html";
         return;
     }
 
     let favoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+    const correoActivo = (usuarioActivo.correo || '').toLowerCase();
     
     // Buscar si el producto ya está en los favoritos de este usuario
-    const index = favoritos.findIndex(fav => fav.correo === usuarioActivo.correo && fav.idProducto === idProducto);
+    const index = favoritos.findIndex(fav => (fav.correo || '').toLowerCase() === correoActivo && fav.idProducto === idProducto);
 
     if (index > -1) {
         // Si ya existe, se saca de la lista
         favoritos.splice(index, 1);
-        alert("Producto eliminado de tus favoritos 💔");
+        if (typeof mostrarAvisoFlotante === 'function') {
+            mostrarAvisoFlotante("Producto eliminado de tus favoritos 💔", "info");
+        }
     } else {
         // Si no existe, se agrega
         favoritos.push({
-            correo: usuarioActivo.correo,
+            correo: correoActivo,
             idProducto: idProducto
         });
-        alert("¡Producto agregado a tus favoritos! ❤️");
+        if (typeof mostrarAvisoFlotante === 'function') {
+            mostrarAvisoFlotante("¡Producto agregado a tus favoritos! ❤️", "success");
+        }
     }
 
-    // Guardadado de los cambios
+    // Guardado de los cambios
     localStorage.setItem('levelup_favoritos', JSON.stringify(favoritos));
     
     // Si el usuario hace esto estando dentro del perfil, se recarga la vista al instante
