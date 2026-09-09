@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Level-Up Gamer | Publicar Guía</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/estilos.css" />
+  </head>
+  <body>
+    <nav
+      class="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top py-2"
+    >
+      <div class="container">
+        <a
+          class="navbar-brand d-flex align-items-center gap-2"
+          href="index.html"
+        >
+          <img
+            src="img/logo.png"
+            alt="Level-Up Logo"
+            style="max-height: 45px"
+          />
+          <span class="d-none d-sm-inline fw-bold brand-font text-info"
+            >LEVEL-UP</span
+          >
+        </a>
+        <button
+          class="navbar-toggler border-0"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarGamer"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarGamer">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html"
+                ><i class="bi bi-house-door me-1"></i>Inicio</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="galeria.html"
+                ><i class="bi bi-grid me-1"></i>Catálogo</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="comentarios-productos.html"
+                ><i class="bi bi-chat-heart me-1"></i>Opiniones</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="nosotros.html"
+                ><i class="bi bi-people me-1"></i>Nosotros</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="blog-lista.html"
+                ><i class="bi bi-newspaper me-1"></i>Blog</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="guias-lista.html"
+                ><i class="bi bi-book me-1"></i>Comunidad/Guías</a
+              >
+            </li>
+          </ul>
+          <div class="d-flex align-items-center me-3">
+            <a
+              href="carrito.html"
+              class="btn btn-outline-info position-relative"
+            >
+              <i class="bi bi-cart3 fs-5"></i>
+              <span
+                class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count-badge d-none"
+                >0</span
+              >
+            </a>
+          </div>
+          <div
+            id="autenticacion-buttons"
+            class="d-flex align-items-center gap-2"
+          >
+            <a href="login.html" class="btn btn-primary px-3"
+              ><i class="bi bi-person me-1"></i>Ingresar</a
+            >
+            <a href="register.html" class="btn btn-outline-light px-3"
+              >Registrarse</a
+            >
+          </div>
+          <div
+            id="perfil-container"
+            class="d-none d-flex align-items-center gap-3"
+          >
+            <a
+              href="perfil.html"
+              class="btn btn-outline-info d-flex align-items-center gap-2 px-3"
+            >
+              <i class="bi bi-person-circle fs-5"></i>
+              <span id="txtNombre">Mi cuenta</span>
+            </a>
+            <div
+              class="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm"
+              title="Tus puntos LevelUp"
+            >
+              <span id="navPuntos" class="fw-bold">0</span>
+              <i class="bi bi-coin text-warning"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container my-5">
+      <section class="mb-4">
+        <h2 class="h3 brand-font text-white m-0">Publicar mi Guía</h2>
+      </section>
+
+      <!-- Mensaje que se muestra si el usuario no tiene sesión activa -->
+      <div id="alertaSinSesion" class="alert alert-warning d-none">
+        Debes iniciar sesión para publicar una guía.
+        <a href="login.html" class="alert-link">Inicia sesión aquí</a>.
+      </div>
+
+      <div class="gamer-card p-4">
+        <form id="formCrearGuia" novalidate>
+          <div class="mb-3">
+            <label
+              for="campoTitulo"
+              class="form-label brand-font text-muted small"
+              >Título de la Guía</label
+            >
+            <input
+              type="text"
+              class="form-control bg-dark text-white border-secondary"
+              id="campoTitulo"
+              placeholder="Ej: Cómo optimizar tu setup gamer"
+              minlength="5"
+              required
+            />
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label
+                for="campoCategoria"
+                class="form-label brand-font text-muted small"
+                >Categoría</label
+              >
+              <select
+                class="form-select bg-dark text-white border-secondary"
+                id="campoCategoria"
+                required
+              >
+                <option value="" selected disabled>
+                  Selecciona una categoría
+                </option>
+                <option value="Hardware">Hardware</option>
+                <option value="Juegos de Mesa">Juegos de Mesa</option>
+                <option value="Configuración">Configuración</option>
+                <option value="Estrategia">Estrategia</option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label
+                for="campoDificultad"
+                class="form-label brand-font text-muted small"
+                >Dificultad</label
+              >
+              <select
+                class="form-select bg-dark text-white border-secondary"
+                id="campoDificultad"
+                required
+              >
+                <option value="" selected disabled>
+                  Selecciona la dificultad
+                </option>
+                <option value="Principiante">Principiante</option>
+                <option value="Intermedio">Intermedio</option>
+                <option value="Avanzado">Avanzado</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label
+              for="campoResumen"
+              class="form-label brand-font text-muted small"
+              >Resumen Corto</label
+            >
+            <textarea
+              class="form-control bg-dark text-white border-secondary"
+              id="campoResumen"
+              rows="2"
+              minlength="10"
+              required
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label
+              for="campoContenido"
+              class="form-label brand-font text-muted small"
+              >Paso a Paso / Contenido</label
+            >
+            <textarea
+              class="form-control bg-dark text-white border-secondary"
+              id="campoContenido"
+              rows="5"
+              minlength="20"
+              required
+            ></textarea>
+          </div>
+
+          <button
+            type="submit"
+            class="btn btn-outline-info brand-font text-uppercase"
+          >
+            <i class="bi bi-send me-1"></i> Publicar Guía
+          </button>
+        </form>
+      </div>
+    </main>
+
+    <footer class="gamer-footer py-5 text-light">
+      <div class="container">
+        <div class="row g-4 mb-4">
+          <div class="col-lg-4">
+            <div class="d-flex align-items-center gap-2 mb-3">
+              <img src="img/logo.png" alt="Level-Up" style="max-height: 40px" />
+              <span class="fw-bold brand-font text-info fs-5"
+                >LEVEL-UP GAMER</span
+              >
+            </div>
+            <p class="text-muted small">
+              Tu tienda de videojuegos y hardware en Chile. Diseñada por gamers,
+              para gamers. Descubre la mejor tecnología y accesorios.
+            </p>
+            <div class="d-flex gap-3 fs-5">
+              <a href="#" class="text-info"><i class="bi bi-facebook"></i></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/guias.js"></script>
+  </body>
+</html>
