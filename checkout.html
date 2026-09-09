@@ -379,6 +379,20 @@
 
                             <hr class="border-secondary my-3">
 
+                            <!-- Puntos a ganar por la compra -->
+                            <div class="p-3 mb-3 rounded-3 d-flex align-items-center justify-content-between" style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3);">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-coin text-warning fs-4"></i>
+                                    <div>
+                                        <strong class="text-white small d-block">Puntos LevelUp que ganarás:</strong>
+                                        <span class="text-muted" style="font-size: 0.75rem;">1 punto por cada $1.000 gastados</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-warning text-dark fs-6 fw-bold px-3 py-2 shadow-sm" id="badgePuntosGanar">
+                                    +${Math.floor(totales.total / 1000)} pts
+                                </span>
+                            </div>
+
                             <div class="d-flex justify-content-between align-items-baseline mb-4">
                                 <span class="text-white fw-bold fs-5">Total a Pagar:</span>
                                 <span class="price-tag fs-2">${formatCLP(totales.total)}</span>
@@ -424,7 +438,7 @@
             } else {
                 panel.innerHTML = `
                     <div class="small text-warning">
-                        <i class="bi bi-star-fill me-1"></i>Se descontarán tus puntos LevelUp acumulados como método de pago de esta orden.
+                        <i class="bi bi-star-fill me-1"></i>Se descontarán tus puntos LevelUp acumulados como método de pago de esta orden (10 pts = $100 CLP).
                     </div>
                 `;
             }
@@ -483,21 +497,117 @@
             let metodo = 'Webpay Plus';
             radios.forEach(r => { if (r.checked) metodo = r.value; });
 
-            const totales = calcularTotalesCarrito();
-            const numOrden = '#LVL-' + Math.floor(100000 + Math.random() * 900000);
+            const correoComprador = inputEmail.value.trim().toLowerCase();
+            
+            // Manejo de puntos LevelUp
+            let usuarioActivo = JSON.parse(localStorage.getItem('usuario_activo'));
+            let registros = JSON.parse(localStorage.getItem('registros')) || [];
+            let puntosGanados = 0;
+            let puntosUsados = 0;
 
-            // Cargar datos en el modal de éxito
+            if (usuarioActivo) {
+                let indexUsuario = registros.findIndex(u => u.correo && u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+                let puntosActuales = usuarioActivo.puntosLevelUp || 0;
+
+                // Si elige pagar con puntos
+                if (metodo === 'Puntos LevelUp') {
+                    const puntosNecesarios = Math.ceil(totales.total / 10); // 1 punto vale $10
+                    if (puntosActuales < puntosNecesarios) {
+                        mostrarErrorCampo(document.getElementById('panelDetallePago'), `Saldo insuficiente. Necesitas ${puntosNecesarios} pts y posees ${puntosActuales} pts.`);
+                        mostrarAvisoFlotante(`⚠️ Puntos insuficientes: Requieres ${puntosNecesarios} pts y tienes ${puntosActuales} pts.`, 'warning');
+                        return false;
+                    }
+                    puntosUsados = puntosNecesarios;
+                    usuarioActivo.puntosLevelUp = puntosActuales - puntosNecesarios;
+                } else {
+                    // Si paga con dinero normal, GANA puntos (1 punto por cada $1.000 gastados)
+                    puntosGanados = Math.floor(totales.total / 1000);
+                    usuarioActivo.puntosLevelUp = puntosActuales + puntosGanados;
+                }
+
+                // Actualizamos las bases de datos de sesión y registro
+                localStorage.setItem('usuario_activo', JSON.stringify(usuarioActivo));
+                if (indexUsuario > -1) {
+                    registros[indexUsuario].puntosLevelUp = usuarioActivo.puntosLevelUp;
+                    localStorage.setItem('registros', JSON.stringify(registros));
+                }
+
+                // Actualizar visualmente en navbar si existe
+                if (typeof sincronizarEstadoNavbar === 'function') {
+                    sincronizarEstadoNavbar();
+                }
+            }
+
+            // Registrar compra en el historial de localStorage
+            const nuevaCompra = {
+                idOrden: numOrden,
+                fecha: new Date().toLocaleDateString('es-CL'),
+                correo: correoComprador,
+                nombreComprador: `${inputNombre.value.trim()} ${inputApellido.value.trim()}`,
+                direccionDespacho: `${inputDireccion.value.trim()}, ${inputComuna.value.trim()} (${selectRegion.value})`,
+                metodo: metodo,
+                totalPagado: totales.total,
+                puntosGanados: puntosGanados,
+                puntosUsados: puntosUsados,
+                cantidadItems: totales.totalArticulos,
+                productos: carritoActual
+            };
+
+            let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+            historialCompras.unshift(nuevaCompra);
+            localStorage.setItem('levelup_compras', JSON.stringify(historialCompras));
+
+            // Actualizar datos en el modal de confirmación de compra
             document.getElementById('modalNumeroOrden').textContent = numOrden;
             document.getElementById('modalDestinatario').textContent = `${inputNombre.value.trim()} ${inputApellido.value.trim()} (${inputComuna.value.trim()}, ${selectRegion.value})`;
             document.getElementById('modalTotalPagado').textContent = formatCLP(totales.total);
             document.getElementById('modalMetodoPago').textContent = metodo;
 
-            // Limpiar carrito en LocalStorage
+            const modalPuntosHtml = puntosGanados > 0 
+                ? `<div class="d-flex justify-content-between mb-1"><span class="text-muted small">Puntos Ganados:</span><strong class="text-warning small">+${puntosGanados} pts</strong></div>`
+                : (puntosUsados > 0 ? `<div class="d-flex justify-content-between mb-1"><span class="text-muted small">Puntos Canjeados:</span><strong class="text-danger small">-${puntosUsados} pts</strong></div>` : '');
+            
+            const contDetalleModal = document.querySelector('#modalExitoCompra .modal-body .p-3.bg-dark');
+            if (contDetalleModal) {
+                contDetalleModal.innerHTML = `
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Número de Orden:</span>
+                        <strong class="text-info">${numOrden}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Destinatario:</span>
+                        <span class="text-light small">${inputNombre.value.trim()} ${inputApellido.value.trim()}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Despacho a:</span>
+                        <span class="text-light small text-truncate" style="max-width: 200px;">${inputComuna.value.trim()}, ${selectRegion.value}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Total Pagado:</span>
+                        <strong class="price-tag">${formatCLP(totales.total)}</strong>
+                    </div>
+                    ${modalPuntosHtml}
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Método de Pago:</span>
+                        <span class="text-light small">${metodo}</span>
+                    </div>
+                `;
+            }
+
+            // Vaciar carrito
             vaciarCarrito();
 
-            // Mostrar Modal de confirmación
-            const modal = new bootstrap.Modal(document.getElementById('modalExitoCompra'));
-            modal.show();
+            // Mostrar notificación flotante de éxito
+            if (typeof mostrarAvisoFlotante === 'function') {
+                mostrarAvisoFlotante(`🎉 ¡Pedido ${numOrden} completado con éxito!`, 'success');
+            }
+
+            // Desplegar Modal de éxito
+            const modalEl = document.getElementById('modalExitoCompra');
+            if (modalEl) {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            }
 
             return false;
         }

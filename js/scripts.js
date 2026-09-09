@@ -548,4 +548,247 @@ function cargarResenas() {
     }).join('');
 }
 
+//logica para el perfil con el historial de compras y el detalle de cada orden, se guarda en localStorage
+function cargarHistorialCompras() {
+    const contenedor = document.getElementById('contenedorHistorialCompras');
+    // Solo funciona en el perfil
+    if (!contenedor) return; 
+
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    if (!usuarioActivo) return;
+
+    // Obtener todas las compras registradas
+    const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+    
+    // Filtrar solo las compras que coincidan con el correo del usuario activo (insensible a mayúsculas)
+    const correoActual = (usuarioActivo.correo || '').toLowerCase();
+    const misCompras = todasLasCompras.filter(compra => (compra.correo || '').toLowerCase() === correoActual);
+
+    // Si no tiene compras, dejamos el mensaje de estado vacío que ya está en el HTML
+    if (misCompras.length === 0) {
+        contenedor.classList.add('text-center', 'py-5');
+        contenedor.innerHTML = `
+            <i class="bi bi-bag-x fs-1 text-muted mb-3 d-block"></i>
+            <h5 class="text-white">Aún no tienes compras registradas</h5>
+            <p class="text-muted">Cuando finalices un pedido, aparecerá aquí.</p>
+            <a href="galeria.html" class="btn btn-outline-info mt-2">Ir al Catálogo</a>
+        `;
+        return; 
+    }
+
+    // Si tiene compras, quitamos el centrado del mensaje vacío 
+    contenedor.classList.remove('text-center', 'py-5');
+    let htmlCompras = '<div class="accordion d-flex flex-column gap-3" id="acordeonCompras">';
+    
+    misCompras.forEach((compra, index) => {
+        // Formatear los productos que vienen dentro de esta compra específica
+        const detallesProductos = (compra.productos || []).map(p => `
+            <li class="list-group-item bg-dark text-light border-secondary d-flex justify-content-between align-items-center py-2">
+                <div class="d-flex align-items-center gap-2">
+                    ${p.imagen ? `<img src="${p.imagen}" alt="${p.nombre}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">` : ''}
+                    <div>
+                        <strong class="small d-block text-white">${p.nombre}</strong>
+                        <span class="text-muted small">Cantidad: ${p.cantidad} x ${formatCLP(p.precio)}</span>
+                    </div>
+                </div>
+                <span class="fw-bold price-tag">${formatCLP(p.precio * p.cantidad)}</span>
+            </li>
+        `).join('');
+
+        const badgePuntos = compra.puntosGanados > 0 
+            ? `<span class="badge bg-warning text-dark me-2">+${compra.puntosGanados} pts</span>` 
+            : (compra.puntosUsados > 0 ? `<span class="badge bg-danger text-white me-2">-${compra.puntosUsados} pts</span>` : '');
+
+        // Crear la tarjeta desplegable para la orden
+        htmlCompras += `
+            <div class="accordion-item gamer-card bg-dark border-secondary rounded overflow-hidden">
+                <h2 class="accordion-header" id="heading${index}">
+                    <button class="accordion-button bg-dark text-white collapsed shadow-none p-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${index}" aria-expanded="false" aria-controls="collapse${index}">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center w-100 pe-3 gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-box-seam-fill text-info fs-5"></i>
+                                <span>Orden: <strong class="text-info">${compra.idOrden}</strong></span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                ${badgePuntos}
+                                <span class="price-tag fs-6">${formatCLP(compra.totalPagado)}</span>
+                                <span class="text-muted small ps-2 border-start border-secondary d-none d-md-inline">${compra.fecha}</span>
+                            </div>
+                        </div>
+                    </button>
+                </h2>
+                <div id="collapse${index}" class="accordion-collapse collapse" aria-labelledby="heading${index}" data-bs-parent="#acordeonCompras">
+                    <div class="accordion-body text-light border-top border-secondary p-3 p-md-4">
+                        <div class="row g-2 mb-3 small text-muted">
+                            <div class="col-sm-6">
+                                <span class="d-block"><strong>Fecha de Orden:</strong> ${compra.fecha}</span>
+                                <span class="d-block"><strong>Método de Pago:</strong> ${compra.metodo}</span>
+                            </div>
+                            <div class="col-sm-6 text-sm-end">
+                                <span class="d-block"><strong>Comprador:</strong> ${compra.nombreComprador || usuarioActivo.nombre}</span>
+                                ${compra.direccionDespacho ? `<span class="d-block text-truncate"><strong>Despacho:</strong> ${compra.direccionDespacho}</span>` : ''}
+                            </div>
+                        </div>
+
+                        <h6 class="text-info small fw-bold mb-2">Artículos comprados:</h6>
+                        <ul class="list-group list-group-flush border border-secondary rounded mb-3">
+                            ${detallesProductos}
+                        </ul>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary">
+                            <span class="text-muted small">Estado: <span class="badge bg-success">En preparación / Pagado</span></span>
+                            <div class="text-end">
+                                <span class="me-2 text-muted small">Total pagado:</span>
+                                <strong class="price-tag fs-5">${formatCLP(compra.totalPagado)}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    htmlCompras += '</div>';
+    
+    // Inyectar el HTML construido en el contenedor de la pestaña
+    contenedor.innerHTML = htmlCompras;
+}
+
+// Alternar producto favorito (agregar o quitar)
+function toggleFavorito(idProducto) {
+    productosFavoritos(idProducto);
+}
+
+//productos favoritos
+function productosFavoritos(idProducto) {
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    
+    // Si no se ha iniciado sesión, avisar de iniciar sesion
+    if (!usuarioActivo) {
+        if (typeof mostrarAvisoFlotante === 'function') {
+            mostrarAvisoFlotante("Debes iniciar sesión para guardar productos en favoritos.", "warning");
+        }
+        window.location.href = "login.html";
+        return;
+    }
+
+    let favoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+    const correoActivo = (usuarioActivo.correo || '').toLowerCase();
+    
+    // Buscar si el producto ya está en los favoritos de este usuario
+    const index = favoritos.findIndex(fav => (fav.correo || '').toLowerCase() === correoActivo && fav.idProducto === idProducto);
+
+    if (index > -1) {
+        // Si ya existe, se saca de la lista
+        favoritos.splice(index, 1);
+        if (typeof mostrarAvisoFlotante === 'function') {
+            mostrarAvisoFlotante("Producto eliminado de tus favoritos 💔", "info");
+        }
+    } else {
+        // Si no existe, se agrega
+        favoritos.push({
+            correo: correoActivo,
+            idProducto: idProducto
+        });
+        if (typeof mostrarAvisoFlotante === 'function') {
+            mostrarAvisoFlotante("¡Producto agregado a tus favoritos! ❤️", "success");
+        }
+    }
+
+    // Guardado de los cambios
+    localStorage.setItem('levelup_favoritos', JSON.stringify(favoritos));
+    
+    // Si el usuario hace esto estando dentro del perfil, se recarga la vista al instante
+    if (document.getElementById('contenedorFavoritos')) {
+        cargarFavoritos();
+    }
+}
+
+// Función para pintar los favoritos en la pestaña del Perfil
+function cargarFavoritos() {
+    const contenedor = document.getElementById('contenedorFavoritos');
+    if (!contenedor) return;
+
+    const usuarioActivo = JSON.parse(localStorage.getItem("usuario_activo"));
+    if (!usuarioActivo) return;
+
+    // Obtener todos los favoritos y filtrar solo los de este usuario
+    const todosFavoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+    const misFavoritos = todosFavoritos.filter(fav => fav.correo === usuarioActivo.correo);
+
+    // Si no tiene favoritos, deja el mensaje de "vacío"
+    if (misFavoritos.length === 0) {
+        contenedor.innerHTML = `
+            <div class="text-center py-5 w-100">
+                <i class="bi bi-heartbreak fs-1 text-muted mb-3 d-block"></i>
+                <h5 class="text-white">Tu lista de favoritos está vacía</h5>
+                <p class="text-muted">Explora el catálogo y guarda los productos que más te gusten.</p>
+                <a href="galeria.html" class="btn btn-outline-info mt-2">Explorar Productos</a>
+            </div>
+        `;
+        return;
+    }
+
+    // Si tiene favoritos, se quita el centrado y se dejan las tarjetas
+    contenedor.classList.remove('text-center', 'py-5');
+    let htmlFavoritos = '';
+    
+    misFavoritos.forEach(fav => {
+        // se busca la información completa del producto en products_data
+        const prod = PRODUCTOS_DATA.find(p => p.id === fav.idProducto);
+        
+        if (prod) {
+            htmlFavoritos += `
+                <div class="col-sm-6 col-md-4 mb-3">
+                    <div class="card gamer-card h-100 d-flex flex-column">
+                        <div class="position-relative">
+                            <a href="producto-detalle.html?id=${prod.id}">
+                                <img src="${prod.imagen}" class="card-img-top" alt="${prod.nombre}" style="height: 150px; object-fit: cover;">
+                            </a>
+                            <!-- Botón rojo sobre la imagen para quitar de favoritos -->
+                            <button class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle shadow" onclick="toggleFavorito('${prod.id}')" title="Quitar de favoritos">
+                                <i class="bi bi-heart-fill"></i>
+                            </button>
+                        </div>
+                        <div class="card-body d-flex flex-column p-3">
+                            <h6 class="card-title text-white mb-2 small text-truncate">
+                                <a href="producto-detalle.html?id=${prod.id}" class="text-white text-decoration-none hover-info">${prod.nombre}</a>
+                            </h6>
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="price-tag fs-6">${formatCLP(prod.precio)}</span>
+                                </div>
+                                <button onclick="agregarAlCarrito('${prod.id}', 1)" class="btn btn-outline-primary btn-sm w-100">
+                                    <i class="bi bi-cart-plus me-1"></i>Al Carrito
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    contenedor.innerHTML = htmlFavoritos;
+}
+
+function calcularNivelGamer(puntos) {
+    if (puntos >= 2000) return { nombre: 'Leyenda', color: 'bg-info text-dark', icono: 'bi-gem' };
+    if (puntos >= 500) return { nombre: 'Oro', color: 'bg-warning text-dark', icono: 'bi-trophy-fill' };
+    if (puntos >= 100) return { nombre: 'Plata', color: 'bg-light text-dark', icono: 'bi-controller' };
+    return { nombre: 'Bronce', color: 'bg-secondary', icono: 'bi-joystick' };
+}
+
+//funcion para copiar el codigo de invitacion
+function copiarCodigoReferido() {
+    const lblCodigo = document.getElementById("lblCodigoReferido");
+    if (!lblCodigo) return;
+
+    const codigo = lblCodigo.textContent.trim();
+    navigator.clipboard.writeText(codigo).then(() => {
+        alert(`¡Código ${codigo} copiado al portapapeles! Compártelo con tus amigos.`);
+    }).catch(err => {
+        console.error("Error al copiar: ", err);
+    });
+}
 
