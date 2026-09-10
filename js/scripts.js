@@ -310,9 +310,53 @@ function cargarDatosUsuario() {
         if (document.getElementById("txtApellido")) document.getElementById("txtApellido").value = usuarioActivo.apellido || "";
         if (document.getElementById("txtEmail")) document.getElementById("txtEmail").value = usuarioActivo.correo || "";
 
-        const nombreNav = document.getElementById("nombreNav");
+        const nombreNav = document.getElementById("txtNombreNav") || document.getElementById("txtNombre");
         if (nombreNav) {
             nombreNav.textContent = usuarioActivo.nombre || "Mi cuenta";
+        }
+
+        // Cargar historial de pedidos y productos favoritos en sus respectivas pestañas
+        cargarHistorialCompras();
+        cargarFavoritos();
+
+        // Calcular y mostrar nivel gamer y puntos actualizados
+        const registros = JSON.parse(localStorage.getItem("registros")) || [];
+        const usuarioReal = registros.find(u => u.correo && u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+        const puntosActuales = usuarioReal ? (usuarioReal.puntosLevelUp || 0) : (usuarioActivo.puntosLevelUp || 0);
+        
+        const nivel = calcularNivelGamer(puntosActuales);
+        const badgeNivel = document.getElementById('badgeNivel');
+        if (badgeNivel) {
+            badgeNivel.className = `badge fs-6 ${nivel.color} shadow-sm`;
+            badgeNivel.innerHTML = `<i class="bi ${nivel.icono} me-1"></i> Rango: ${nivel.nombre} (${puntosActuales} pts)`;
+        }
+
+        const navPuntos = document.getElementById('navPuntos');
+        if (navPuntos) {
+            navPuntos.textContent = puntosActuales;
+        }
+
+        // Mostrar código de referido del usuario
+        const lblCodigo = document.getElementById("lblCodigoReferido");
+        if (lblCodigo && usuarioReal) {
+            lblCodigo.textContent = usuarioReal.codigo || "SIN-CODIGO";
+        }
+
+        // Si viene con parámetro ?tab=compras o ?tab=favoritos, activar esa pestaña
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get('tab');
+        if (tabParam === 'compras') {
+            const tabBtn = document.getElementById('v-pills-compras-tab');
+            if (tabBtn) {
+                const tab = new bootstrap.Tab(tabBtn);
+                tab.show();
+            }
+        } else if (tabParam === 'favoritos') {
+            const tabBtn = document.getElementById('v-pills-favoritos-tab');
+            if (tabBtn) {
+                const tab = new bootstrap.Tab(tabBtn);
+                tab.show();
+            }
         }
     } else {
         window.location.href = "login.html";

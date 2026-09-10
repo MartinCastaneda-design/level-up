@@ -119,9 +119,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-top border-secondary justify-content-center">
-                    <a href="index.html" class="btn btn-primary px-4">Volver al Inicio</a>
-                    <a href="galeria.html" class="btn btn-outline-info px-4">Seguir Explorando</a>
+                <div class="modal-footer border-top border-secondary justify-content-center gap-2">
+                    <a href="perfil.html?tab=compras" class="btn btn-outline-info px-3">
+                        <i class="bi bi-receipt me-1"></i>Ver en Mi Historial
+                    </a>
+                    <a href="index.html" class="btn btn-primary px-3">
+                        <i class="bi bi-house-door me-1"></i>Volver al Inicio
+                    </a>
+                    <a href="galeria.html" class="btn btn-outline-light px-3">
+                        <i class="bi bi-controller me-1"></i>Seguir Explorando
+                    </a>
                 </div>
             </div>
         </div>
@@ -497,6 +504,9 @@
             let metodo = 'Webpay Plus';
             radios.forEach(r => { if (r.checked) metodo = r.value; });
 
+            const carritoActual = obtenerCarrito();
+            const totales = calcularTotalesCarrito();
+            const numOrden = '#LVL-' + Math.floor(100000 + Math.random() * 900000);
             const correoComprador = inputEmail.value.trim().toLowerCase();
             
             // Manejo de puntos LevelUp
