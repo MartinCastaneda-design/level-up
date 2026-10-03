@@ -256,20 +256,8 @@ const PRODUCTOS_DATA = [
     }
 ];
 
-function formatCLP(valor) {
-    return new Intl.NumberFormat('es-CL', {
-        style: 'currency',
-        currency: 'CLP',
-        maximumFractionDigits: 0
-    }).format(valor);
-}
-
-function getProductById(id) {
-    return PRODUCTOS_DATA.find(p => p.id === id);
-}
-
 // Reseñas base iniciales por producto
-const RESENAS_BASE = [
+export const RESENAS_BASE = [
     {
         id: 101,
         idProducto: 'JM001',
@@ -353,8 +341,22 @@ const RESENAS_BASE = [
     }
 ];
 
+// Formato de precio en CLP
+export function formatCLP(valor) {
+    return new Intl.NumberFormat('es-CL', {
+        style: 'currency',
+        currency: 'CLP',
+        maximumFractionDigits: 0
+    }).format(valor);
+}
+
+// Obtener producto por ID
+export function getProductById(id) {
+    return PRODUCTOS_DATA.find(p => p.id === id);
+}
+
 // Obtener todas las reseñas combinadas (base + creadas por usuarios en localStorage)
-function obtenerTodasLasResenas() {
+export function obtenerTodasLasResenas() {
     let guardadas = [];
     try {
         guardadas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
@@ -365,7 +367,7 @@ function obtenerTodasLasResenas() {
 }
 
 // Obtener reseñas y métricas reales de un producto
-function getProductReviewsInfo(idProducto) {
+export function getProductReviewsInfo(idProducto) {
     const todas = obtenerTodasLasResenas();
     const resenasProd = todas.filter(r => r.idProducto === idProducto);
     const count = resenasProd.length;
@@ -380,3 +382,7 @@ function getProductReviewsInfo(idProducto) {
         rating: avg
     };
 }
+
+export { PRODUCTOS_DATA };
+
+

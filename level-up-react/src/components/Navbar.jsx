@@ -6,7 +6,7 @@ import logo from '../assets/logo.png';
 
 export const Navbar = () => {
   const { totalArticulos } = useCart();
-  const { usuario, estaAutenticado, logout } = useAuth();
+  const { usuario, estaAutenticado } = useAuth();
   const location = useLocation();
 
   const esRutaActiva = (ruta) => (location.pathname === ruta ? 'active' : '');
@@ -43,19 +43,29 @@ export const Navbar = () => {
               </Link>
             </li>
             <li className="nav-item">
-              <Link className={`nav-link ${esRutaActiva('/ofertas')}`} to="/ofertas">
-                <i className="bi bi-tag me-1"></i>Ofertas
-              </Link>
-            </li>
-            <li className="nav-item">
               <Link className={`nav-link ${esRutaActiva('/opiniones')}`} to="/opiniones">
                 <i className="bi bi-chat-heart me-1"></i>Opiniones
               </Link>
             </li>
+            <li className="nav-item">
+              <Link className={`nav-link ${esRutaActiva('/nosotros')}`} to="/nosotros">
+                <i className="bi bi-people me-1"></i>Nosotros
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className={`nav-link ${esRutaActiva('/blog')}`} to="/blog">
+                <i className="bi bi-newspaper me-1"></i>Blog
+              </Link>
+            </li>
+            <li className="nav-item">
+              <Link className={`nav-link ${esRutaActiva('/guias')}`} to="/guias">
+                <i className="bi bi-book me-1"></i>Comunidad/Guías
+              </Link>
+            </li>
           </ul>
 
-          <div className="d-flex align-items-center gap-3">
-            <Link to="/carrito" className={`btn btn-outline-info position-relative ${esRutaActiva('/carrito')}`}>
+          <div className="d-flex align-items-center me-3">
+            <Link to="/carrito" className="btn btn-outline-info position-relative">
               <i className="bi bi-cart3 fs-5"></i>
               {totalArticulos > 0 && (
                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-count-badge">
@@ -63,53 +73,32 @@ export const Navbar = () => {
                 </span>
               )}
             </Link>
-
-            {estaAutenticado ? (
-              <div className="dropdown">
-                <button
-                  className="btn btn-outline-info dropdown-toggle d-flex align-items-center gap-2"
-                  type="button"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false"
-                >
-                  <i className="bi bi-person-circle"></i>
-                  <span>{usuario.nombre}</span>
-                  {usuario.puntosLevelUp > 0 && (
-                    <span className="badge bg-warning text-dark">{usuario.puntosLevelUp} pts</span>
-                  )}
-                </button>
-                <ul className="dropdown-menu dropdown-menu-dark dropdown-menu-end">
-                  <li>
-                    <Link className="dropdown-item" to="/perfil">
-                      <i className="bi bi-person me-2"></i>Mi Perfil
-                    </Link>
-                  </li>
-                  <li>
-                    <Link className="dropdown-item" to="/admin">
-                      <i className="bi bi-speedometer2 me-2"></i>Panel Admin
-                    </Link>
-                  </li>
-                  <li>
-                    <hr className="dropdown-divider border-secondary" />
-                  </li>
-                  <li>
-                    <button className="dropdown-item text-danger" onClick={logout}>
-                      <i className="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-                    </button>
-                  </li>
-                </ul>
-              </div>
-            ) : (
-              <div className="d-flex align-items-center gap-2">
-                <Link to="/login" className="btn btn-primary px-3">
-                  <i className="bi bi-person me-1"></i>Ingresar
-                </Link>
-                <Link to="/registro" className="btn btn-outline-light px-3">
-                  Registrarse
-                </Link>
-              </div>
-            )}
           </div>
+
+          {estaAutenticado ? (
+            <div id="perfil-container" className="d-flex align-items-center gap-3">
+              <Link to="/perfil" className="btn btn-outline-info d-flex align-items-center gap-2 px-3">
+                <i className="bi bi-person-circle fs-5"></i>
+                <span id="txtNombre">{usuario?.nombre || 'Mi cuenta'}</span>
+              </Link>
+              <div
+                className="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm"
+                title="Tus puntos LevelUp"
+              >
+                <span id="navPuntos" className="fw-bold">{usuario?.puntosLevelUp || 0}</span>
+                <i className="bi bi-coin text-warning"></i>
+              </div>
+            </div>
+          ) : (
+            <div id="autenticacion-buttons" className="d-flex align-items-center gap-2">
+              <Link to="/login" className="btn btn-primary px-3">
+                <i className="bi bi-person me-1"></i>Ingresar
+              </Link>
+              <Link to="/registro" className="btn btn-outline-light px-3">
+                Registrarse
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </nav>
