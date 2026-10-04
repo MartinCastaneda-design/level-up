@@ -1,8 +1,15 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import logo from '../assets/logo.png';
 
 export const Footer = () => {
+  const location = useLocation();
+
+  const authRoutes = ['/Login', '/Register'];
+  if (authRoutes.includes(location.pathname)) {
+    return null;
+  }
+
   return (
     <footer className="gamer-footer py-5 text-light">
       <div className="container">

@@ -9,6 +9,11 @@ export const Navbar = () => {
   const { usuario, estaAutenticado } = useAuth();
   const location = useLocation();
 
+  const authRoutes = ['/Login', '/Register'];
+  if (authRoutes.includes(location.pathname)) {
+    return null;
+  }
+
   const esRutaActiva = (ruta) => (location.pathname === ruta ? 'active' : '');
 
   return (
@@ -91,10 +96,10 @@ export const Navbar = () => {
             </div>
           ) : (
             <div id="autenticacion-buttons" className="d-flex align-items-center gap-2">
-              <Link to="/login" className="btn btn-primary px-3">
+              <Link to="/Login" className="btn btn-primary px-3">
                 <i className="bi bi-person me-1"></i>Ingresar
               </Link>
-              <Link to="/registro" className="btn btn-outline-light px-3">
+              <Link to="/Register" className="btn btn-outline-light px-3">
                 Registrarse
               </Link>
             </div>
@@ -104,3 +109,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+export default Navbar;

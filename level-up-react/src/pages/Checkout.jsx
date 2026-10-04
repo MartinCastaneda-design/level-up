@@ -6,7 +6,7 @@ import { formatCLP } from '../js/products-data';
 
 export const Checkout = () => {
   const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();
-  const { usuario } = useAuth();
+  const { usuario, agregarPuntos, descontarPuntos } = useAuth();
 
   // Estados del Formulario de Envío
   const [nombre, setNombre] = useState(usuario ? usuario.nombre : '');
@@ -42,10 +42,10 @@ export const Checkout = () => {
             Debes estar registrado o haber iniciado sesión con tu cuenta gamer para proceder al pago de tu orden.
           </p>
           <div className="d-flex justify-content-center gap-3">
-            <Link to="/login" className="btn btn-primary btn-lg px-4">
+            <Link to="/Login" className="btn btn-primary btn-lg px-4">
               <i className="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
             </Link>
-            <Link to="/registro" className="btn btn-outline-light btn-lg px-4">
+            <Link to="/Register" className="btn btn-outline-light btn-lg px-4">
               <i className="bi bi-person-plus me-2"></i>Crear Cuenta
             </Link>
           </div>
@@ -89,7 +89,45 @@ export const Checkout = () => {
       return;
     }
 
+    let puntosUsados = 0;
+    let puntosGanados = 0;
+
+    // Lógica condicional de pago
+    if (metodoPago === 'Puntos LevelUp') {
+      const puntosNecesarios = Math.floor(total / 10); // 1 punto equivale a $10 CLP
+      
+      if ((usuario.puntosLevelUp || 0) < puntosNecesarios) {
+        alert(`Saldo insuficiente. Necesitas ${puntosNecesarios} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
+        return; // Detiene la compra instantáneamente
+      }
+      
+      // Ejecutamos el descuento de puntos
+      descontarPuntos(puntosNecesarios);
+      puntosUsados = puntosNecesarios;
+    } else {
+      // Si paga con otro método (Webpay, Transferencia), GANA puntos
+      puntosGanados = Math.floor(total / 1000);
+      agregarPuntos(puntosGanados);
+    }
+    
     const numOrden = '#LVL-' + Math.floor(10000 + Math.random() * 90000);
+    
+    const nuevaCompra = {
+      idOrden: numOrden,
+      fecha: new Date().toLocaleDateString('es-CL'),
+      correo: usuario.correo, 
+      metodo: metodoPago,
+      cantidadItems: carrito.reduce((acc, item) => acc + item.cantidad, 0),
+      totalPagado: total,
+      puntosGanados: puntosGanados, // Si pagó con puntos, esto será 0
+      puntosUsados: puntosUsados,   // Si ganó puntos, esto será 0
+      productos: carrito
+    };
+
+    let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+    historialCompras.unshift(nuevaCompra);
+    localStorage.setItem('levelup_compras', JSON.stringify(historialCompras));
+
     const orden = {
       numOrden,
       destinatario: `${nombre} ${apellido}`,

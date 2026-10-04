@@ -14,6 +14,10 @@ import ProductDetail from './pages/ProductDetail';
 import ProductReviews from './pages/ProductReviews';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import Register from './pages/Register';  
+import Login from './pages/Login';
+import Perfil from './pages/Perfil';
+import Nosotros from './pages/Nosotros';
 
 // Componente placeholder para vistas secundarias adicionales
 const VistaEnConstruccion = ({ titulo, icono = 'bi-tools' }) => (
@@ -48,12 +52,13 @@ export const App = () => {
               <Route path="/opiniones" element={<ProductReviews />} />
               <Route path="/carrito" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-
+              <Route path="/Register" element={<Register />} />
+              <Route path="/Login" element={<Login />} />
+              <Route path="/perfil" element={<Perfil />} />
+              <Route path="/nosotros" element={<Nosotros />} />
+              
               {/* Rutas Adicionales del Diagrama */}
               <Route path="/ofertas" element={<Gallery />} />
-              <Route path="/login" element={<VistaEnConstruccion titulo="Iniciar Sesión" icono="bi-person" />} />
-              <Route path="/registro" element={<VistaEnConstruccion titulo="Registro de Usuario" icono="bi-person-plus" />} />
-              <Route path="/perfil" element={<VistaEnConstruccion titulo="Mi Perfil" icono="bi-person-badge" />} />
               <Route path="/admin" element={<VistaEnConstruccion titulo="Panel Administrativo" icono="bi-speedometer2" />} />
               <Route path="*" element={<VistaEnConstruccion titulo="Página No Encontrada (404)" icono="bi-exclamation-triangle" />} />
             </Routes>

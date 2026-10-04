@@ -61,8 +61,43 @@ export const AuthProvider = ({ children }) => {
     setUsuario((prev) => ({ ...prev, ...nuevosDatos }));
   };
 
+  const agregarPuntos = (puntosGanados) => {
+    if (!usuario) return;
+
+    const nuevosDatos = { puntosLevelUp: (usuario.puntosLevelUp || 0) + puntosGanados };
+    
+    const registros = JSON.parse(localStorage.getItem(CLAVE_REGISTROS)) || [];
+    const index = registros.findIndex((u) => u.correo === usuario.correo);
+    if (index !== -1) {
+      registros[index] = { ...registros[index], ...nuevosDatos };
+      localStorage.setItem(CLAVE_REGISTROS, JSON.stringify(registros));
+    }
+
+    setUsuario((prev) => ({ ...prev, ...nuevosDatos }));
+  };
+
+  const descontarPuntos = (puntosAGastar) => {
+    if (!usuario) return false;
+    
+    if ((usuario.puntosLevelUp || 0) < puntosAGastar) {
+        return false;
+    }
+
+    const nuevosDatos = { puntosLevelUp: usuario.puntosLevelUp - puntosAGastar };
+    
+    const registros = JSON.parse(localStorage.getItem(CLAVE_REGISTROS)) || [];
+    const index = registros.findIndex((u) => u.correo === usuario.correo);
+    if (index !== -1) {
+      registros[index] = { ...registros[index], ...nuevosDatos };
+      localStorage.setItem(CLAVE_REGISTROS, JSON.stringify(registros));
+    }
+
+    setUsuario((prev) => ({ ...prev, ...nuevosDatos }));
+    return true; 
+  };
+
   return (
-    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, logout, actualizarPerfil }}>
+    <AuthContext.Provider value={{ usuario, estaAutenticado: !!usuario, login, logout, actualizarPerfil, agregarPuntos, descontarPuntos }}>
       {children}
     </AuthContext.Provider>
   );
