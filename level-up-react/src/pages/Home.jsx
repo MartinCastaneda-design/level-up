@@ -122,7 +122,7 @@ export const Home = () => {
               <code className="bg-dark text-warning px-2 py-1 rounded">PROMO20</code> al pagar.
             </p>
             <div className="d-flex gap-2">
-              <Link to="/registro" className="btn btn-primary">
+              <Link to="/Register" className="btn btn-primary">
                 Registrarme ahora
               </Link>
             </div>
