@@ -18,6 +18,12 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Perfil from './pages/Perfil';
 import Nosotros from './pages/Nosotros';
+import AdminRespaldo from './pages/AdminRespaldo';
+import AdminUsuario from './pages/AdminUsuario';
+import AdminProducto from './pages/AdminProducto';
+import GuiaCrear from './pages/GuiaCrear';
+import GuiasLista from './pages/GuiasLista';
+import BlogLista from './pages/BlogLista';
 
 // Componente placeholder para vistas secundarias adicionales
 const VistaEnConstruccion = ({ titulo, icono = 'bi-tools' }) => (
@@ -56,11 +62,20 @@ export const App = () => {
               <Route path="/Login" element={<Login />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/nosotros" element={<Nosotros />} />
+              <Route path="/guias" element={<GuiasLista />} />
+              <Route path="/crear-guia" element={<GuiaCrear />} />
+              <Route path="/blog" element={<BlogLista />} />
               
               {/* Rutas Adicionales del Diagrama */}
               <Route path="/ofertas" element={<Gallery />} />
               <Route path="/admin" element={<VistaEnConstruccion titulo="Panel Administrativo" icono="bi-speedometer2" />} />
               <Route path="*" element={<VistaEnConstruccion titulo="Página No Encontrada (404)" icono="bi-exclamation-triangle" />} />
+              <Route path="/AdminRespaldo" element={<AdminRespaldo />} />
+              <Route path="/AdminUsuario" element={<AdminUsuario />} />
+              <Route path="/AdminProducto" element={<AdminProducto />} />
+
+              
+
             </Routes>
             <Footer />
             <WhatsAppButton />
