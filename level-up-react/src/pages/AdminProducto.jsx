@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { PRODUCTOS_DATA } from '../js/products-data';
+import { PRODUCTOS_DATA } from '../data/productsData';
 
 export default function AdminProducto() {
     // 1. Estado para almacenar productos y filtro de búsqueda

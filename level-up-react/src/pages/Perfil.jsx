@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { getProductById, formatCLP } from '../js/products-data';
+import { getProductById } from '../data/productsData';
+import { formatCLP } from '../utils/formatters';
 
 const Perfil = () => {
   const navigate = useNavigate();
