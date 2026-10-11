@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// 1. Importamos las imágenes directamente desde la carpeta assets
 import fondoImg from '../assets/fondo.jpg'; 
 import logoImg from '../assets/logo.png';
 
 const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { login } = useAuth();
 
   const [formData, setFormData] = useState({
     email: '',
@@ -50,22 +51,10 @@ const Login = () => {
       return;
     }
 
-    const usuarios = JSON.parse(localStorage.getItem("registros")) || [];
-    const usuarioEncontrado = usuarios.find(
-      u => u.correo.toLowerCase() === formData.email.trim().toLowerCase() && u.contrasena === formData.contrasena
-    );
+    const resultado = login(formData.email.trim(), formData.contrasena);
 
-    if (usuarioEncontrado) {
-      localStorage.setItem("usuario_activo", JSON.stringify({
-        id: usuarioEncontrado.id,
-        nombre: usuarioEncontrado.nombre,
-        apellido: usuarioEncontrado.apellido,
-        correo: usuarioEncontrado.correo,
-        esBeneficiario: usuarioEncontrado.esBeneficiario,
-        puntosLevelUp: usuarioEncontrado.puntosLevelUp || 0
-      }));
-
-      if (usuarioEncontrado.esBeneficiario) {
+    if (resultado.exito) {
+      if (resultado.usuario.esBeneficiario) {
         localStorage.setItem("levelup_cupon", JSON.stringify({
           codigo: "ESTUDIANTE20",
           porcentaje: 20,
@@ -73,8 +62,8 @@ const Login = () => {
         }));
       }
 
-      setUsuarioExito(usuarioEncontrado.nombre);
-
+      setUsuarioExito(resultado.usuario.nombre);
+      
       setTimeout(() => {
         let redirectUrl = searchParams.get('redirect');
         if (redirectUrl) {
@@ -84,11 +73,10 @@ const Login = () => {
           navigate("/");
         }
       }, 800);
-
     } else {
       setErrores({
         email: "Credenciales incorrectas.",
-        contrasena: "Verifica tu correo y contraseña o regístrate si no tienes cuenta."
+        contrasena: resultado.mensaje || "Verifica tu correo y contraseña o regístrate si no tienes cuenta."
       });
     }
   };
@@ -97,7 +85,6 @@ const Login = () => {
     <div 
       className="auth-page d-flex flex-column justify-content-center align-items-center min-vh-100 m-0"
       style={{
-        // 2. Inyectamos la imagen importada como fondo dinámico
         backgroundImage: `linear-gradient(rgba(10, 12, 15, 0.8), rgba(10, 12, 15, 0.85)), url(${fondoImg})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -109,7 +96,6 @@ const Login = () => {
           
           <div className="text-center mb-3">
             <Link to="/">
-              {/* 3. Reemplazamos la ruta estática por la variable del logo importado */}
               <img src={logoImg} alt="Level-Up Gamer" className="img-fluid" style={{ maxHeight: '80px' }} />
             </Link>
           </div>
@@ -167,7 +153,7 @@ const Login = () => {
             <button type="submit" className="btn btn-primary w-100">Iniciar sesión</button>
           </form>
           
-          <p className="mt-3 text-center">¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link></p>
+          <p className="mt-3 text-center">¿No tienes cuenta? <Link to="/Register">Regístrate aquí</Link></p>
         </section>
       </main>
     </div>

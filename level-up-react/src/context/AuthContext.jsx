@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
         puntosLevelUp: encontrado.puntosLevelUp || 0
       };
       setUsuario(datosSesion);
+      localStorage.setItem(CLAVE_USUARIO, JSON.stringify(datosSesion));
       return { exito: true, usuario: datosSesion };
     }
     return { exito: false, mensaje: 'Credenciales inválidas.' };
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUsuario(null);
+    localStorage.removeItem(CLAVE_USUARIO);
   };
 
   const actualizarPerfil = (nuevosDatos) => {

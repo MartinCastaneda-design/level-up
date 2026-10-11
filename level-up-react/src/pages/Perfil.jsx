@@ -1,23 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { getProductById, formatCLP } from '../js/products-data';
 
 const Perfil = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // 1. Estados para el usuario y la interfaz
   const [usuarioActivo, setUsuarioActivo] = useState(null);
-  const [usuarioDetalles, setUsuarioDetalles] = useState(null); // Datos completos del localStorage
+  const [usuarioDetalles, setUsuarioDetalles] = useState(null);
   const [puntos, setPuntos] = useState(0);
   const [nivel, setNivel] = useState({ nombre: 'Calculando...', color: 'bg-secondary', icono: '' });
-  const [tabActiva, setTabActiva] = useState('datos'); // 'datos', 'compras', 'favoritos'
+  const [tabActiva, setTabActiva] = useState('datos'); 
 
-  // 2. Estados para los datos de las pestañas
   const [compras, setCompras] = useState([]);
   const [favoritos, setFavoritos] = useState([]);
-  const [productosData, setProductosData] = useState([]); // Simula products-data.js
+  const [productosData, setProductosData] = useState([]); 
 
-  // 3. Estados para el formulario de actualización
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -27,7 +25,6 @@ const Perfil = () => {
   const [errores, setErrores] = useState({});
   const [mensajeExito, setMensajeExito] = useState(null);
 
-  // Efecto inicial: Cargar datos al montar el componente
   useEffect(() => {
     const userString = localStorage.getItem("usuario_activo");
     if (!userString) {
@@ -38,7 +35,6 @@ const Perfil = () => {
     const user = JSON.parse(userString);
     setUsuarioActivo(user);
 
-    // Cargar registros completos para obtener puntos y código
     const registros = JSON.parse(localStorage.getItem("registros")) || [];
     const userDb = registros.find(u => u.correo.toLowerCase() === user.correo.toLowerCase());
     
@@ -52,22 +48,24 @@ const Perfil = () => {
         nombre: userDb.nombre || '',
         apellido: userDb.apellido || '',
         email: userDb.correo || '',
-        contrasena: '' // No pre-llenar contraseña por seguridad
+        contrasena: '' 
       });
     }
 
-    // Cargar compras
     const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
     const misCompras = todasLasCompras.filter(compra => compra.correo.toLowerCase() === user.correo.toLowerCase());
     setCompras(misCompras);
 
-    // Cargar favoritos (Necesitarás tener PRODUCTOS_DATA disponible en React)
     const todosFavoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
-    const misFavoritos = todosFavoritos.filter(fav => fav.correo === user.correo);
-    // Asumimos que tienes una forma de importar PRODUCTOS_DATA o lo pasas como prop/context
-    // setFavoritos(misFavoritosConDetalle);
+    const misFavoritosIds = todosFavoritos.filter(fav => fav.correo.toLowerCase() === user.correo.toLowerCase());
+    
+    const misFavoritosConDetalle = misFavoritosIds.map(fav => {
+      const producto = getProductById(fav.idProducto);
+      return producto ? producto : null;
+    }).filter(prod => prod !== null); 
 
-    // Revisar si viene un parámetro en la URL para cambiar de tab (ej: ?tab=compras)
+    setFavoritos(misFavoritosConDetalle);
+
     const tabParam = searchParams.get('tab');
     if (tabParam === 'compras' || tabParam === 'favoritos') {
       setTabActiva(tabParam);
@@ -95,7 +93,6 @@ const Perfil = () => {
     }
   };
 
-  // Manejador del formulario de actualización
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     const key = id.replace('txt', '').toLowerCase();
@@ -138,7 +135,6 @@ const Perfil = () => {
     setTimeout(() => setMensajeExito(null), 3000);
   };
 
-  // Formateador de moneda
   const formatCLP = (valor) => {
     return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(valor);
   };
@@ -158,7 +154,6 @@ const Perfil = () => {
       </div>
 
       <div className="row g-4 align-items-start">
-        {/* Columna Izquierda: Menú Lateral controlado por Estado React */}
         <div className="col-md-4 col-lg-3 sticky-md-top" style={{ top: '100px' }}>
           <div className="nav flex-column nav-pills gamer-card p-3 gap-2">
             <button 
@@ -182,10 +177,8 @@ const Perfil = () => {
           </div>
         </div>
 
-        {/* Columna Derecha: Contenido Renderizado Condicionalmente */}
         <div className="col-md-8 col-lg-9">
           
-          {/* VISTA: DATOS PERSONALES */}
           {tabActiva === 'datos' && (
             <div className="card gamer-card p-4">
               <div className="d-flex justify-content-between align-items-center mb-4 border-bottom border-secondary pb-2">
@@ -244,30 +237,115 @@ const Perfil = () => {
             </div>
           )}
 
-          {/* VISTA: COMPRAS */}
+          {/* VISTA: COMPRAS CON ACORDEÓN BOOTSTRAP */}
           {tabActiva === 'compras' && (
-            <div className="card gamer-card p-4">
-              <h3 className="h4 text-info mb-4 border-bottom border-secondary pb-2"><i className="bi bi-receipt me-2"></i>Historial de Compras</h3>
+            <div className="card bg-dark border-secondary p-4 shadow">
+              <div className="d-flex align-items-center gap-2 mb-4 border-bottom border-secondary pb-3">
+                <i className="bi bi-receipt fs-4 text-info"></i>
+                <h3 className="mb-0 text-info brand-font">Historial de Compras</h3>
+              </div>
               
               {compras.length === 0 ? (
                 <div className="text-center py-5">
                   <i className="bi bi-bag-x fs-1 text-muted mb-3 d-block"></i>
                   <h5 className="text-white">Aún no tienes compras registradas</h5>
                   <p className="text-muted">Cuando finalices un pedido, aparecerá aquí.</p>
-                  <Link to="/galeria" className="btn btn-outline-info mt-2">Ir al Catálogo</Link>
+                  <Link to="/catalogo" className="btn btn-outline-info mt-2">Ir al Catálogo</Link>
                 </div>
               ) : (
-                <div className="accordion d-flex flex-column gap-3">
+                <div className="accordion accordion-flush" id="accordionHistorial">
                   {compras.map((compra, index) => (
-                    <div key={index} className="accordion-item gamer-card bg-dark border-secondary rounded overflow-hidden">
-                      {/* Aquí iría la estructura del acordeón de compras traducida a JSX */}
-                      <div className="p-3 border-bottom border-secondary d-flex justify-content-between">
-                         <span className="text-info fw-bold">Orden: {compra.idOrden}</span>
-                         <span className="text-white">{formatCLP(compra.totalPagado)}</span>
-                      </div>
-                      <div className="p-3 text-muted small">
-                         Fecha: {compra.fecha} <br/>
-                         Artículos: {compra.cantidadItems}
+                    <div className="accordion-item bg-dark border-secondary text-white" key={compra.idOrden || index}>
+                      
+                        <h2 className="accordion-header" id={`heading-${index}`}>
+                        <button
+                          className="accordion-button collapsed bg-dark text-white shadow-none border-bottom border-secondary p-3"
+                          type="button"
+                          data-bs-toggle="collapse"
+                          data-bs-target={`#collapse-${index}`}
+                          aria-expanded="false"
+                          aria-controls={`collapse-${index}`}
+                        >
+                          <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                            <div className="d-flex align-items-center gap-2">
+                              <i className="bi bi-box-seam fs-5 text-info"></i>
+                              <span className="fs-5">Orden: <span className="text-info fw-bold">#{compra.idOrden || `LVL-${1000 + index}`}</span></span>
+                            </div>
+                            
+                            <div className="d-flex align-items-center gap-3 d-none d-md-flex">
+                              {/* Calcula los puntos dinámicamente si no vienen en la compra (ej. 5% de la compra) */}
+                              <span className="badge bg-warning text-dark px-2 py-1 fs-6">+{compra.puntosGanados || Math.floor(compra.totalPagado * 0.05)} pts</span>
+                              <span className="text-success fw-bold fs-5">{formatCLP(compra.totalPagado)}</span>
+                              <span className="text-light">{compra.fecha}</span>
+                            </div>
+                          </div>
+                        </button>
+                      </h2>
+
+                      <div
+                        id={`collapse-${index}`}
+                        className="accordion-collapse collapse"
+                        aria-labelledby={`heading-${index}`}
+                        data-bs-parent="#accordionHistorial"
+                      >
+                        <div className="accordion-body pt-4">
+                          
+                          <div className="row mb-4 text-light small">
+                            <div className="col-md-6">
+                              <div><strong>Fecha de Orden:</strong> {compra.fecha}</div>
+                              <div><strong>Método de Pago:</strong> {compra.metodoPago || 'Webpay Plus (Débito/Crédito)'}</div>
+                            </div>
+                            <div className="col-md-6 text-md-end mt-3 mt-md-0">
+                              <div><strong>Comprador:</strong> {compra.nombreComprador || `${usuarioActivo.nombre} ${usuarioActivo.apellido}`}</div>
+                              <div><strong>Despacho:</strong> {compra.direccionDespacho || 'Envío estándar'}</div>
+                            </div>
+                          </div>
+
+                          <h6 className="text-info mb-3">Artículos comprados:</h6>
+                          
+                          {compra.productos && compra.productos.length > 0 ? (
+                            compra.productos.map((producto, idx) => (
+                              <div className="card bg-transparent border-secondary text-white mb-2" key={idx}>
+                                <div className="card-body p-2 d-flex justify-content-between align-items-center">
+                                  <div className="d-flex align-items-center gap-3">
+                                    {producto.imagen && (
+                                      <img 
+                                        src={producto.imagen} 
+                                        alt={producto.nombre} 
+                                        className="rounded" 
+                                        style={{ width: '50px', height: '50px', objectFit: 'cover' }} 
+                                      />
+                                    )}
+                                    <div>
+                                      <div className="fw-bold">{producto.nombre}</div>
+                                      <div className="small text-muted">Cantidad: {producto.cantidad} x {formatCLP(producto.precio)}</div>
+                                    </div>
+                                  </div>
+                                  <div className="text-success fw-bold">
+                                    {formatCLP(producto.cantidad * producto.precio)}
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-muted small mb-3 border border-secondary p-3 rounded">
+                              <i className="bi bi-info-circle me-2"></i>
+                              Resumen de compra: <strong>{compra.cantidadItems} artículo(s)</strong>. Los detalles específicos no fueron guardados en esta versión del historial.
+                            </div>
+                          )}
+
+                          <div className="d-flex justify-content-between align-items-center mt-4 border-top border-secondary pt-3">
+                            <div>
+                              <span className="text-light me-2">Estado:</span>
+                              <span className="badge bg-success">{compra.estado || 'En preparación / Pagado'}</span>
+                            </div>
+                            <div className="fs-5">
+                              <span className="text-light me-2">Total pagado:</span>
+                              <span className="text-info fw-bold">{formatCLP(compra.totalPagado)}</span>
+                            </div>
+                          </div>
+
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -276,16 +354,63 @@ const Perfil = () => {
             </div>
           )}
 
-          {/* VISTA: FAVORITOS */}
+          {/* vista de favoritos */}
+
           {tabActiva === 'favoritos' && (
             <div className="card gamer-card p-4">
-              <h3 className="h4 text-info mb-4 border-bottom border-secondary pb-2"><i className="bi bi-heart me-2"></i>Mis Favoritos</h3>
-              <div className="text-center py-5">
-                 {/* La lógica de favoritos completa requiere importar tu array de productos */}
-                  <i className="bi bi-heartbreak fs-1 text-muted mb-3 d-block"></i>
-                  <h5 className="text-white">Funcionalidad en construcción</h5>
-                  <p className="text-muted">Para renderizar favoritos, asegúrate de importar PRODUCTOS_DATA en React.</p>
+              <div className="d-flex align-items-center gap-2 mb-4 border-bottom border-secondary pb-3">
+                <i className="bi bi-heart-fill fs-4 text-danger"></i>
+                <h3 className="mb-0 text-info brand-font">Mis Favoritos</h3>
               </div>
+              
+              {favoritos.length === 0 ? (
+                <div className="text-center py-5">
+                  <i className="bi bi-heartbreak fs-1 text-muted mb-3 d-block"></i>
+                  <h5 className="text-white">Aún no tienes productos favoritos</h5>
+                  <p className="text-muted">Explora nuestro catálogo y guarda los artículos que más te gusten.</p>
+                  <Link to="/catalogo" className="btn btn-outline-info mt-2">Explorar Catálogo</Link>
+                </div>
+              ) : (
+                <div className="row g-3">
+                  {favoritos.map((producto, index) => (
+                    <div className="col-md-6 col-lg-4" key={index}>
+                      <div className="card h-100 bg-dark border-secondary">
+                        <img 
+                          src={producto.imagen} 
+                          className="card-img-top p-2 rounded" 
+                          alt={producto.nombre}
+                          style={{ height: '180px', objectFit: 'cover' }}
+                        />
+                        <div className="card-body d-flex flex-column text-white">
+                          <h6 className="card-title text-truncate" title={producto.nombre}>{producto.nombre}</h6>
+                          <div className="d-flex justify-content-between align-items-center mt-auto">
+                            <span className="text-success fw-bold">{formatCLP(producto.precio)}</span>
+                            <span className="badge bg-secondary text-light">{producto.categoria}</span>
+                          </div>
+                        </div>
+                        <div className="card-footer bg-transparent border-secondary d-flex gap-2 p-2">
+                          <Link to={`/producto/${producto.id}`} className="btn btn-sm btn-info flex-grow-1">
+                            <i className="bi bi-eye"></i> Ver
+                          </Link>
+                          <button 
+                            className="btn btn-sm btn-outline-danger" 
+                            title="Eliminar de favoritos"
+                            onClick={() => {
+                              const nuevosFavs = JSON.parse(localStorage.getItem('levelup_favoritos')).filter(
+                                f => !(f.correo === usuarioActivo.correo && f.idProducto === producto.id)
+                              );
+                              localStorage.setItem('levelup_favoritos', JSON.stringify(nuevosFavs));
+                              setFavoritos(favoritos.filter(p => p.id !== producto.id)); // Actualiza la vista
+                            }}
+                          >
+                            <i className="bi bi-trash"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

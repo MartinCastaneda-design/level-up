@@ -115,13 +115,21 @@ export const Checkout = () => {
     const nuevaCompra = {
       idOrden: numOrden,
       fecha: new Date().toLocaleDateString('es-CL'),
-      correo: usuario.correo, 
+      correo: usuario.correo,
+      nombreComprador: `${nombre} ${apellido}`,
+      direccionComprador: `${direccion}, ${comuna}, ${region}`, 
       metodo: metodoPago,
       cantidadItems: carrito.reduce((acc, item) => acc + item.cantidad, 0),
       totalPagado: total,
-      puntosGanados: puntosGanados, // Si pagó con puntos, esto será 0
-      puntosUsados: puntosUsados,   // Si ganó puntos, esto será 0
-      productos: carrito
+      puntosGanados: puntosGanados, 
+      puntosUsados: puntosUsados, 
+      estado: 'En preparación / Pagado',  
+      productos: carrito.map(item => ({
+        nombre: item.nombre,
+        precio: item.precio,
+        cantidad: item.cantidad,
+        imagen: item.imagen
+      }))
     };
 
     let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
