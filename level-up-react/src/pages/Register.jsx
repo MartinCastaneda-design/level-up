@@ -181,7 +181,7 @@ const Register = () => {
             
             <button type="submit" className="btn btn-primary w-100">Hecho</button>
           </form>
-          <p className="mt-3 text-center">Ya tienes cuenta? <Link to="/login">Inicia sesión</Link></p>
+          <p className="mt-3 text-center">Ya tienes cuenta? <Link to="/Login">Inicia sesión</Link></p>
         </section>
       </main>
     </div>
