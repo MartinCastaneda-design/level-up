@@ -14,10 +14,11 @@ export const ProductDetail = () => {
   const [cantidad, setCantidad] = useState(1);
   const [avisoFlotante, setAvisoFlotante] = useState(null);
 
-  // Estados de formulario de reseña local
   const [calificacionDetalle, setCalificacionDetalle] = useState(5);
   const [comentarioDetalle, setComentarioDetalle] = useState('');
   const [resenasProducto, setResenasProducto] = useState([]);
+
+  const [esFavorito, setEsFavorito] = useState(false);
 
   const idProducto = id || 'CO001';
   const producto = getProductById(idProducto);
@@ -34,9 +35,41 @@ export const ProductDetail = () => {
     window.scrollTo(0, 0);
   }, [idProducto]);
 
+  useEffect(() => {
+    if (usuario && producto) {
+      const favoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+      const existe = favoritos.some(fav => fav.correo === usuario.correo && fav.idProducto === producto.id);
+      setEsFavorito(existe);
+    } else {
+      setEsFavorito(false);
+    }
+  }, [usuario, producto]);
+
   const mostrarAviso = (mensaje, tipo = 'info') => {
     setAvisoFlotante({ mensaje, tipo });
     setTimeout(() => setAvisoFlotante(null), 3000);
+  };
+
+  const toggleFavorito = () => {
+    if (!usuario) {
+      mostrarAviso("¡Debes iniciar sesión para guardar favoritos!", "warning");
+      return;
+    }
+
+    let favoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
+    const index = favoritos.findIndex(fav => fav.correo === usuario.correo && fav.idProducto === producto.id);
+
+    if (index === -1) {
+      favoritos.push({ correo: usuario.correo, idProducto: producto.id });
+      setEsFavorito(true);
+      mostrarAviso("¡Agregado a tus favoritos!", "success");
+    } else {
+      favoritos.splice(index, 1);
+      setEsFavorito(false);
+      mostrarAviso("Producto eliminado de favoritos.", "info");
+    }
+    
+    localStorage.setItem('levelup_favoritos', JSON.stringify(favoritos));
   };
 
   if (!producto) {
@@ -56,7 +89,6 @@ export const ProductDetail = () => {
     );
   }
 
-  // Stock y reseñas
   const revInfo = (typeof getProductReviewsInfo === 'function')
     ? getProductReviewsInfo(producto.id)
     : { rating: producto.rating || 5, count: producto.numReviews || 0 };
@@ -159,7 +191,6 @@ export const ProductDetail = () => {
 
   return (
     <main className="container my-5 flex-grow-1">
-      {/* Aviso Flotante */}
       {avisoFlotante && (
         <div
           className={`alert alert-${avisoFlotante.tipo} position-fixed top-0 end-0 m-4 shadow-lg`}
@@ -169,7 +200,6 @@ export const ProductDetail = () => {
         </div>
       )}
 
-      {/* Migas de pan (Breadcrumbs) */}
       <nav aria-label="breadcrumb" className="mb-4">
         <ol className="breadcrumb">
           <li className="breadcrumb-item">
@@ -184,12 +214,9 @@ export const ProductDetail = () => {
         </ol>
       </nav>
 
-      {/* Detalle del Producto Principal en 2 Columnas idéntico a producto-detalle.html */}
       <div id="contenedorDetalleProducto">
         <div className="row g-4 align-items-stretch">
-          {/* Columna Izquierda: Imagen Principal + Ficha Técnica compacta/cuadrada debajo */}
           <div className="col-lg-6 d-flex flex-column gap-4">
-            {/* Tarjeta de Imagen del Producto */}
             <div className="card gamer-card p-3 p-md-4 text-center">
               <div className="position-relative overflow-hidden rounded-3 mb-3">
                 <img
@@ -210,7 +237,6 @@ export const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Ficha Técnica y Especificaciones */}
             <div className="card gamer-card p-4 flex-grow-1">
               <div className="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom border-secondary">
                 <i className="bi bi-cpu-fill text-info fs-5"></i>
@@ -231,7 +257,6 @@ export const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Columna Derecha: Información extendida, Descripción y Compra */}
           <div className="col-lg-6 d-flex">
             <div className="card gamer-card p-4 p-md-5 w-100 d-flex flex-column justify-content-between">
               <div>
@@ -284,7 +309,6 @@ export const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Selector de Cantidad y Botones de Acción */}
               <div className="pt-4 border-top border-secondary mt-auto">
                 <div className="row g-3 align-items-center mb-3">
                   <div className="col-auto">
@@ -315,9 +339,16 @@ export const ProductDetail = () => {
                   <button id="btnComprarAhora" className="btn btn-outline-info py-2" onClick={handleComprarAhora}>
                     <i className="bi bi-lightning-charge-fill me-1"></i>Comprar Ahora
                   </button>
+                  
+                  <button 
+                    className={`btn py-2 fw-bold ${esFavorito ? 'btn-outline-danger' : 'btn-outline-secondary text-white'}`} 
+                    onClick={toggleFavorito}
+                  >
+                    <i className={`bi ${esFavorito ? 'bi-heart-fill' : 'bi-heart'} me-2`}></i>
+                    {esFavorito ? 'Quitar de Favoritos' : 'Agregar a Favoritos'}
+                  </button>
                 </div>
 
-                {/* Compartir en Redes Sociales */}
                 <div className="d-flex align-items-center justify-content-between pt-3 border-top border-secondary text-muted small">
                   <span>Compartir producto:</span>
                   <div className="d-flex gap-2">
@@ -341,7 +372,6 @@ export const ProductDetail = () => {
         </div>
       </div>
 
-      {/* Sección de Reseñas del Producto */}
       <section className="mt-5 pt-4 border-top border-secondary" id="seccionResenasProducto">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
           <div>
@@ -353,7 +383,6 @@ export const ProductDetail = () => {
         </div>
 
         <div className="row g-4">
-          {/* Columna: Formulario para Dejar Reseña */}
           <div className="col-lg-4">
             <div className="card gamer-card p-4 sticky-top" style={{ top: '90px' }}>
               <h5 className="h6 text-info mb-3"><i className="bi bi-pencil-square me-2"></i>Escribir una Opinión</h5>
@@ -393,7 +422,6 @@ export const ProductDetail = () => {
             </div>
           </div>
 
-          {/* Columna: Listado de Reseñas */}
           <div className="col-lg-8">
             <div id="listaResenasDetalle" className="d-flex flex-column gap-3">
               {resenasProducto.length > 0 ? (
@@ -418,7 +446,6 @@ export const ProductDetail = () => {
         </div>
       </section>
 
-      {/* Productos Relacionados */}
       <section className="mt-5 pt-4 border-top border-secondary">
         <div className="d-flex justify-content-between align-items-center mb-4">
           <h3 className="h4 mb-0">🎮 También te podría interesar</h3>
