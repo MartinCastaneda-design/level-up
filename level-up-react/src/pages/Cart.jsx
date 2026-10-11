@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { formatCLP } from '../js/products-data';
+import { formatCLP } from '../utils/formatters';
 
 export const Cart = () => {
   const {

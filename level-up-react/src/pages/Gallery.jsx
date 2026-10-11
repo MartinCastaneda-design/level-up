@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PRODUCTOS_DATA } from '../js/products-data';
+import { PRODUCTOS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
 
 export const Gallery = () => {

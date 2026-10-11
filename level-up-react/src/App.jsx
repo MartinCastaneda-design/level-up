@@ -5,7 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { WhatsAppButton } from './components/WhatsAppButton';
-import './css/estilos.css';
+import './styles/index.css';
 
 // Importación de Páginas
 import Home from './pages/Home';

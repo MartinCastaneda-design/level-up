@@ -1,0 +1,40 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
+
+:root {
+  /* Color de fondo principal oscuro de la página web */
+  --bg-dark: #0a0c0f;
+  /* Color de fondo para las tarjetas de productos y secciones */
+  --card-bg: #14181f;
+  /* Color de los bordes para estructurar y separar secciones/tarjetas */
+  --card-border: #222a36;
+  /* Color de acento cian brillante representativo de la temática gamer */
+  --accent-cyan: #00d2d3;
+  /* Color de acento azul secundario para botones y degradados */
+  --accent-blue: #0d6efd;
+  /* Color de texto principal claro de alto contraste */
+  --text-main: #f8f9fa;
+  /* Color gris claro suave para textos secundarios, subtítulos y descripciones legibles */
+  --text-muted: #cbd5e1;
+}
+
+/* Sobrescribe la clase de texto secundario (.text-muted) de Bootstrap para legibilidad */
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* Configuración global para el cuerpo */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Roboto', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Títulos con tipografía futurista Orbitron */
+h1, h2, h3, h4, h5, h6, .brand-font {
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 0.5px;
+}

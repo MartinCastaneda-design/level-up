@@ -1,0 +1,108 @@
+/* Tarjetas gamer interactivas */
+.gamer-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  color: var(--text-main);
+}
+
+.gamer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 210, 211, 0.2);
+  border-color: var(--accent-cyan);
+}
+
+.gamer-card .card-text {
+  color: var(--text-muted);
+}
+
+/* Banner Hero Principal */
+.hero-banner {
+  background: linear-gradient(135deg, rgba(0, 139, 139, 0.2) 0%, rgba(13, 110, 253, 0.2) 100%), #0d1117;
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  overflow: hidden;
+}
+
+/* Badges e insignias */
+.badge-category {
+  background-color: rgba(0, 210, 211, 0.15);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 210, 211, 0.4);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+  letter-spacing: 0.3px;
+}
+
+.badge-discount {
+  background: linear-gradient(135deg, #ff4757, #ff6b81);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.8rem;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.badge-stock {
+  background-color: rgba(46, 204, 113, 0.18);
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.5);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+.badge-stock-low {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: #f39c12;
+  border: 1px solid rgba(243, 156, 18, 0.6);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+.badge-stock-out {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #ff6b6b;
+  border: 1px solid rgba(231, 76, 60, 0.6);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.35em 0.65em;
+  border-radius: 6px;
+}
+
+/* Etiqueta de precio formateado */
+.price-tag {
+  color: #20b2aa;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+}
+
+/* Mensajes de error y validación */
+.invalid-feedback-custom {
+  font-size: 0.85rem;
+  color: #ff6b6b;
+  font-weight: 500;
+}
+
+.is-invalid {
+  border-color: #ff4757 !important;
+  box-shadow: 0 0 0 0.2rem rgba(255, 71, 87, 0.25) !important;
+}
+
+/* Auth Cards */
+.auth-page .card {
+  background-color: rgba(20, 24, 31, 0.92);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+  color: var(--text-main);
+}

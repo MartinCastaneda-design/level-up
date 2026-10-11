@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PRODUCTOS_DATA, obtenerTodasLasResenas } from '../js/products-data';
+import { PRODUCTOS_DATA, obtenerTodasLasResenas } from '../data/productsData';
 import { useAuth } from '../context/AuthContext';
 
 export const ProductReviews = () => {

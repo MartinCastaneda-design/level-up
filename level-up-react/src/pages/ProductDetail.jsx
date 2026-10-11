@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getProductById, formatCLP, PRODUCTOS_DATA, getProductReviewsInfo, obtenerTodasLasResenas } from '../js/products-data';
+import { getProductById, PRODUCTOS_DATA, getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
+import { formatCLP } from '../utils/formatters';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ProductCard } from '../components/ProductCard';

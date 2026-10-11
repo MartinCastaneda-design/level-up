@@ -1,7 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { formatCLP, getProductReviewsInfo } from '../js/products-data';
+import { getProductReviewsInfo } from '../data/productsData';
+import { formatCLP } from '../utils/formatters';
 
 export const ProductCard = ({ producto }) => {
   const { agregarAlCarrito } = useCart();

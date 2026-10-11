@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { formatCLP } from '../js/products-data';
+import { formatCLP } from '../utils/formatters';
 
 export const Checkout = () => {
   const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();

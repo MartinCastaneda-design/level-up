@@ -1,0 +1,4 @@
+/* Índice central de estilos modulares de Level-Up Gamer */
+@import './variables.css';
+@import './layout.css';
+@import './components.css';
