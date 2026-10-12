@@ -30,7 +30,7 @@ export default function AdminUsuario() {
   // 3. Cambiar Rol (Cliente <-> Admin)
   const toggleRol = (email) => {
     const nuevos = usuarios.map(u => {
-      if (u.email === email) {
+      if (u.correo === email) {
         const nuevoRol = u.rol === 'admin' ? 'cliente' : 'admin';
         return { ...u, rol: nuevoRol };
       }
@@ -42,7 +42,7 @@ export default function AdminUsuario() {
   // 4. Cambiar Estado (Activo <-> Suspendido)
   const toggleEstado = (email) => {
     const nuevos = usuarios.map(u => {
-      if (u.email === email) {
+      if (u.correo === email) {
         const nuevoEstado = u.estado === 'suspendido' ? 'activo' : 'suspendido';
         return { ...u, estado: nuevoEstado };
       }
@@ -54,7 +54,7 @@ export default function AdminUsuario() {
   // 5. Eliminar usuario
   const eliminarUsuario = (email) => {
     if (window.confirm(`¿Seguro que deseas eliminar al usuario ${email}?`)) {
-      const nuevos = usuarios.filter(u => u.email !== email);
+      const nuevos = usuarios.filter(u => u.correo !== email);
       guardarUsuarios(nuevos);
     }
   };
@@ -62,7 +62,7 @@ export default function AdminUsuario() {
   // Filtrado de usuarios según la caja de búsqueda
   const usuariosFiltrados = usuarios.filter(u =>
     (u.nombre && u.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
-    (u.email && u.email.toLowerCase().includes(busqueda.toLowerCase()))
+    (u.correo && u.correo.toLowerCase().includes(busqueda.toLowerCase()))
   );
 
   return (
@@ -108,9 +108,9 @@ export default function AdminUsuario() {
               </tr>
             ) : (
               usuariosFiltrados.map((u, index) => (
-                <tr key={u.email || index}>
+                <tr key={u.correo || index}>
                   <td>{u.nombre || "Sin Nombre"}</td>
-                  <td>{u.email}</td>
+                  <td>{u.correo}</td>
                   <td>
                     <span className={`badge ${u.rol === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`}>
                       {u.rol ? u.rol.toUpperCase() : 'CLIENTE'}
@@ -125,21 +125,21 @@ export default function AdminUsuario() {
                     <div className="d-flex gap-2">
                       <button
                         className="btn btn-sm btn-outline-info"
-                        onClick={() => toggleRol(u.email)}
+                        onClick={() => toggleRol(u.correo)}
                         title="Cambiar rol"
                       >
                         <i className="bi bi-person-gear"></i>
                       </button>
                       <button
                         className="btn btn-sm btn-outline-warning"
-                        onClick={() => toggleEstado(u.email)}
+                        onClick={() => toggleEstado(u.correo)}
                         title="Activar / Suspender"
                       >
                         <i className="bi bi-slash-circle"></i>
                       </button>
                       <button
                         className="btn btn-sm btn-outline-danger"
-                        onClick={() => eliminarUsuario(u.email)}
+                        onClick={() => eliminarUsuario(u.correo)}
                         title="Eliminar usuario"
                       >
                         <i className="bi bi-trash"></i>
