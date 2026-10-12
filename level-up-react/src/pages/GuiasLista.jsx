@@ -112,7 +112,7 @@ export default function GuiasLista() {
                 </div>
 
                 <Link
-                    to="/guia-crear.html"
+                    to="/crear-guia"
                     className="btn btn-primary"
                 >
                     Publicar Guía
