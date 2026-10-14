@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { formatCLP } from '../utils/formatters';
+import { QuantitySelector } from '../components/QuantitySelector';
+import { OrderSummary } from '../components/OrderSummary';
 
 export const Cart = () => {
   const {
@@ -136,29 +138,13 @@ export const Cart = () => {
                           <span className="text-light">{formatCLP(item.precio)}</span>
                         </td>
                         <td className="align-middle" style={{ width: '140px' }}>
-                          <div className="input-group input-group-sm">
-                            <button
-                              className="btn btn-outline-secondary text-white"
-                              type="button"
-                              onClick={() => actualizarCantidad(item.id, item.cantidad - 1)}
-                            >
-                              -
-                            </button>
-                            <input
-                              type="number"
-                              className="form-control bg-dark border-secondary text-light text-center fw-bold px-1"
-                              value={item.cantidad}
-                              min="1"
-                              onChange={(e) => actualizarCantidad(item.id, e.target.value)}
-                            />
-                            <button
-                              className="btn btn-outline-secondary text-white"
-                              type="button"
-                              onClick={() => actualizarCantidad(item.id, item.cantidad + 1)}
-                            >
-                              +
-                            </button>
-                          </div>
+                          <QuantitySelector
+                            cantidad={item.cantidad}
+                            stock={item.stock || 99}
+                            onDecrementar={() => actualizarCantidad(item.id, item.cantidad - 1)}
+                            onIncrementar={() => actualizarCantidad(item.id, item.cantidad + 1)}
+                            onChange={(val) => actualizarCantidad(item.id, val)}
+                          />
                         </td>
                         <td className="align-middle text-end pe-3">
                           <strong className="price-tag fs-6">{formatCLP(item.precio * item.cantidad)}</strong>
@@ -225,33 +211,13 @@ export const Cart = () => {
 
           {/* Resumen del Pedido */}
           <div className="col-lg-4">
-            <div className="card gamer-card p-4 sticky-top" style={{ top: '90px' }}>
-              <h4 className="h5 text-white brand-font mb-3 pb-2 border-bottom border-secondary">Resumen del Pedido</h4>
-
-              <div className="d-flex justify-content-between text-muted mb-2">
-                <span>Artículos ({totalArticulos}):</span>
-                <span className="text-light">{formatCLP(subtotal)}</span>
-              </div>
-
-              {montoDescuento > 0 && (
-                <div className="d-flex justify-content-between text-warning mb-2">
-                  <span>Descuento ({porcentajeDescuento}%):</span>
-                  <span>-{formatCLP(montoDescuento)}</span>
-                </div>
-              )}
-
-              <div className="d-flex justify-content-between text-muted mb-3">
-                <span>Costo de Envío:</span>
-                <span className="text-success fw-bold">Gratis</span>
-              </div>
-
-              <hr className="border-secondary my-3" />
-
-              <div className="d-flex justify-content-between align-items-baseline mb-4">
-                <span className="text-white fw-bold fs-5">Total a Pagar:</span>
-                <span className="price-tag fs-2">{formatCLP(total)}</span>
-              </div>
-
+            <OrderSummary
+              subtotal={subtotal}
+              descuento={montoDescuento}
+              porcentajeDescuento={porcentajeDescuento}
+              total={total}
+              articulosCount={totalArticulos}
+            >
               <div className="d-grid gap-2">
                 <Link to="/checkout" className="btn btn-primary btn-lg py-2">
                   <i className="bi bi-credit-card me-2"></i>Ir al Checkout / Pagar
@@ -260,7 +226,7 @@ export const Cart = () => {
                   Seguir Comprando
                 </Link>
               </div>
-            </div>
+            </OrderSummary>
           </div>
         </div>
       </div>

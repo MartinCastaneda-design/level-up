@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PRODUCTOS_DATA, obtenerTodasLasResenas } from '../data/productsData';
 import { useAuth } from '../context/AuthContext';
+import { ReviewCard } from '../components/ReviewCard';
 
 export const ProductReviews = () => {
   const { usuario } = useAuth();
@@ -147,29 +148,16 @@ export const ProductReviews = () => {
         <div className="col-lg-8">
           <div id="listaResenas" className="d-flex flex-column gap-3">
             {resenas.length > 0 ? (
-              resenas.map((resena) => {
-                const estrellasActivas = '⭐'.repeat(resena.calificacion || 5);
-                return (
-                  <div key={resena.id || Math.random()} className="card gamer-card p-4">
-                    <div className="d-flex justify-content-between align-items-start mb-2">
-                      <div>
-                        <h6 className="text-info mb-1">
-                          <i className="bi bi-person-circle me-2"></i>{resena.usuario || resena.autor}
-                        </h6>
-                        <small className="text-muted">
-                          Reseña sobre: <strong className="text-white">{resena.nombreProducto || resena.productoNombre}</strong>
-                        </small>
-                      </div>
-                      <div className="text-end">
-                        <div className="mb-1">{estrellasActivas}</div>
-                        <small className="text-muted">{resena.fecha || 'Reciente'}</small>
-                      </div>
-                    </div>
-                    <hr className="border-secondary my-2" />
-                    <p className="text-light mb-0 mt-2">"{resena.comentario}"</p>
-                  </div>
-                );
-              })
+              resenas.map((resena) => (
+                <ReviewCard
+                  key={resena.id || Math.random()}
+                  autor={resena.usuario || resena.autor}
+                  nombreProducto={resena.nombreProducto || resena.productoNombre}
+                  calificacion={resena.calificacion}
+                  comentario={resena.comentario}
+                  fecha={resena.fecha}
+                />
+              ))
             ) : (
               <div className="card gamer-card p-5 text-center h-100 d-flex justify-content-center align-items-center">
                 <div>

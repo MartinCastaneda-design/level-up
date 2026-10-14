@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCLP } from '../utils/formatters';
+import { OrderSummary } from '../components/OrderSummary';
 
 export const Checkout = () => {
   const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();
@@ -366,10 +367,15 @@ export const Checkout = () => {
 
           {/* Resumen del Pedido */}
           <div className="col-lg-5">
-            <div className="card gamer-card p-4 sticky-top" style={{ top: '90px' }}>
-              <h4 className="h5 text-white brand-font mb-3 pb-2 border-bottom border-secondary">Resumen de la Compra</h4>
-
+            <OrderSummary
+              subtotal={subtotal}
+              descuento={montoDescuento}
+              porcentajeDescuento={porcentajeDescuento}
+              total={total}
+              puntosGanar={Math.floor(total / 1000)}
+            >
               <div className="mb-3" style={{ maxHeight: '250px', overflowY: 'auto' }}>
+                <h6 className="text-white small fw-bold mb-2">Artículos en tu pedido:</h6>
                 {carrito.map((item) => (
                   <div key={item.id} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
                     <div className="d-flex align-items-center gap-2">
@@ -384,52 +390,14 @@ export const Checkout = () => {
                 ))}
               </div>
 
-              <div className="d-flex justify-content-between text-muted mb-2">
-                <span>Subtotal:</span>
-                <span className="text-light">{formatCLP(subtotal)}</span>
-              </div>
-
-              {montoDescuento > 0 && (
-                <div className="d-flex justify-content-between text-warning mb-2">
-                  <span>Descuento aplicado ({porcentajeDescuento}%):</span>
-                  <span>-{formatCLP(montoDescuento)}</span>
-                </div>
-              )}
-
-              <div className="d-flex justify-content-between text-muted mb-3">
-                <span>Costo de Despacho:</span>
-                <span className="text-success fw-bold">Gratis</span>
-              </div>
-
-              <hr className="border-secondary my-3" />
-
-              {/* Puntos a ganar por la compra */}
-              <div className="p-3 mb-3 rounded-3 d-flex align-items-center justify-content-between" style={{ background: 'rgba(255, 193, 7, 0.1)', border: '1px solid rgba(255, 193, 7, 0.3)' }}>
-                <div className="d-flex align-items-center gap-2">
-                  <i className="bi bi-coin text-warning fs-4"></i>
-                  <div>
-                    <strong className="text-white small d-block">Puntos LevelUp que ganarás:</strong>
-                    <span className="text-muted" style={{ fontSize: '0.75rem' }}>1 punto por cada $1.000 gastados</span>
-                  </div>
-                </div>
-                <span className="badge bg-warning text-dark fs-6 fw-bold px-3 py-2 shadow-sm" id="badgePuntosGanar">
-                  +{Math.floor(total / 1000)} pts
-                </span>
-              </div>
-
-              <div className="d-flex justify-content-between align-items-baseline mb-4">
-                <span className="text-white fw-bold fs-5">Total a Pagar:</span>
-                <span className="price-tag fs-2">{formatCLP(total)}</span>
-              </div>
-
-              <div className="p-3 bg-dark rounded-3 border border-secondary text-muted small">
+              <div className="p-3 bg-dark rounded-3 border border-secondary text-muted small mt-3">
                 <div className="d-flex align-items-center gap-2 mb-1">
                   <i className="bi bi-shield-check text-success fs-5"></i>
                   <strong className="text-white">Transacción 100% Protegida</strong>
                 </div>
                 <span>Tus datos de compra viajan encriptados de extremo a extremo.</span>
               </div>
-            </div>
+            </OrderSummary>
           </div>
         </div>
       </div>

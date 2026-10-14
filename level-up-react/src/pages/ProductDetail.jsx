@@ -5,6 +5,9 @@ import { formatCLP } from '../utils/formatters';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { ProductCard } from '../components/ProductCard';
+import { AlertToast } from '../components/AlertToast';
+import { QuantitySelector } from '../components/QuantitySelector';
+import { ReviewCard } from '../components/ReviewCard';
 
 export const ProductDetail = () => {
   const { id } = useParams();
@@ -193,12 +196,11 @@ export const ProductDetail = () => {
   return (
     <main className="container my-5 flex-grow-1">
       {avisoFlotante && (
-        <div
-          className={`alert alert-${avisoFlotante.tipo} position-fixed top-0 end-0 m-4 shadow-lg`}
-          style={{ zIndex: 9999 }}
-        >
-          {avisoFlotante.mensaje}
-        </div>
+        <AlertToast
+          mensaje={avisoFlotante.mensaje}
+          tipo={avisoFlotante.tipo}
+          onClose={() => setAvisoFlotante(null)}
+        />
       )}
 
       <nav aria-label="breadcrumb" className="mb-4">
@@ -314,19 +316,17 @@ export const ProductDetail = () => {
                 <div className="row g-3 align-items-center mb-3">
                   <div className="col-auto">
                     <label htmlFor="cantidadInput" className="form-label text-muted small mb-1">Cantidad (Stock: {producto.stock}):</label>
-                    <div className="input-group" style={{ width: '140px' }}>
-                      <button className="btn btn-outline-secondary text-white" type="button" onClick={handleRestar}>-</button>
-                      <input
-                        type="number"
-                        id="cantidadInput"
-                        className="form-control bg-dark border-secondary text-light text-center fw-bold"
-                        value={cantidad}
-                        min="1"
-                        max={producto.stock}
-                        onChange={handleCantidadInput}
-                      />
-                      <button className="btn btn-outline-secondary text-white" type="button" onClick={handleSumar}>+</button>
-                    </div>
+                    <QuantitySelector
+                      cantidad={cantidad}
+                      stock={producto.stock}
+                      onDecrementar={handleRestar}
+                      onIncrementar={handleSumar}
+                      onChange={(val) => {
+                        let num = isNaN(val) || val < 1 ? 1 : val;
+                        if (num > producto.stock) num = producto.stock;
+                        setCantidad(num);
+                      }}
+                    />
                   </div>
                   <div className="col">
                     <label className="form-label text-muted small mb-1 d-block">&nbsp;</label>
@@ -427,14 +427,13 @@ export const ProductDetail = () => {
             <div id="listaResenasDetalle" className="d-flex flex-column gap-3">
               {resenasProducto.length > 0 ? (
                 resenasProducto.map((resena) => (
-                  <div key={resena.id || Math.random()} className="card gamer-card p-3">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <strong className="text-info"><i className="bi bi-person-circle me-1"></i>{resena.usuario || resena.autor}</strong>
-                      <span className="text-warning small">{'⭐'.repeat(resena.calificacion || 5)}</span>
-                    </div>
-                    <p className="text-light mb-1 small">{resena.comentario}</p>
-                    <small className="text-muted">{resena.fecha || 'Reciente'}</small>
-                  </div>
+                  <ReviewCard
+                    key={resena.id || Math.random()}
+                    autor={resena.usuario || resena.autor}
+                    calificacion={resena.calificacion}
+                    comentario={resena.comentario}
+                    fecha={resena.fecha}
+                  />
                 ))
               ) : (
                 <div className="card gamer-card p-4 text-center">

@@ -2,9 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { PRODUCTOS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
+import { CategoryCard } from '../components/CategoryCard';
 
 export const Home = () => {
   const productosDestacados = PRODUCTOS_DATA.filter((p) => p.destacado).slice(0, 4);
+
+  const categoriasPopulares = [
+    { slug: 'consolas', nombre: 'Consolas', icono: 'bi-controller' },
+    { slug: 'computadores-gamers', nombre: 'PC Gamers', icono: 'bi-pc-display-horizontal' },
+    { slug: 'mouse', nombre: 'Mouse', icono: 'bi-mouse' },
+    { slug: 'accesorios', nombre: 'Accesorios', icono: 'bi-headset' },
+    { slug: 'sillas-gamers', nombre: 'Sillas', icono: 'bi-person-workspace' },
+    { slug: 'juegos-de-mesa', nombre: 'Juegos de Mesa', icono: 'bi-dice-5' }
+  ];
 
   return (
     <main className="container my-4">
@@ -51,42 +61,14 @@ export const Home = () => {
           </Link>
         </div>
         <div className="row g-3 text-center">
-          <div className="col-6 col-md-4 col-lg-2">
-            <Link to="/catalogo?cat=consolas" className="card gamer-card p-3 text-decoration-none text-white h-100">
-              <i className="bi bi-controller fs-1 text-info mb-2"></i>
-              <h6 className="mb-0">Consolas</h6>
-            </Link>
-          </div>
-          <div className="col-6 col-md-4 col-lg-2">
-            <Link to="/catalogo?cat=computadores-gamers" className="card gamer-card p-3 text-decoration-none text-white h-100">
-              <i className="bi bi-pc-display-horizontal fs-1 text-info mb-2"></i>
-              <h6 className="mb-0">PC Gamers</h6>
-            </Link>
-          </div>
-          <div className="col-6 col-md-4 col-lg-2">
-            <Link to="/catalogo?cat=mouse" className="card gamer-card p-3 text-decoration-none text-white h-100">
-              <i className="bi bi-mouse fs-1 text-info mb-2"></i>
-              <h6 className="mb-0">Mouse</h6>
-            </Link>
-          </div>
-          <div className="col-6 col-md-4 col-lg-2">
-            <Link to="/catalogo?cat=accesorios" className="card gamer-card p-3 text-decoration-none text-white h-100">
-              <i className="bi bi-headset fs-1 text-info mb-2"></i>
-              <h6 className="mb-0">Accesorios</h6>
-            </Link>
-          </div>
-          <div className="col-6 col-md-4 col-lg-2">
-            <Link to="/catalogo?cat=sillas-gamers" className="card gamer-card p-3 text-decoration-none text-white h-100">
-              <i className="bi bi-person-workspace fs-1 text-info mb-2"></i>
-              <h6 className="mb-0">Sillas</h6>
-            </Link>
-          </div>
-          <div className="col-6 col-md-4 col-lg-2">
-            <Link to="/catalogo?cat=juegos-de-mesa" className="card gamer-card p-3 text-decoration-none text-white h-100">
-              <i className="bi bi-dice-5 fs-1 text-info mb-2"></i>
-              <h6 className="mb-0">Juegos de Mesa</h6>
-            </Link>
-          </div>
+          {categoriasPopulares.map((cat) => (
+            <CategoryCard
+              key={cat.slug}
+              slug={cat.slug}
+              nombre={cat.nombre}
+              icono={cat.icono}
+            />
+          ))}
         </div>
       </section>
 
