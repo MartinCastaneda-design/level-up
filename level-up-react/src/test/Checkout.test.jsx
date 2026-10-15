@@ -58,6 +58,6 @@ describe('Prueba Página: Checkout.jsx', () => {
     const inputNombre = screen.getByLabelText(/Nombre \*/i);
     expect(inputNombre).toHaveValue('Fernando');
     expect(screen.getByText(/Webpay Plus/i)).toBeInTheDocument();
-    expect(screen.getByText(/Resumen de la Compra/i)).toBeInTheDocument();
+    expect(screen.getByText(/Artículos en tu pedido/i)).toBeInTheDocument();
   });
 });

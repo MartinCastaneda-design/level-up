@@ -6,10 +6,12 @@ import Perfil from '../pages/Perfil';
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
+  const stableSearchParams = new URLSearchParams(); 
+
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useSearchParams: () => [new URLSearchParams()], 
+    useSearchParams: () => [stableSearchParams], 
   };
 });
 
