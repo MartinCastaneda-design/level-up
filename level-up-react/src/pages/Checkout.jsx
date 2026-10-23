@@ -440,6 +440,9 @@ export const Checkout = () => {
                 </div>
               </div>
               <div className="modal-footer border-top border-secondary justify-content-center gap-2">
+                <Link to="/compra-exitosa" state={{ order: ordenExitosa }} className="btn btn-success px-3">
+                  <i className="bi bi-receipt me-1"></i>Ver Boleta Completa
+                </Link>
                 <Link to="/" className="btn btn-primary px-3">
                   <i className="bi bi-house-door me-1"></i>Volver al Inicio
                 </Link>

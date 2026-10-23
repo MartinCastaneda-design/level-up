@@ -48,6 +48,11 @@ export const Navbar = () => {
               </Link>
             </li>
             <li className="nav-item">
+              <Link className="nav-link text-danger fw-bold d-flex align-items-center gap-1" to="/catalogo?cat=ofertas">
+                <i className="bi bi-fire"></i>Ofertas
+              </Link>
+            </li>
+            <li className="nav-item">
               <Link className={`nav-link ${esRutaActiva('/opiniones')}`} to="/opiniones">
                 <i className="bi bi-chat-heart me-1"></i>Opiniones
               </Link>
