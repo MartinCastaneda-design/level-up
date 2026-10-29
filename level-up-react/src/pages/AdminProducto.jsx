@@ -7,6 +7,9 @@ export default function AdminProducto() {
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
 
+    //Estado donde ver los producto con poco stock
+    const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false);
+
     // Estado para controlar la visibilidad del modal y el modo (crear o editar)
     const [modalAbierto, setModalAbierto] = useState(false);
     const [modoEdicion, setModoEdicion] = useState(false);
@@ -21,6 +24,7 @@ export default function AdminProducto() {
         imagen: '',
         descripcion: ''
     });
+
 
     // 2. Cargar productos desde localStorage al cargar la página
     useEffect(() => {
@@ -134,17 +138,16 @@ export default function AdminProducto() {
     };
 
     // Filtrar productos según la búsqueda
-    const productosFiltrados = productos.filter(
-        (p) =>
-            (p.nombre &&
-                p.nombre
-                    .toLowerCase()
-                    .includes(busqueda.toLowerCase())) ||
-            (p.categoria &&
-                p.categoria
-                    .toLowerCase()
-                    .includes(busqueda.toLowerCase()))
-    );
+    const productosFiltrados = productos.filter((p) => {
+        const coincideBusqueda =
+            (p.nombre && p.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
+            (p.categoria && p.categoria.toLowerCase().includes(busqueda.toLowerCase()));
+
+        const esCritico = Number(p.stock) <= 5
+
+        return coincideBusqueda && (!mostrarSoloCriticos || esCritico);
+        });
+    
 
     return (
         <main className="container py-4">
@@ -255,6 +258,16 @@ export default function AdminProducto() {
 
                                     <td>
                                         <div className="d-flex gap-2">
+
+                                            <button
+                                            type='button'
+                                            className={mostrarSoloCriticos ? "btn btn-warning" : "btn btn-outline-warning"}
+                                            onClick={() => setMostrarSoloCriticos(!mostrarSoloCriticos)}
+
+                                            >
+                                                {mostrarSoloCriticos ? "X Mostrar todos": "⚠ Ver solo críticos"}
+
+                                            </button>
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-warning"
@@ -277,6 +290,7 @@ export default function AdminProducto() {
                                             >
                                                 Eliminar
                                             </button>
+
                                         </div>
                                     </td>
                                 </tr>
