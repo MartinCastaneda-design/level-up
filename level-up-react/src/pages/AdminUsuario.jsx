@@ -5,6 +5,9 @@ export default function AdminUsuario() {
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState('');
 
+  const [compras, setCompras] = useState([]);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+
   // 2. useEffect: Carga únicamente los usuarios reales guardados en localStorage
   useEffect(() => {
     const registrosGuardados = localStorage.getItem('registros');
@@ -18,6 +21,21 @@ export default function AdminUsuario() {
     } else {
       // Si está vacío, simplemente dejamos la lista vacía
       setUsuarios([]);
+    }
+  }, []);
+
+  // 3. useEffect: Carga únicamente las compras reales guardados en localStorage
+  useEffect(() => {
+    const comprasGuardadas = localStorage.getItem('levelup_compras');
+    if (comprasGuardadas) {
+      try {
+        setCompras(JSON.parse(comprasGuardadas));
+      } catch (e) {
+        console.error("Error al parsear la compra: ", e);
+        setCompras([]);
+      }
+    } else {
+      setCompras([]);
     }
   }, []);
 
@@ -64,6 +82,9 @@ export default function AdminUsuario() {
     (u.nombre && u.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
     (u.correo && u.correo.toLowerCase().includes(busqueda.toLowerCase()))
   );
+
+  const usuarioData = usuarios.find(u => u.correo === usuarioSeleccionado);
+  const comprasDelUsuario = compras.filter(c => c.correo === usuarioSeleccionado);
 
   return (
     <main className="container py-4">
@@ -130,6 +151,7 @@ export default function AdminUsuario() {
                       >
                         <i className="bi bi-person-gear"></i>
                       </button>
+
                       <button
                         className="btn btn-sm btn-outline-warning"
                         onClick={() => toggleEstado(u.correo)}
@@ -144,6 +166,14 @@ export default function AdminUsuario() {
                       >
                         <i className="bi bi-trash"></i>
                       </button>
+
+                      <button
+                        className="btn btn-sm btn-outline-info"
+                        onClick={() => setUsuarioSeleccionado(u.correo)}
+                        title="Ver historial de compras"
+                      >
+                        <i className='bi bi-receipt'></i>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -152,6 +182,37 @@ export default function AdminUsuario() {
           </tbody>
         </table>
       </div>
+
+      {usuarioSeleccionado && (
+        <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  <i className="bi bi-receipt me-2"></i>
+                  Compras de {usuarioData ? `${usuarioData.nombre} ${usuarioData.apellido}` : usuarioSeleccionado}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setUsuarioSeleccionado(null)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                {comprasDelUsuario.length === 0 ? (
+                  <p className="text-muted mb-0">Este usuario no tiene compras registradas.</p>
+                ) : (
+                  comprasDelUsuario.map((compra) => (
+                    <div key={compra.idOrden} className="border rounded p-2 mb-2">
+                      <strong>{compra.idOrden}</strong> — {compra.cantidadItems} artículo(s) — ${compra.totalPagado}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
