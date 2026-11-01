@@ -27,6 +27,7 @@ import BlogLista from './pages/BlogLista';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
 import PanelAdmin from './pages/PanelAdmin';
+import { RutaProtegida } from './components/RutaProtegida';
 
 // Componente placeholder para vistas secundarias adicionales
 const VistaEnConstruccion = ({ titulo, icono = 'bi-tools' }) => (
@@ -73,11 +74,11 @@ export const App = () => {
               <Route path="/ofertas" element={<Gallery />} />
               <Route path="/compra-exitosa" element={<PaymentSuccess />} />
               <Route path="/pago-fallido" element={<PaymentFailure />} />
-              <Route path="/admin" element={<PanelAdmin />} />
               <Route path="*" element={<VistaEnConstruccion titulo="Página No Encontrada (404)" icono="bi-exclamation-triangle" />} />
-              <Route path="/AdminRespaldo" element={<AdminRespaldo />} />
-              <Route path="/AdminUsuario" element={<AdminUsuario />} />
-              <Route path="/AdminProducto" element={<AdminProducto />} />
+              <Route path="/AdminRespaldo" element={<RutaProtegida><AdminRespaldo /></RutaProtegida>} />
+              <Route path="/AdminUsuario" element={<RutaProtegida><AdminUsuario /></RutaProtegida>} />
+              <Route path="/AdminProducto" element={<RutaProtegida><AdminProducto /></RutaProtegida>} />
+              <Route path="/admin" element={<RutaProtegida><PanelAdmin /></RutaProtegida>} />
 
               
 
