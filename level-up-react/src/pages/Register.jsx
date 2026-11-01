@@ -73,6 +73,7 @@ const Register = () => {
     }
 
     const esBeneficiario = formData.email.toLowerCase().endsWith("@duocuc.cl");
+    const rol = formData.email.toLowerCase().endsWith("@admin.cl") ? "admin" : "cliente";   
     const nuevoCodigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     const nuevoUsuario = {
@@ -83,6 +84,7 @@ const Register = () => {
         sexo: formData.sexo,
         correo: formData.email.trim(),
         esBeneficiario: esBeneficiario,
+        rol: rol,
         contrasena: formData.contrasena,
         codigo: nuevoCodigo,
         puntosLevelUp: 0

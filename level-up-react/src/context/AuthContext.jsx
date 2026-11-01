@@ -36,7 +36,8 @@ export const AuthProvider = ({ children }) => {
         apellido: encontrado.apellido,
         correo: encontrado.correo,
         esBeneficiario: encontrado.esBeneficiario,
-        puntosLevelUp: encontrado.puntosLevelUp || 0
+        puntosLevelUp: encontrado.puntosLevelUp || 0,
+        rol: encontrado.rol 
       };
       setUsuario(datosSesion);
       localStorage.setItem(CLAVE_USUARIO, JSON.stringify(datosSesion));
