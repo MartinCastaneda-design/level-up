@@ -26,6 +26,7 @@ import GuiasLista from './pages/GuiasLista';
 import BlogLista from './pages/BlogLista';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
+import PanelAdmin from './pages/PanelAdmin';
 
 // Componente placeholder para vistas secundarias adicionales
 const VistaEnConstruccion = ({ titulo, icono = 'bi-tools' }) => (
@@ -72,7 +73,7 @@ export const App = () => {
               <Route path="/ofertas" element={<Gallery />} />
               <Route path="/compra-exitosa" element={<PaymentSuccess />} />
               <Route path="/pago-fallido" element={<PaymentFailure />} />
-              <Route path="/admin" element={<VistaEnConstruccion titulo="Panel Administrativo" icono="bi-speedometer2" />} />
+              <Route path="/admin" element={<PanelAdmin />} />
               <Route path="*" element={<VistaEnConstruccion titulo="Página No Encontrada (404)" icono="bi-exclamation-triangle" />} />
               <Route path="/AdminRespaldo" element={<AdminRespaldo />} />
               <Route path="/AdminUsuario" element={<AdminUsuario />} />
