@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { formatCLP } from '../utils/formatters';
@@ -100,7 +100,6 @@ export const Cart = () => {
 
       <div id="contenedorCarrito">
         <div className="row g-4">
-          {/* Lista de Productos en Tabla */}
           <div className="col-lg-8">
             <div className="card gamer-card p-3 p-md-4">
               <div className="table-responsive">
@@ -165,7 +164,6 @@ export const Cart = () => {
               </div>
             </div>
 
-            {/* Sección de Cupón de Descuento */}
             <div className="card gamer-card p-3 p-md-4 mt-4">
               <h5 className="text-white brand-font h6 mb-3">
                 <i className="bi bi-ticket-perforated text-info me-2"></i>¿Tienes un cupón de descuento?
@@ -209,7 +207,6 @@ export const Cart = () => {
             </div>
           </div>
 
-          {/* Resumen del Pedido */}
           <div className="col-lg-4">
             <OrderSummary
               subtotal={subtotal}

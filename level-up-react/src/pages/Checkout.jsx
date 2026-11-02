@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,6 @@ export const Checkout = () => {
   const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();
   const { usuario, agregarPuntos, descontarPuntos } = useAuth();
 
-  // Estados del Formulario de Envío
   const [nombre, setNombre] = useState(usuario ? usuario.nombre : '');
   const [apellido, setApellido] = useState(usuario ? (usuario.apellido || '') : '');
   const [email, setEmail] = useState(usuario ? usuario.correo : '');
@@ -19,10 +18,8 @@ export const Checkout = () => {
   const [comuna, setComuna] = useState('');
   const [metodoPago, setMetodoPago] = useState('Webpay Plus (Débito/Crédito)');
 
-  // Modal de Compra Exitosa
   const [ordenExitosa, setOrdenExitosa] = useState(null);
 
-  // Si no hay usuario activo registrado/logueado
   if (!usuario) {
     return (
       <main className="container my-5 flex-grow-1">
@@ -55,7 +52,6 @@ export const Checkout = () => {
     );
   }
 
-  // Si no hay productos en el carrito y no hay orden finalizada
   if ((!carrito || carrito.length === 0) && !ordenExitosa) {
     return (
       <main className="container my-5 flex-grow-1">
@@ -93,20 +89,17 @@ export const Checkout = () => {
     let puntosUsados = 0;
     let puntosGanados = 0;
 
-    // Lógica condicional de pago
     if (metodoPago === 'Puntos LevelUp') {
-      const puntosNecesarios = Math.floor(total / 10); // 1 punto equivale a $10 CLP
+      const puntosNecesarios = Math.floor(total / 10); 
       
       if ((usuario.puntosLevelUp || 0) < puntosNecesarios) {
         alert(`Saldo insuficiente. Necesitas ${puntosNecesarios} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
-        return; // Detiene la compra instantáneamente
+        return; 
       }
       
-      // Ejecutamos el descuento de puntos
       descontarPuntos(puntosNecesarios);
       puntosUsados = puntosNecesarios;
     } else {
-      // Si paga con otro método (Webpay, Transferencia), GANA puntos
       puntosGanados = Math.floor(total / 1000);
       agregarPuntos(puntosGanados);
     }
@@ -163,10 +156,8 @@ export const Checkout = () => {
 
       <div id="contenedorCheckout">
         <div className="row g-4">
-          {/* Formulario de Despacho y Pago */}
           <div className="col-lg-7">
             <form id="formCheckout" onSubmit={handleProcesarPago} noValidate>
-              {/* 1. Datos Personales */}
               <div className="card gamer-card p-4 mb-4">
                 <h4 className="h5 text-white brand-font mb-3">
                   <i className="bi bi-person-lines-fill text-info me-2"></i>1. Datos de Contacto y Facturación
@@ -220,7 +211,6 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              {/* 2. Dirección de Envío */}
               <div className="card gamer-card p-4 mb-4">
                 <h4 className="h5 text-white brand-font mb-3">
                   <i className="bi bi-geo-alt-fill text-info me-2"></i>2. Dirección de Despacho (Chile)
@@ -272,7 +262,6 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              {/* 3. Selección de Método de Pago */}
               <div className="card gamer-card p-4 mb-4">
                 <h4 className="h5 text-white brand-font mb-3">
                   <i className="bi bi-wallet2 text-info me-2"></i>3. Método de Pago Simulado
@@ -327,7 +316,6 @@ export const Checkout = () => {
                   </div>
                 </div>
 
-                {/* Detalle del Pago Simulado */}
                 <div id="panelDetallePago" className="p-3 bg-dark rounded-3 border border-secondary mt-3">
                   {metodoPago.includes('Webpay') && (
                     <>
@@ -365,7 +353,6 @@ export const Checkout = () => {
             </form>
           </div>
 
-          {/* Resumen del Pedido */}
           <div className="col-lg-5">
             <OrderSummary
               subtotal={subtotal}
@@ -402,7 +389,6 @@ export const Checkout = () => {
         </div>
       </div>
 
-      {/* Modal de Confirmación de Compra Exitosa */}
       {ordenExitosa && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1060 }} tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">

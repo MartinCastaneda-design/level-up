@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,6 @@ export const ProductCard = ({ producto }) => {
   const { agregarAlCarrito } = useCart();
   const { usuario } = useAuth();
   
-  // Estado para controlar si el producto está en favoritos
   const [esFavorito, setEsFavorito] = useState(false);
 
   useEffect(() => {
@@ -66,7 +65,6 @@ export const ProductCard = ({ producto }) => {
           />
         </Link>
         
-        {/* Botón de favorito flotante */}
         <button 
           className="btn btn-sm btn-dark position-absolute top-0 start-0 m-2 rounded-circle shadow-sm"
           style={{ width: '35px', height: '35px', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, background: 'rgba(33, 37, 41, 0.85)' }}

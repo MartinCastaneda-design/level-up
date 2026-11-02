@@ -1,7 +1,5 @@
-import React from "react";
 
 export default function AdminRespaldo() {
-  // 1. Lógica para exportar el LocalStorage a un archivo .json
   const handleExportar = () => {
     const copiaSeguridad = {
       levelup_productos: localStorage.getItem('levelup_productos'),
@@ -25,12 +23,10 @@ export default function AdminRespaldo() {
     alert('¡Copia de seguridad descargada con éxito!');
   };
 
-  // 2. Lógica para activar el input de archivo oculto
   const triggerFileInput = () => {
     document.getElementById('inputArchivo').click();
   };
 
-  // 3. Lógica para importar y restaurar el archivo JSON
   const handleImportar = (event) => {
     const archivo = event.target.files[0];
     if (!archivo) return;
@@ -51,7 +47,7 @@ export default function AdminRespaldo() {
 
         alert('¡Base de datos restaurada con éxito! La página se recargará.');
         window.location.reload();
-      } catch (err) {
+      } catch {
         alert('Error: El archivo no es un JSON válido o está corrupto.');
       }
     };
@@ -68,18 +64,15 @@ export default function AdminRespaldo() {
       </p>
 
       <div className="d-flex gap-3">
-        {/* Conectamos el evento onClick */}
         <button className="btn btn-primary" onClick={handleExportar}>
           <i className="bi bi-download me-2"></i>Exportar respaldo
         </button>
 
-        {/* Conectamos el evento onClick */}
         <button className="btn btn-success" onClick={triggerFileInput}>
           <i className="bi bi-upload me-2"></i>Importar respaldo
         </button>
       </div>
 
-      {/* Etiqueta cerrada correctamente con onChange */}
       <input
         type="file"
         id="inputArchivo"

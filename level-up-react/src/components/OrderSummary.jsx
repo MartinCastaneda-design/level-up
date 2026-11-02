@@ -1,4 +1,3 @@
-import React from 'react';
 import { formatCLP } from '../utils/formatters';
 
 export const OrderSummary = ({ subtotal = 0, descuento = 0, porcentajeDescuento = 0, total = 0, puntosGanar = 0, children }) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 export default function GuiaCrear() {
@@ -12,7 +12,6 @@ export default function GuiaCrear() {
         contenido: ''
     });
 
-    // Manejar cambios en los campos del formulario
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -22,17 +21,14 @@ export default function GuiaCrear() {
         });
     };
 
-    // Publicar nueva guía
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // Validar campos obligatorios
         if (!form.titulo || !form.juego || !form.contenido) {
             alert('Por favor completa todos los campos requeridos.');
             return;
         }
 
-        // Obtener usuario activo o utilizar un nombre por defecto
         let usuarioActivo;
 
         try {
@@ -51,7 +47,6 @@ export default function GuiaCrear() {
             };
         }
 
-        // Crear nueva guía
         const nuevaGuia = {
             id: Date.now(),
             titulo: form.titulo,
@@ -68,7 +63,6 @@ export default function GuiaCrear() {
             votos: 0
         };
 
-        // Obtener guías existentes
         let guiasExistentes = [];
 
         try {
@@ -85,13 +79,11 @@ export default function GuiaCrear() {
             guiasExistentes = [];
         }
 
-        // Agregar la nueva guía al comienzo de la lista
         const actualizadas = [
             nuevaGuia,
             ...guiasExistentes
         ];
 
-        // Guardar en localStorage
         localStorage.setItem(
             'levelup_guias',
             JSON.stringify(actualizadas)
@@ -101,13 +93,11 @@ export default function GuiaCrear() {
             '¡Tu guía ha sido publicada con éxito en la comunidad!'
         );
 
-        // Volver a la lista de guías
         navigate('/guias');
     };
 
     return (
         <main className="container py-4">
-            {/* Botón volver */}
             <div className="mb-4">
                 <Link
                     to="/guias"
@@ -117,7 +107,6 @@ export default function GuiaCrear() {
                 </Link>
             </div>
 
-            {/* Encabezado */}
             <div className="mb-4">
                 <h2>Crear Nueva Guía de Estrategia</h2>
 
@@ -127,12 +116,10 @@ export default function GuiaCrear() {
                 </p>
             </div>
 
-            {/* Formulario */}
             <div className="card shadow-sm">
                 <div className="card-body">
                     <form onSubmit={handleSubmit}>
                         <div className="row g-3">
-                            {/* Título */}
                             <div className="col-12">
                                 <label
                                     htmlFor="titulo"
@@ -153,7 +140,6 @@ export default function GuiaCrear() {
                                 />
                             </div>
 
-                            {/* Juego */}
                             <div className="col-md-6">
                                 <label
                                     htmlFor="juego"
@@ -174,7 +160,6 @@ export default function GuiaCrear() {
                                 />
                             </div>
 
-                            {/* Dificultad */}
                             <div className="col-md-6">
                                 <label
                                     htmlFor="dificultad"
@@ -208,7 +193,6 @@ export default function GuiaCrear() {
                                 </select>
                             </div>
 
-                            {/* Resumen */}
                             <div className="col-12">
                                 <label
                                     htmlFor="resumen"
@@ -233,7 +217,6 @@ export default function GuiaCrear() {
                                 </div>
                             </div>
 
-                            {/* Contenido */}
                             <div className="col-12">
                                 <label
                                     htmlFor="contenido"
@@ -255,7 +238,6 @@ export default function GuiaCrear() {
                             </div>
                         </div>
 
-                        {/* Botones */}
                         <div className="d-flex justify-content-end gap-2 mt-4">
                             <Link
                                 to="/guias"

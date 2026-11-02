@@ -1,4 +1,3 @@
-// Base de datos de productos Level-Up Gamer
 const PRODUCTOS_DATA = [
     {
         id: 'JM001',
@@ -256,7 +255,6 @@ const PRODUCTOS_DATA = [
     }
 ];
 
-// Reseñas base iniciales por producto
 export const RESENAS_BASE = [
     {
         id: 101,
@@ -341,7 +339,6 @@ export const RESENAS_BASE = [
     }
 ];
 
-// Formato de precio en CLP
 export function formatCLP(valor) {
     return new Intl.NumberFormat('es-CL', {
         style: 'currency',
@@ -350,23 +347,20 @@ export function formatCLP(valor) {
     }).format(valor);
 }
 
-// Obtener producto por ID
 export function getProductById(id) {
     return PRODUCTOS_DATA.find(p => p.id === id);
 }
 
-// Obtener todas las reseñas combinadas (base + creadas por usuarios en localStorage)
 export function obtenerTodasLasResenas() {
     let guardadas = [];
     try {
         guardadas = JSON.parse(localStorage.getItem('levelup_resenas')) || [];
-    } catch(e) {
+    } catch {
         guardadas = [];
     }
     return [...guardadas, ...RESENAS_BASE];
 }
 
-// Obtener reseñas y métricas reales de un producto
 export function getProductReviewsInfo(idProducto) {
     const todas = obtenerTodasLasResenas();
     const resenasProd = todas.filter(r => r.idProducto === idProducto);
@@ -384,5 +378,4 @@ export function getProductReviewsInfo(idProducto) {
 }
 
 export { PRODUCTOS_DATA };
-
 

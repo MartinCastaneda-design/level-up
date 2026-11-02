@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PRODUCTOS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
@@ -11,7 +11,6 @@ export const Gallery = () => {
   const [selectCategoria, setSelectCategoria] = useState(categoriaUrl);
   const [selectOrden, setSelectOrden] = useState('destacados');
 
-  // Sincronizar estado cuando cambie el query param en la URL
   useEffect(() => {
     const cat = searchParams.get('cat') || 'todos';
     setSelectCategoria(cat);
@@ -33,7 +32,6 @@ export const Gallery = () => {
     setSelectOrden('destacados');
   };
 
-  // Filtrar y ordenar idéntico a galeria.html
   const productosFiltrados = useMemo(() => {
     const texto = inputBuscar.trim().toLowerCase();
     const categoria = selectCategoria;
@@ -58,7 +56,6 @@ export const Gallery = () => {
       return coincideTexto && coincideCategoria;
     });
 
-    // Ordenar productos
     if (orden === 'precio-menor') {
       productos.sort((a, b) => a.precio - b.precio);
     } else if (orden === 'precio-mayor') {
@@ -84,10 +81,8 @@ export const Gallery = () => {
         </div>
       </div>
 
-      {/* Barra de Búsqueda y Filtros */}
       <section className="card gamer-card p-3 p-md-4 mb-4">
         <div className="row g-3 align-items-center">
-          {/* Buscador de Texto */}
           <div className="col-12 col-md-5">
             <div className="input-group">
               <span className="input-group-text bg-dark border-secondary text-info">
@@ -103,7 +98,6 @@ export const Gallery = () => {
               />
             </div>
           </div>
-          {/* Filtro por Categoría */}
           <div className="col-12 col-sm-6 col-md-4">
             <select
               id="selectCategoria"
@@ -125,7 +119,6 @@ export const Gallery = () => {
               <option value="polerones-gamers">Polerones Gamers</option>
             </select>
           </div>
-          {/* Ordenamiento */}
           <div className="col-12 col-sm-6 col-md-3">
             <select
               id="selectOrden"
@@ -141,7 +134,6 @@ export const Gallery = () => {
           </div>
         </div>
 
-        {/* Filtros Rápidos (Chips) */}
         <div className="d-flex flex-wrap gap-2 mt-3 pt-3 border-top border-secondary align-items-center">
           <span className="text-muted small me-2">
             <i className="bi bi-funnel me-1"></i>Filtros rápidos:
@@ -191,7 +183,6 @@ export const Gallery = () => {
         </div>
       </section>
 
-      {/* Cuadrícula de Productos */}
       {productosFiltrados.length > 0 ? (
         <div id="contenedorProductos" className="row g-4">
           {productosFiltrados.map((prod) => (
@@ -201,7 +192,6 @@ export const Gallery = () => {
           ))}
         </div>
       ) : (
-        /* Mensaje de Sin Resultados */
         <div id="sinResultados" className="card gamer-card p-5 text-center my-4">
           <i className="bi bi-emoji-frown fs-1 text-info mb-3"></i>
           <h4 className="text-white">No encontramos productos con esos filtros</h4>

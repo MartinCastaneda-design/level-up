@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const AlertToast = ({ mensaje, tipo = 'info', onClose }) => {
   if (!mensaje) return null;

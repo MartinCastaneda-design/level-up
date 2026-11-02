@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function AdminUsuario() {
-  // 1. Estado para almacenar la lista de usuarios y la búsqueda
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState('');
 
   const [compras, setCompras] = useState([]);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
 
-  // 2. useEffect: Carga únicamente los usuarios reales guardados en localStorage
   useEffect(() => {
     const registrosGuardados = localStorage.getItem('registros');
     if (registrosGuardados) {
@@ -19,12 +17,10 @@ export default function AdminUsuario() {
         setUsuarios([]);
       }
     } else {
-      // Si está vacío, simplemente dejamos la lista vacía
       setUsuarios([]);
     }
   }, []);
 
-  // 3. useEffect: Carga únicamente las compras reales guardados en localStorage
   useEffect(() => {
     const comprasGuardadas = localStorage.getItem('levelup_compras');
     if (comprasGuardadas) {
@@ -39,13 +35,11 @@ export default function AdminUsuario() {
     }
   }, []);
 
-  // Función para guardar cambios en localStorage y actualizar la vista
   const guardarUsuarios = (nuevosUsuarios) => {
     setUsuarios(nuevosUsuarios);
     localStorage.setItem('registros', JSON.stringify(nuevosUsuarios));
   };
 
-  // 3. Cambiar Rol (Cliente <-> Admin)
   const toggleRol = (email) => {
     const nuevos = usuarios.map(u => {
       if (u.correo === email) {
@@ -57,7 +51,6 @@ export default function AdminUsuario() {
     guardarUsuarios(nuevos);
   };
 
-  // 4. Cambiar Estado (Activo <-> Suspendido)
   const toggleEstado = (email) => {
     const nuevos = usuarios.map(u => {
       if (u.correo === email) {
@@ -69,7 +62,6 @@ export default function AdminUsuario() {
     guardarUsuarios(nuevos);
   };
 
-  // 5. Eliminar usuario
   const eliminarUsuario = (email) => {
     if (window.confirm(`¿Seguro que deseas eliminar al usuario ${email}?`)) {
       const nuevos = usuarios.filter(u => u.correo !== email);
@@ -77,7 +69,6 @@ export default function AdminUsuario() {
     }
   };
 
-  // Filtrado de usuarios según la caja de búsqueda
   const usuariosFiltrados = usuarios.filter(u =>
     (u.nombre && u.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
     (u.correo && u.correo.toLowerCase().includes(busqueda.toLowerCase()))
@@ -96,7 +87,6 @@ export default function AdminUsuario() {
           </p>
         </div>
 
-        {/* Buscador controlado */}
         <div>
           <input
             type="text"
@@ -108,7 +98,6 @@ export default function AdminUsuario() {
         </div>
       </div>
 
-      {/* Tabla de Usuarios */}
       <div className="table-responsive">
         <table className="table table-dark table-hover align-middle">
           <thead>

@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { PRODUCTOS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
@@ -18,7 +17,6 @@ export const Home = () => {
 
   return (
     <main className="container my-4">
-      {/* Banner Hero Principal */}
       <section className="hero-banner p-4 p-md-5 mb-5 text-white position-relative">
         <div className="row align-items-center">
           <div className="col-lg-7">
@@ -49,7 +47,6 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* Accesos Rápidos por Categoría */}
       <section className="mb-5">
         <div className="d-flex justify-content-between align-items-end mb-4">
           <div>
@@ -72,7 +69,6 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* Productos Destacados */}
       <section id="destacados" className="mb-5">
         <div className="d-flex justify-content-between align-items-end mb-4">
           <div>
@@ -92,7 +88,6 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* Beneficios y Descuento Especial */}
       <section id="info-descuento" className="card gamer-card p-4 p-md-5 my-5 border-info">
         <div className="row align-items-center">
           <div className="col-lg-8">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PRODUCTOS_DATA, obtenerTodasLasResenas } from '../data/productsData';
 import { useAuth } from '../context/AuthContext';
 import { ReviewCard } from '../components/ReviewCard';
@@ -73,7 +73,6 @@ export const ProductReviews = () => {
       </div>
 
       <div id="contenedorComentarios" className="row g-4">
-        {/* Espacio para la lista y formulario de reseña */}
         <div className="col-lg-4">
           <div className="card gamer-card p-4 sticky-top" style={{ top: '100px' }}>
             <h4 className="h5 text-info mb-3">
@@ -144,7 +143,6 @@ export const ProductReviews = () => {
           </div>
         </div>
 
-        {/* Columna con la lista de las reseñas publicadas */}
         <div className="col-lg-8">
           <div id="listaResenas" className="d-flex flex-column gap-3">
             {resenas.length > 0 ? (

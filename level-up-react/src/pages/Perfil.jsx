@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getProductById } from '../data/productsData';
 import { formatCLP } from '../utils/formatters';
@@ -15,7 +15,6 @@ const Perfil = () => {
 
   const [compras, setCompras] = useState([]);
   const [favoritos, setFavoritos] = useState([]);
-  const [productosData, setProductosData] = useState([]); 
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -136,11 +135,7 @@ const Perfil = () => {
     setTimeout(() => setMensajeExito(null), 3000);
   };
 
-  const formatCLP = (valor) => {
-    return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(valor);
-  };
-
-  if (!usuarioActivo) return <div className="text-center mt-5 text-white">Cargando perfil...</div>;
+if (!usuarioActivo) return <div className="text-center mt-5 text-white">Cargando perfil...</div>;
 
   return (
     <main className="container my-5 flex-grow-1">
@@ -238,7 +233,6 @@ const Perfil = () => {
             </div>
           )}
 
-          {/* VISTA: COMPRAS CON ACORDEÓN BOOTSTRAP */}
           {tabActiva === 'compras' && (
             <div className="card bg-dark border-secondary p-4 shadow">
               <div className="d-flex align-items-center gap-2 mb-4 border-bottom border-secondary pb-3">
@@ -274,7 +268,6 @@ const Perfil = () => {
                             </div>
                             
                             <div className="d-flex align-items-center gap-3 d-none d-md-flex">
-                              {/* Calcula los puntos dinámicamente si no vienen en la compra (ej. 5% de la compra) */}
                               <span className="badge bg-warning text-dark px-2 py-1 fs-6">+{compra.puntosGanados || Math.floor(compra.totalPagado * 0.05)} pts</span>
                               <span className="text-success fw-bold fs-5">{formatCLP(compra.totalPagado)}</span>
                               <span className="text-light">{compra.fecha}</span>
@@ -355,9 +348,7 @@ const Perfil = () => {
             </div>
           )}
 
-          {/* vista de favoritos */}
-
-          {tabActiva === 'favoritos' && (
+{tabActiva === 'favoritos' && (
             <div className="card gamer-card p-4">
               <div className="d-flex align-items-center gap-2 mb-4 border-bottom border-secondary pb-3">
                 <i className="bi bi-heart-fill fs-4 text-danger"></i>
@@ -401,7 +392,7 @@ const Perfil = () => {
                                 f => !(f.correo === usuarioActivo.correo && f.idProducto === producto.id)
                               );
                               localStorage.setItem('levelup_favoritos', JSON.stringify(nuevosFavs));
-                              setFavoritos(favoritos.filter(p => p.id !== producto.id)); // Actualiza la vista
+                              setFavoritos(favoritos.filter(p => p.id !== producto.id)); 
                             }}
                           >
                             <i className="bi bi-trash"></i>

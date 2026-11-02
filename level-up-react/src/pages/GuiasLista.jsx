@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-// Guías iniciales del catálogo
 const getGuiasIniciales = () => [
     {
         id: 1,
@@ -34,7 +33,6 @@ export default function GuiasLista() {
     const [busqueda, setBusqueda] = useState('');
     const [guiaSeleccionada, setGuiaSeleccionada] = useState(null);
 
-    // Cargar guías desde localStorage
     useEffect(() => {
         const guiasGuardadas = localStorage.getItem('levelup_guias');
 
@@ -64,7 +62,6 @@ export default function GuiasLista() {
         }
     }, []);
 
-    // Incrementar votos / likes
     const darVoto = (id) => {
         const nuevasGuias = guias.map((g) => {
             if (g.id === id) {
@@ -85,7 +82,6 @@ export default function GuiasLista() {
         );
     };
 
-    // Filtrar guías según la búsqueda
     const guiasFiltradas = guias.filter(
         (g) =>
             (g.titulo &&
@@ -100,7 +96,6 @@ export default function GuiasLista() {
 
     return (
         <main className="container py-4">
-            {/* Encabezado */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2>Guías de la Comunidad</h2>
@@ -119,7 +114,6 @@ export default function GuiasLista() {
                 </Link>
             </div>
 
-            {/* Buscador */}
             <div className="mb-4">
                 <input
                     type="text"
@@ -130,7 +124,6 @@ export default function GuiasLista() {
                 />
             </div>
 
-            {/* Lista de guías */}
             {guiasFiltradas.length === 0 ? (
                 <div className="alert alert-info text-center">
                     No se encontraron guías publicadas.
@@ -146,7 +139,6 @@ export default function GuiasLista() {
                         >
                             <div className="card gamer-card h-100">
                                 <div className="card-body d-flex flex-column">
-                                    {/* Juego y dificultad */}
                                     <div className="d-flex justify-content-between align-items-center mb-3">
                                         <span className="badge bg-primary">
                                             {guia.juego}
@@ -157,23 +149,19 @@ export default function GuiasLista() {
                                         </span>
                                     </div>
 
-                                    {/* Título */}
                                     <h5 className="card-title">
                                         {guia.titulo}
                                     </h5>
 
-                                    {/* Resumen */}
                                     <p className="card-text text-muted">
                                         {guia.resumen}
                                     </p>
 
-                                    {/* Autor */}
                                     <p className="small text-muted mb-3">
                                         Publicado por{' '}
                                         <strong>{guia.autor}</strong>
                                     </p>
 
-                                    {/* Acciones */}
                                     <div className="mt-auto d-flex justify-content-between align-items-center">
                                         <button
                                             type="button"
@@ -202,7 +190,6 @@ export default function GuiasLista() {
                 </div>
             )}
 
-            {/* Modal Leer Guía */}
             {guiaSeleccionada && (
                 <div
                     className="modal d-block"
@@ -213,7 +200,6 @@ export default function GuiasLista() {
                 >
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content">
-                            {/* Encabezado del modal */}
                             <div className="modal-header">
                                 <div>
                                     <span className="badge bg-primary mb-2">
@@ -235,7 +221,6 @@ export default function GuiasLista() {
                                 ></button>
                             </div>
 
-                            {/* Contenido */}
                             <div className="modal-body">
                                 <p>
                                     Publicado por{' '}
@@ -251,7 +236,6 @@ export default function GuiasLista() {
                                 </p>
                             </div>
 
-                            {/* Pie del modal */}
                             <div className="modal-footer">
                                 <span className="text-muted me-auto">
                                     ❤️ {guiaSeleccionada.votos} votos

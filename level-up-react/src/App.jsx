@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
@@ -7,7 +6,6 @@ import { Footer } from './components/Footer';
 import { WhatsAppButton } from './components/WhatsAppButton';
 import './styles/index.css';
 
-// Importación de Páginas
 import Home from './pages/Home';
 import Gallery from './pages/Gallery';
 import ProductDetail from './pages/ProductDetail';
@@ -29,7 +27,6 @@ import PaymentFailure from './pages/PaymentFailure';
 import PanelAdmin from './pages/PanelAdmin';
 import { RutaProtegida } from './components/RutaProtegida';
 
-// Componente placeholder para vistas secundarias adicionales
 const VistaEnConstruccion = ({ titulo, icono = 'bi-tools' }) => (
   <main className="container my-5 text-center flex-grow-1">
     <div className="card gamer-card p-5 my-4">
@@ -55,33 +52,29 @@ export const App = () => {
           <div className="d-flex flex-column min-vh-100">
             <Navbar />
             <Routes>
-              {/* Vistas Principales Implementadas */}
               <Route path="/" element={<Home />} />
               <Route path="/catalogo" element={<Gallery />} />
               <Route path="/producto/:id" element={<ProductDetail />} />
               <Route path="/opiniones" element={<ProductReviews />} />
               <Route path="/carrito" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/register" element={<Register />} />
               <Route path="/Register" element={<Register />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/Login" element={<Login />} />
               <Route path="/perfil" element={<Perfil />} />
               <Route path="/nosotros" element={<Nosotros />} />
               <Route path="/guias" element={<GuiasLista />} />
               <Route path="/crear-guia" element={<GuiaCrear />} />
               <Route path="/blog" element={<BlogLista />} />
-              
-              {/* Rutas Adicionales del Diagrama */}
               <Route path="/ofertas" element={<Gallery />} />
               <Route path="/compra-exitosa" element={<PaymentSuccess />} />
               <Route path="/pago-fallido" element={<PaymentFailure />} />
-              <Route path="*" element={<VistaEnConstruccion titulo="Página No Encontrada (404)" icono="bi-exclamation-triangle" />} />
+              <Route path="/admin" element={<RutaProtegida><PanelAdmin /></RutaProtegida>} />
               <Route path="/AdminRespaldo" element={<RutaProtegida><AdminRespaldo /></RutaProtegida>} />
               <Route path="/AdminUsuario" element={<RutaProtegida><AdminUsuario /></RutaProtegida>} />
               <Route path="/AdminProducto" element={<RutaProtegida><AdminProducto /></RutaProtegida>} />
-              <Route path="/admin" element={<RutaProtegida><PanelAdmin /></RutaProtegida>} />
-
-              
-
+              <Route path="*" element={<VistaEnConstruccion titulo="Página No Encontrada (404)" icono="bi-exclamation-triangle" />} />
             </Routes>
             <Footer />
             <WhatsAppButton />
@@ -93,4 +86,3 @@ export const App = () => {
 };
 
 export default App;
-

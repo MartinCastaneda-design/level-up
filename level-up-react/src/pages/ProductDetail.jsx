@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getProductById, PRODUCTOS_DATA, getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
 import { formatCLP } from '../utils/formatters';
@@ -27,17 +27,17 @@ export const ProductDetail = () => {
   const idProducto = id || 'CO001';
   const producto = getProductById(idProducto);
 
-  const cargarResenas = () => {
+  const cargarResenas = useCallback(() => {
     const todas = obtenerTodasLasResenas();
     const filtradas = todas.filter((r) => r.idProducto === idProducto);
     setResenasProducto(filtradas);
-  };
+  }, [idProducto]);
 
   useEffect(() => {
     setCantidad(1);
     cargarResenas();
     window.scrollTo(0, 0);
-  }, [idProducto]);
+  }, [cargarResenas]);
 
   useEffect(() => {
     if (usuario && producto) {
@@ -128,14 +128,7 @@ export const ProductDetail = () => {
     }
   };
 
-  const handleCantidadInput = (e) => {
-    let val = parseInt(e.target.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
-    if (val > producto.stock) val = producto.stock;
-    setCantidad(val);
-  };
-
-  const handleAgregar = () => {
+const handleAgregar = () => {
     agregarAlCarrito(producto, cantidad);
     mostrarAviso(`¡Agregaste ${cantidad} unidad(es) de ${producto.nombre} al carrito!`, 'success');
   };
@@ -190,7 +183,7 @@ export const ProductDetail = () => {
   const textoCompartir = encodeURIComponent(`¡Mira este producto en Level-Up Gamer: ${producto.nombre}!`);
 
   const relacionados = PRODUCTOS_DATA.filter((p) => p.id !== producto.id)
-    .sort((a, b) => (a.categoriaSlug === producto.categoriaSlug ? -1 : 1))
+    .sort((a) => (a.categoriaSlug === producto.categoriaSlug ? -1 : 1))
     .slice(0, 4);
 
   return (

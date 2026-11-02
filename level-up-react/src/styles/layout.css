@@ -1,4 +1,4 @@
-/* Barra de navegación gamer */
+
 .custom-navbar {
   background-color: rgba(10, 12, 15, 0.95);
   border-bottom: 1px solid var(--card-border);
@@ -16,7 +16,6 @@
   color: var(--accent-cyan);
 }
 
-/* Pie de página gamer */
 footer.gamer-footer {
   background-color: #07080a;
   border-top: 1px solid var(--card-border);
@@ -38,7 +37,6 @@ footer.gamer-footer a.text-muted:hover {
   color: var(--accent-cyan) !important;
 }
 
-/* Botón flotante de WhatsApp */
 .whatsapp-float {
   position: fixed;
   bottom: 25px;

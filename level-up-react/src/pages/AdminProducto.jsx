@@ -1,20 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 
 import { PRODUCTOS_DATA } from '../data/productsData';
 
 export default function AdminProducto() {
-    // 1. Estado para almacenar productos y filtro de búsqueda
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
 
-    //Estado donde ver los producto con poco stock
     const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false);
 
-    // Estado para controlar la visibilidad del modal y el modo (crear o editar)
     const [modalAbierto, setModalAbierto] = useState(false);
     const [modoEdicion, setModoEdicion] = useState(false);
 
-    // Estado para el formulario del producto
     const [formProducto, setFormProducto] = useState({
         id: '',
         nombre: '',
@@ -25,9 +21,7 @@ export default function AdminProducto() {
         descripcion: ''
     });
 
-
-    // 2. Cargar productos desde localStorage al cargar la página
-    useEffect(() => {
+useEffect(() => {
     const productosGuardados = localStorage.getItem('levelup_productos');
 
     if (productosGuardados) {
@@ -42,7 +36,6 @@ export default function AdminProducto() {
             );
         }
     } else {
-        // Si el localStorage está vacío, copiamos el catálogo base inicial
         setProductos(PRODUCTOS_DATA);
         localStorage.setItem(
             'levelup_productos',
@@ -51,7 +44,6 @@ export default function AdminProducto() {
     }
     }, []);
 
-    // Guardar productos en localStorage y actualizar la vista
     const guardarProductos = (nuevosProductos) => {
         setProductos(nuevosProductos);
         localStorage.setItem(
@@ -60,7 +52,6 @@ export default function AdminProducto() {
         );
     };
 
-    // Manejar cambios en las cajas de texto del formulario
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -70,7 +61,6 @@ export default function AdminProducto() {
         });
     };
 
-    // Abrir modal para crear un nuevo producto
     const abrirModalCrear = () => {
         setModoEdicion(false);
 
@@ -87,14 +77,12 @@ export default function AdminProducto() {
         setModalAbierto(true);
     };
 
-    // Abrir modal para editar un producto existente
     const abrirModalEditar = (prod) => {
         setModoEdicion(true);
         setFormProducto({ ...prod });
         setModalAbierto(true);
     };
 
-    // Guardar producto (agregar o actualizar)
     const handleSubmit = (e) => {
         e.preventDefault();
 
@@ -106,12 +94,10 @@ export default function AdminProducto() {
         let nuevosProductos;
 
         if (modoEdicion) {
-            // Actualizar producto existente
             nuevosProductos = productos.map((p) =>
                 p.id === formProducto.id ? formProducto : p
             );
         } else {
-            // Agregar nuevo producto
             nuevosProductos = [...productos, formProducto];
         }
 
@@ -125,7 +111,6 @@ export default function AdminProducto() {
         );
     };
 
-    // Eliminar producto
     const handleEliminar = (id, nombre) => {
         if (
             window.confirm(
@@ -137,7 +122,6 @@ export default function AdminProducto() {
         }
     };
 
-    // Filtrar productos según la búsqueda
     const productosFiltrados = productos.filter((p) => {
         const coincideBusqueda =
             (p.nombre && p.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
@@ -147,11 +131,9 @@ export default function AdminProducto() {
 
         return coincideBusqueda && (!mostrarSoloCriticos || esCritico);
         });
-    
 
-    return (
+return (
         <main className="container py-4">
-            {/* Encabezado y botón Agregar */}
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h2>Gestión de Inventario</h2>
@@ -181,7 +163,6 @@ export default function AdminProducto() {
                 </div>
             </div>
 
-            {/* Tabla de productos */}
             <div className="table-responsive">
                 <table className="table table-dark table-striped table-hover align-middle">
                     <thead>
@@ -300,7 +281,6 @@ export default function AdminProducto() {
                 </table>
             </div>
 
-            {/* Formulario / Modal para Agregar y Editar */}
             {modalAbierto && (
                 <div
                     className="modal d-block"
@@ -328,7 +308,6 @@ export default function AdminProducto() {
                             <form onSubmit={handleSubmit}>
                                 <div className="modal-body">
                                     <div className="row g-3">
-                                        {/* Nombre */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="nombre"
@@ -348,7 +327,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Categoría */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="categoria"
@@ -384,7 +362,6 @@ export default function AdminProducto() {
                                             </select>
                                         </div>
 
-                                        {/* Precio */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="precio"
@@ -405,7 +382,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Stock */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="stock"
@@ -425,7 +401,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Imagen */}
                                         <div className="col-12">
                                             <label
                                                 htmlFor="imagen"
@@ -445,7 +420,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Descripción */}
                                         <div className="col-12">
                                             <label
                                                 htmlFor="descripcion"
