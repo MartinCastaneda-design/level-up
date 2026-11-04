@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCLP } from '../utils/formatters';
 import { OrderSummary } from '../components/OrderSummary';
 
 export const Checkout = () => {
+  const navigate = useNavigate();
   const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();
   const { usuario, agregarPuntos, descontarPuntos } = useAuth();
 
@@ -78,6 +79,13 @@ export const Checkout = () => {
       </main>
     );
   }
+
+  // Simulación temporal para pruebas de rechazo de pago
+  const handleSimularErrorPago = (motivoError = 'Tarjeta vencida o bloqueada por la entidad emisora') => {
+    navigate('/pago-fallido', {
+      state: { motivo: motivoError }
+    });
+  };
 
   const handleProcesarPago = (e) => {
     e.preventDefault();
@@ -349,6 +357,13 @@ export const Checkout = () => {
 
               <button type="submit" className="btn btn-primary btn-lg w-100 py-3 fw-bold">
                 <i className="bi bi-lock-fill me-2"></i>Confirmar y Realizar Pedido ({formatCLP(total)})
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger btn-lg w-100 py-2 fw-bold mt-3"
+                onClick={() => handleSimularErrorPago("Tarjeta inválida o rechazada por la entidad emisora (Transacción fallida).")}
+              >
+                <i className="bi bi-x-octagon-fill me-2"></i>Simular pago fallido
               </button>
             </form>
           </div>
