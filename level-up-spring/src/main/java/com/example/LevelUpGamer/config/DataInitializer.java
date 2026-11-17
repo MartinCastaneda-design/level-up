@@ -1,7 +1,9 @@
 package com.example.LevelUpGamer.config;
 
+import com.example.LevelUpGamer.model.Categoria;
 import com.example.LevelUpGamer.model.Producto;
 import com.example.LevelUpGamer.model.Usuario;
+import com.example.LevelUpGamer.repository.CategoriaRepository;
 import com.example.LevelUpGamer.repository.ProductoRepository;
 import com.example.LevelUpGamer.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -15,11 +17,16 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UsuarioRepository usuarioRepository;
     private final ProductoRepository productoRepository;
+    private final CategoriaRepository categoriaRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(UsuarioRepository usuarioRepository, ProductoRepository productoRepository, PasswordEncoder passwordEncoder) {
+    public DataInitializer(UsuarioRepository usuarioRepository,
+                           ProductoRepository productoRepository,
+                           CategoriaRepository categoriaRepository,
+                           PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.productoRepository = productoRepository;
+        this.categoriaRepository = categoriaRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -36,6 +43,16 @@ public class DataInitializer implements CommandLineRunner {
                     .puntosLevelUp(5000)
                     .build();
 
+            Usuario vendedor = Usuario.builder()
+                    .username("vendedor")
+                    .correo("vendedor@levelup.cl")
+                    .password(passwordEncoder.encode("vendedor123"))
+                    .nombre("Carlos")
+                    .apellido("Ventas")
+                    .rol("ROLE_VENDEDOR")
+                    .puntosLevelUp(100)
+                    .build();
+
             Usuario gamer = Usuario.builder()
                     .username("gamer")
                     .correo("gamer@levelup.cl")
@@ -46,7 +63,18 @@ public class DataInitializer implements CommandLineRunner {
                     .puntosLevelUp(450)
                     .build();
 
-            usuarioRepository.saveAll(List.of(admin, gamer));
+            usuarioRepository.saveAll(List.of(admin, vendedor, gamer));
+        }
+
+        if (categoriaRepository.count() == 0) {
+            List<Categoria> categorias = List.of(
+                    Categoria.builder().nombre("Consolas").slug("consolas").descripcion("PlayStation, Xbox y Nintendo").icono("bi-controller").build(),
+                    Categoria.builder().nombre("Computadores Gamers").slug("computadores-gamers").descripcion("Torres y Notebooks Gamer").icono("bi-pc-display-horizontal").build(),
+                    Categoria.builder().nombre("Periféricos").slug("perifericos").descripcion("Teclados, mouse y audífonos").icono("bi-mouse").build(),
+                    Categoria.builder().nombre("Sillas Gamers").slug("sillas-gamers").descripcion("Ergonomía pro gamer").icono("bi-person-workspace").build(),
+                    Categoria.builder().nombre("Juegos de Mesa").slug("juegos-de-mesa").descripcion("Estrategia y cartas coleccionables").icono("bi-dice-5").build()
+            );
+            categoriaRepository.saveAll(categorias);
         }
 
         if (productoRepository.count() == 0) {

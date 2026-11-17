@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import api from '../services/api';
 
 const AuthContext = createContext();
 
@@ -20,13 +21,43 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem(CLAVE_USUARIO, JSON.stringify(usuario));
     } else {
       localStorage.removeItem(CLAVE_USUARIO);
+      localStorage.removeItem('token');
+      localStorage.removeItem('jwt_token');
     }
   }, [usuario]);
 
-  const login = (correo, contrasena) => {
+  const login = async (correo, contrasena) => {
+    // 1. Intentar autenticar contra el backend Spring Boot con JWT
+    try {
+      const res = await api.post('/auth/login', {
+        correo: correo,
+        contrasena: contrasena
+      });
+
+      if (res.data && res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('jwt_token', res.data.token);
+
+        const datosUsuario = {
+          id: res.data.usuario?.id || 1,
+          nombre: res.data.usuario?.nombre || 'Usuario',
+          apellido: res.data.usuario?.apellido || 'Gamer',
+          correo: res.data.usuario?.correo || correo,
+          rol: res.data.usuario?.rol || 'ROLE_CLIENTE',
+          puntosLevelUp: res.data.usuario?.puntosLevelUp || 0
+        };
+
+        setUsuario(datosUsuario);
+        return { exito: true, usuario: datosUsuario };
+      }
+    } catch (apiError) {
+      console.warn('Backend Spring Boot no disponible o credenciales inválidas en API, probando fallback local:', apiError.message);
+    }
+
+    // 2. Fallback de persistencia local (compatibilidad con tests y modo offline)
     const registros = JSON.parse(localStorage.getItem(CLAVE_REGISTROS)) || [];
     const encontrado = registros.find(
-      (u) => u.correo.toLowerCase() === correo.toLowerCase() && u.contrasena === contrasena
+      (u) => (u.correo && u.correo.toLowerCase() === correo.toLowerCase()) && u.contrasena === contrasena
     );
 
     if (encontrado) {
@@ -37,10 +68,9 @@ export const AuthProvider = ({ children }) => {
         correo: encontrado.correo,
         esBeneficiario: encontrado.esBeneficiario,
         puntosLevelUp: encontrado.puntosLevelUp || 0,
-        rol: encontrado.rol 
+        rol: encontrado.rol || 'ROLE_CLIENTE'
       };
       setUsuario(datosSesion);
-      localStorage.setItem(CLAVE_USUARIO, JSON.stringify(datosSesion));
       return { exito: true, usuario: datosSesion };
     }
     return { exito: false, mensaje: 'Credenciales inválidas.' };
@@ -49,6 +79,8 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUsuario(null);
     localStorage.removeItem(CLAVE_USUARIO);
+    localStorage.removeItem('token');
+    localStorage.removeItem('jwt_token');
   };
 
   const actualizarPerfil = (nuevosDatos) => {
