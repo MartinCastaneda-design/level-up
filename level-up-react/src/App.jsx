@@ -25,6 +25,7 @@ import BlogLista from './pages/BlogLista';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure';
 import PanelAdmin from './pages/PanelAdmin';
+import PanelVendedor from './pages/PanelVendedor';
 import { RutaProtegida } from './components/RutaProtegida';
 
 const VistaEnConstruccion = ({ titulo, icono = 'bi-tools' }) => (
@@ -70,6 +71,7 @@ export const App = () => {
               <Route path="/ofertas" element={<Gallery />} />
               <Route path="/compra-exitosa" element={<PaymentSuccess />} />
               <Route path="/pago-fallido" element={<PaymentFailure />} />
+              <Route path="/vendedor" element={<RutaProtegida><PanelVendedor /></RutaProtegida>} />
               <Route path="/admin" element={<RutaProtegida><PanelAdmin /></RutaProtegida>} />
               <Route path="/AdminRespaldo" element={<RutaProtegida><AdminRespaldo /></RutaProtegida>} />
               <Route path="/AdminUsuario" element={<RutaProtegida><AdminUsuario /></RutaProtegida>} />

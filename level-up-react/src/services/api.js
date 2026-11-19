@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Instancia base de Axios apuntando al backend Spring Boot
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: 'http://localhost:8089/api',
   headers: {
     'Content-Type': 'application/json'
   }

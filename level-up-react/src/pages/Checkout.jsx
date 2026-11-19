@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCLP } from '../utils/formatters';
 import { OrderSummary } from '../components/OrderSummary';
+import api from '../services/api';
 
 export const Checkout = () => {
   const navigate = useNavigate();
@@ -87,7 +88,7 @@ export const Checkout = () => {
     });
   };
 
-  const handleProcesarPago = (e) => {
+  const handleProcesarPago = async (e) => {
     e.preventDefault();
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !direccion.trim() || !region || !comuna.trim()) {
       alert('Por favor completa todos los campos requeridos con asterisco (*).');
@@ -112,7 +113,34 @@ export const Checkout = () => {
       agregarPuntos(puntosGanados);
     }
     
-    const numOrden = '#LVL-' + Math.floor(10000 + Math.random() * 90000);
+    let numOrden = '#LVL-' + Math.floor(10000 + Math.random() * 90000);
+
+    // Intentar registrar la orden en el Backend Spring Boot
+    try {
+      const ordenPayload = {
+        total: total,
+        subtotal: subtotal,
+        descuento: montoDescuento,
+        metodoPago: metodoPago,
+        direccion: direccion,
+        comuna: comuna,
+        region: region,
+        telefono: telefono,
+        puntosUsados: puntosUsados,
+        items: carrito.map(item => ({
+          id: item.id,
+          cantidad: item.cantidad,
+          precio: item.precio
+        }))
+      };
+
+      const res = await api.post('/ordenes', ordenPayload);
+      if (res.data && res.data.numeroOrden) {
+        numOrden = res.data.numeroOrden;
+      }
+    } catch (apiError) {
+      console.warn('Backend Spring Boot no disponible para guardar orden, usando almacenamiento local:', apiError.message);
+    }
     
     const nuevaCompra = {
       idOrden: numOrden,

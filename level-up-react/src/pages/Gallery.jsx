@@ -2,14 +2,37 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PRODUCTOS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
+import api from '../services/api';
 
 export const Gallery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoriaUrl = searchParams.get('cat') || 'todos';
 
+  const [listaProductos, setListaProductos] = useState(PRODUCTOS_DATA);
+  const [cargandoApi, setCargandoApi] = useState(false);
   const [inputBuscar, setInputBuscar] = useState('');
   const [selectCategoria, setSelectCategoria] = useState(categoriaUrl);
   const [selectOrden, setSelectOrden] = useState('destacados');
+
+  // Intentar cargar productos desde el backend Spring Boot
+  useEffect(() => {
+    let montado = true;
+    const fetchProductosBackend = async () => {
+      try {
+        setCargandoApi(true);
+        const res = await api.get('/productos');
+        if (montado && res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setListaProductos(res.data);
+        }
+      } catch (err) {
+        console.warn('Backend no disponible, usando datos de catálogo local:', err.message);
+      } finally {
+        if (montado) setCargandoApi(false);
+      }
+    };
+    fetchProductosBackend();
+    return () => { montado = false; };
+  }, []);
 
   useEffect(() => {
     const cat = searchParams.get('cat') || 'todos';
@@ -37,12 +60,12 @@ export const Gallery = () => {
     const categoria = selectCategoria;
     const orden = selectOrden;
 
-    let productos = PRODUCTOS_DATA.filter((prod) => {
+    let productos = listaProductos.filter((prod) => {
       const coincideTexto =
         !texto ||
         prod.nombre.toLowerCase().includes(texto) ||
-        prod.descripcionCorta.toLowerCase().includes(texto) ||
-        prod.categoria.toLowerCase().includes(texto);
+        (prod.descripcionCorta && prod.descripcionCorta.toLowerCase().includes(texto)) ||
+        (prod.categoria && prod.categoria.toLowerCase().includes(texto));
 
       let coincideCategoria = true;
       if (categoria === 'ofertas') {
@@ -67,7 +90,7 @@ export const Gallery = () => {
     }
 
     return productos;
-  }, [inputBuscar, selectCategoria, selectOrden]);
+  }, [listaProductos, inputBuscar, selectCategoria, selectOrden]);
 
   return (
     <main className="container my-5 flex-grow-1">

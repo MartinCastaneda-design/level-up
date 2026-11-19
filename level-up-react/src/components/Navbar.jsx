@@ -125,6 +125,15 @@ export const Navbar = () => {
                   <span className="d-none d-md-inline">Panel Admin</span>
                 </Link>
               )}
+              {usuario?.rol === "vendedor" && (
+                <Link
+                  to="/vendedor"
+                  className="btn btn-outline-warning d-flex align-items-center gap-1 px-3"
+                >
+                  <i className="bi bi-briefcase"></i>
+                  <span className="d-none d-md-inline">Panel Ventas</span>
+                </Link>
+              )}
               <div
                 className="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm"
                 title="Tus puntos LevelUp"
