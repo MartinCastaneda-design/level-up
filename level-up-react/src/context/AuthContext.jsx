@@ -6,11 +6,24 @@ const AuthContext = createContext();
 const CLAVE_USUARIO = 'usuario_activo';
 const CLAVE_REGISTROS = 'registros';
 
+const normalizarRol = (rol) => {
+  if (!rol) return 'cliente';
+  const limpio = String(rol).toLowerCase().trim();
+  if (limpio.includes('admin')) return 'admin';
+  if (limpio.includes('vendedor')) return 'vendedor';
+  return 'cliente';
+};
+
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(() => {
     try {
       const guardado = localStorage.getItem(CLAVE_USUARIO);
-      return guardado ? JSON.parse(guardado) : null;
+      if (!guardado) return null;
+      const parsed = JSON.parse(guardado);
+      return {
+        ...parsed,
+        rol: normalizarRol(parsed.rol)
+      };
     } catch {
       return null;
     }
@@ -38,13 +51,18 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', res.data.token);
         localStorage.setItem('jwt_token', res.data.token);
 
+        // AuthController devuelve las propiedades en res.data o dentro de res.data.usuario
+        const u = res.data.usuario || res.data;
+        const rolNormalizado = normalizarRol(u.rol);
+
         const datosUsuario = {
-          id: res.data.usuario?.id || 1,
-          nombre: res.data.usuario?.nombre || 'Usuario',
-          apellido: res.data.usuario?.apellido || 'Gamer',
-          correo: res.data.usuario?.correo || correo,
-          rol: res.data.usuario?.rol || 'ROLE_CLIENTE',
-          puntosLevelUp: res.data.usuario?.puntosLevelUp || 0
+          id: u.id || 1,
+          nombre: u.nombre || (u.username ? u.username.split('@')[0] : 'Usuario'),
+          apellido: u.apellido || '',
+          correo: u.correo || correo,
+          rol: rolNormalizado,
+          puntosLevelUp: u.puntosLevelUp || 0,
+          esBeneficiario: !!u.esBeneficiario
         };
 
         setUsuario(datosUsuario);
@@ -68,7 +86,7 @@ export const AuthProvider = ({ children }) => {
         correo: encontrado.correo,
         esBeneficiario: encontrado.esBeneficiario,
         puntosLevelUp: encontrado.puntosLevelUp || 0,
-        rol: encontrado.rol || 'ROLE_CLIENTE'
+        rol: normalizarRol(encontrado.rol)
       };
       setUsuario(datosSesion);
       return { exito: true, usuario: datosSesion };

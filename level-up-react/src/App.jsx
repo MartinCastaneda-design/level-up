@@ -71,7 +71,7 @@ export const App = () => {
               <Route path="/ofertas" element={<Gallery />} />
               <Route path="/compra-exitosa" element={<PaymentSuccess />} />
               <Route path="/pago-fallido" element={<PaymentFailure />} />
-              <Route path="/vendedor" element={<RutaProtegida><PanelVendedor /></RutaProtegida>} />
+              <Route path="/vendedor" element={<RutaProtegida rolesPermitidos={['vendedor', 'admin']}><PanelVendedor /></RutaProtegida>} />
               <Route path="/admin" element={<RutaProtegida><PanelAdmin /></RutaProtegida>} />
               <Route path="/AdminRespaldo" element={<RutaProtegida><AdminRespaldo /></RutaProtegida>} />
               <Route path="/AdminUsuario" element={<RutaProtegida><AdminUsuario /></RutaProtegida>} />
