@@ -62,10 +62,12 @@ export default function AdminUsuario() {
       }
     } catch (err) {
       console.error('Error al actualizar rol en API:', err);
-      alert('No se pudo actualizar el rol en el servidor.');
+      const msg = err.response?.data?.error || err.response?.data?.message || 'No se pudo actualizar el rol en el servidor.';
+      alert(`Error: ${msg}`);
+      return;
     }
 
-    // Fallback local
+    // Fallback local solo si el usuario no tiene ID de backend
     const nuevos = usuarios.map(item => {
       if (item.correo === u.correo) {
         return { ...item, rol: proximoRol.toLowerCase().replace('role_', '') };
@@ -74,24 +76,6 @@ export default function AdminUsuario() {
     });
     setUsuarios(nuevos);
     localStorage.setItem('registros', JSON.stringify(nuevos));
-  };
-
-  const toggleEstado = (email) => {
-    const nuevos = usuarios.map(u => {
-      if (u.correo === email) {
-        const nuevoEstado = u.estado === 'suspendido' ? 'activo' : 'suspendido';
-        return { ...u, estado: nuevoEstado };
-      }
-      return u;
-    });
-    guardarUsuarios(nuevos);
-  };
-
-  const eliminarUsuario = (email) => {
-    if (window.confirm(`¿Seguro que deseas eliminar al usuario ${email}?`)) {
-      const nuevos = usuarios.filter(u => u.correo !== email);
-      guardarUsuarios(nuevos);
-    }
   };
 
   const usuariosFiltrados = usuarios.filter(u =>
@@ -130,14 +114,13 @@ export default function AdminUsuario() {
               <th>Usuario / Nombre</th>
               <th>Correo Electrónico</th>
               <th>Rol</th>
-              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {usuariosFiltrados.length === 0 ? (
               <tr>
-                <td colSpan="5" className="text-center text-muted py-4">
+                <td colSpan="4" className="text-center text-muted py-4">
                   No se encontraron usuarios registrados en el sistema.
                 </td>
               </tr>
@@ -147,13 +130,8 @@ export default function AdminUsuario() {
                   <td>{u.nombre || "Sin Nombre"}</td>
                   <td>{u.correo}</td>
                   <td>
-                    <span className={`badge ${u.rol === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`}>
-                      {u.rol ? u.rol.toUpperCase() : 'CLIENTE'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge ${u.estado === 'suspendido' ? 'bg-danger' : 'bg-success'}`}>
-                      {u.estado ? u.estado.toUpperCase() : 'ACTIVO'}
+                    <span className={`badge ${((u.rol || '').toLowerCase().includes('admin')) ? 'bg-warning text-dark' : (((u.rol || '').toLowerCase().includes('vendedor')) ? 'bg-info text-dark' : 'bg-secondary')}`}>
+                      {u.rol ? u.rol.toUpperCase().replace('ROLE_', '') : 'CLIENTE'}
                     </span>
                   </td>
                   <td>
@@ -161,24 +139,9 @@ export default function AdminUsuario() {
                       <button
                         className="btn btn-sm btn-outline-info"
                         onClick={() => toggleRol(u)}
-                        title="Cambiar rol"
+                        title="Cambiar rol (Admin / Cliente)"
                       >
-                        <i className="bi bi-person-gear"></i>
-                      </button>
-
-                      <button
-                        className="btn btn-sm btn-outline-warning"
-                        onClick={() => toggleEstado(u.correo)}
-                        title="Activar / Suspender"
-                      >
-                        <i className="bi bi-slash-circle"></i>
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => eliminarUsuario(u.correo)}
-                        title="Eliminar usuario"
-                      >
-                        <i className="bi bi-trash"></i>
+                        <i className="bi bi-person-gear me-1"></i>Cambiar Rol
                       </button>
 
                       <button

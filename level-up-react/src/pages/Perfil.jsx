@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getProductById } from '../data/productsData';
 import { formatCLP } from '../utils/formatters';
+import api from '../services/api';
 
 const Perfil = () => {
   const navigate = useNavigate();
@@ -75,9 +76,35 @@ const Perfil = () => {
       });
     }
 
-    const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
-    const misCompras = todasLasCompras.filter(compra => compra.correo && compra.correo.toLowerCase() === usuario.correo.toLowerCase());
-    setCompras(misCompras);
+    // Cargar historial de compras desde Spring Boot (/api/ordenes/mis-compras)
+    api.get('/ordenes/mis-compras')
+      .then(res => {
+        if (res.data && Array.isArray(res.data)) {
+          // Adaptar formato boleta de backend a la vista del perfil
+          const comprasBackend = res.data.map(b => ({
+            idOrden: b.numeroOrden,
+            fecha: b.fecha ? new Date(b.fecha).toLocaleDateString('es-CL') : 'Reciente',
+            metodo: b.metodoPago || 'Webpay Plus',
+            totalPagado: b.total,
+            puntosGanados: b.puntosGanados || 0,
+            puntosUsados: b.puntosUsados || 0,
+            estado: b.estado || 'Completada',
+            productos: (b.detalles || []).map(d => ({
+              nombre: d.producto?.nombre || 'Producto Gamer',
+              precio: d.precioUnitario,
+              cantidad: d.cantidad,
+              imagen: d.producto?.imagen || '/img/productos/default.jpg'
+            }))
+          }));
+          setCompras(comprasBackend);
+        }
+      })
+      .catch(() => {
+        // Fallback local en caso de desconexión
+        const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
+        const misCompras = todasLasCompras.filter(compra => compra.correo && compra.correo.toLowerCase() === usuario.correo.toLowerCase());
+        setCompras(misCompras);
+      });
 
     const todosFavoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
     const misFavoritosIds = todosFavoritos.filter(fav => fav.correo && fav.correo.toLowerCase() === usuario.correo.toLowerCase());

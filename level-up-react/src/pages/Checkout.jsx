@@ -8,7 +8,7 @@ import api from '../services/api';
 
 export const Checkout = () => {
   const navigate = useNavigate();
-  const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();
+  const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, cupon, vaciarCarrito } = useCart();
   const { usuario, agregarPuntos, descontarPuntos } = useAuth();
 
   const [nombre, setNombre] = useState(usuario ? usuario.nombre : '');
@@ -95,31 +95,23 @@ export const Checkout = () => {
       return;
     }
 
-    let puntosUsados = 0;
-    let puntosGanados = 0;
-
+    let puntosACanjear = 0;
     if (metodoPago === 'Puntos LevelUp') {
-      const puntosNecesarios = Math.floor(total / 10); 
-      
-      if ((usuario.puntosLevelUp || 0) < puntosNecesarios) {
-        alert(`Saldo insuficiente. Necesitas ${puntosNecesarios} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
+      puntosACanjear = Math.floor(total / 10); 
+      if ((usuario.puntosLevelUp || 0) < puntosACanjear) {
+        alert(`Saldo insuficiente. Necesitas ${puntosACanjear} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
         return; 
       }
-      
-      descontarPuntos(puntosNecesarios);
-      puntosUsados = puntosNecesarios;
-    } else {
-      puntosGanados = Math.floor(total / 1000);
-      agregarPuntos(puntosGanados);
     }
-    
+
     let numOrden = '#LVL-' + Math.floor(10000 + Math.random() * 90000);
+    let boletaOficial = null;
 
     // Intentar registrar la orden en el Backend Spring Boot
     try {
       const ordenPayload = {
-        codigoCupon: cuponAplicado?.codigo || null,
-        puntosUsados: puntosUsados,
+        codigoCupon: cupon?.codigo || null,
+        puntosUsados: puntosACanjear,
         metodoPago: metodoPago,
         direccion: direccion.trim(),
         comuna: comuna.trim(),
@@ -132,8 +124,11 @@ export const Checkout = () => {
       };
 
       const res = await api.post('/ordenes', ordenPayload);
-      if (res.data && res.data.numeroOrden) {
-        numOrden = res.data.numeroOrden;
+      if (res.data) {
+        boletaOficial = res.data;
+        if (boletaOficial.numeroOrden) {
+          numOrden = boletaOficial.numeroOrden;
+        }
       }
     } catch (apiError) {
       console.error('Error al procesar orden en Backend:', apiError);
@@ -141,6 +136,19 @@ export const Checkout = () => {
       alert(`Error en el checkout: ${msg}`);
       return;
     }
+
+    // Actualizar puntos de la sesión SOLO tras confirmación 201 exitosa del backend (P0-02)
+    const puntosUsadosOficial = boletaOficial?.puntosUsados ?? puntosACanjear;
+    const puntosGanadosOficial = boletaOficial?.puntosGanados ?? (metodoPago === 'Puntos LevelUp' ? 0 : Math.floor(total / 100));
+
+    if (puntosUsadosOficial > 0) {
+      descontarPuntos(puntosUsadosOficial);
+    }
+    if (puntosGanadosOficial > 0) {
+      agregarPuntos(puntosGanadosOficial);
+    }
+
+    const totalOficial = boletaOficial?.total ?? total;
     
     const nuevaCompra = {
       idOrden: numOrden,
@@ -150,9 +158,9 @@ export const Checkout = () => {
       direccionComprador: `${direccion}, ${comuna}, ${region}`, 
       metodo: metodoPago,
       cantidadItems: carrito.reduce((acc, item) => acc + item.cantidad, 0),
-      totalPagado: total,
-      puntosGanados: puntosGanados, 
-      puntosUsados: puntosUsados, 
+      totalPagado: totalOficial,
+      puntosGanados: puntosGanadosOficial, 
+      puntosUsados: puntosUsadosOficial, 
       estado: 'En preparación / Pagado',  
       productos: carrito.map(item => ({
         nombre: item.nombre,
@@ -169,7 +177,7 @@ export const Checkout = () => {
     const orden = {
       numOrden,
       destinatario: `${nombre} ${apellido}`,
-      total: total,
+      total: totalOficial,
       metodoPago: metodoPago,
       direccion: `${direccion}, ${comuna}, ${region}`
     };
