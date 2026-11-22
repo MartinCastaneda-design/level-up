@@ -16,9 +16,9 @@ export const Navbar = () => {
   const esRutaActiva = (ruta) => (location.pathname === ruta ? "active" : "");
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top py-2">
-      <div className="container">
-        <Link className="navbar-brand d-flex align-items-center gap-2" to="/">
+    <nav className="navbar navbar-expand-lg navbar-dark custom-navbar sticky-top py-2 px-3 px-xl-4">
+      <div className="container-fluid px-lg-3">
+        <Link className="navbar-brand d-flex align-items-center gap-2 me-4" to="/">
           <img src={logo} alt="Level-Up Logo" style={{ maxHeight: "45px" }} />
           <span className="d-none d-sm-inline fw-bold brand-font text-info">
             LEVEL-UP
@@ -37,7 +37,7 @@ export const Navbar = () => {
         </button>
 
         <div className="collapse navbar-collapse" id="navbarGamer">
-          <ul className="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3">
+          <ul className="navbar-nav me-auto mb-2 mb-lg-0 gap-1 gap-lg-2">
             <li className="nav-item">
               <Link className={`nav-link ${esRutaActiva("/")}`} to="/">
                 <i className="bi bi-house-door me-1"></i>Inicio
@@ -90,10 +90,11 @@ export const Navbar = () => {
             </li>
           </ul>
 
-          <div className="d-flex align-items-center me-3">
+          <div className="d-flex align-items-center gap-3 ms-auto mt-2 mt-lg-0">
             <Link
               to="/carrito"
               className="btn btn-outline-info position-relative"
+              title="Carrito de compras"
             >
               <i className="bi bi-cart3 fs-5"></i>
               {totalArticulos > 0 && (
@@ -102,61 +103,61 @@ export const Navbar = () => {
                 </span>
               )}
             </Link>
-          </div>
 
-          {estaAutenticado ? (
-            <div
-              id="perfil-container"
-              className="d-flex align-items-center gap-3"
-            >
-              <Link
-                to="/perfil"
-                className="btn btn-outline-info d-flex align-items-center gap-2 px-3"
-              >
-                <i className="bi bi-person-circle fs-5"></i>
-                <span id="txtNombre">{usuario?.nombre || "Mi cuenta"}</span>
-              </Link>
-              {usuario?.rol === "admin" && (
-                <Link
-                  to="/admin"
-                  className="btn btn-outline-warning d-flex align-items-center gap-1 px-3"
-                >
-                  <i className="bi bi-speedometer2"></i>
-                  <span className="d-none d-md-inline">Panel Admin</span>
-                </Link>
-              )}
-              {usuario?.rol === "vendedor" && (
-                <Link
-                  to="/vendedor"
-                  className="btn btn-outline-warning d-flex align-items-center gap-1 px-3"
-                >
-                  <i className="bi bi-briefcase"></i>
-                  <span className="d-none d-md-inline">Panel Ventas</span>
-                </Link>
-              )}
+            {estaAutenticado ? (
               <div
-                className="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm"
-                title="Tus puntos LevelUp"
+                id="perfil-container"
+                className="d-flex align-items-center gap-2 gap-lg-3"
               >
-                <span id="navPuntos" className="fw-bold">
-                  {usuario?.puntosLevelUp || 0}
-                </span>
-                <i className="bi bi-coin text-warning"></i>
+                <Link
+                  to="/perfil"
+                  className="btn btn-outline-info d-flex align-items-center gap-2 px-3"
+                >
+                  <i className="bi bi-person-circle fs-5"></i>
+                  <span id="txtNombre">{usuario?.nombre || "Mi cuenta"}</span>
+                </Link>
+                {usuario?.rol === "admin" && (
+                  <Link
+                    to="/admin"
+                    className="btn btn-outline-warning d-flex align-items-center gap-1 px-3"
+                  >
+                    <i className="bi bi-speedometer2"></i>
+                    <span className="d-none d-md-inline">Panel Admin</span>
+                  </Link>
+                )}
+                {usuario?.rol === "vendedor" && (
+                  <Link
+                    to="/vendedor"
+                    className="btn btn-outline-warning d-flex align-items-center gap-1 px-3"
+                  >
+                    <i className="bi bi-briefcase"></i>
+                    <span className="d-none d-md-inline">Panel Ventas</span>
+                  </Link>
+                )}
+                <div
+                  className="badge bg-dark border border-warning text-warning d-flex align-items-center gap-1 px-3 py-2 fs-6 shadow-sm"
+                  title="Tus puntos LevelUp"
+                >
+                  <span id="navPuntos" className="fw-bold">
+                    {usuario?.puntosLevelUp || 0}
+                  </span>
+                  <i className="bi bi-coin text-warning"></i>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div
-              id="autenticacion-buttons"
-              className="d-flex align-items-center gap-2"
-            >
-              <Link to="/Login" className="btn btn-primary px-3">
-                <i className="bi bi-person me-1"></i>Ingresar
-              </Link>
-              <Link to="/Register" className="btn btn-outline-light px-3">
-                Registrarse
-              </Link>
-            </div>
-          )}
+            ) : (
+              <div
+                id="autenticacion-buttons"
+                className="d-flex align-items-center gap-2"
+              >
+                <Link to="/Login" className="btn btn-primary px-3">
+                  <i className="bi bi-person me-1"></i>Ingresar
+                </Link>
+                <Link to="/Register" className="btn btn-outline-light px-3">
+                  Registrarse
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </nav>
