@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
@@ -59,7 +58,8 @@ public class RefreshTokenService {
     @Transactional
     public Optional<RefreshToken> verifyAndRotate(String rawToken, String[] newRawTokenHolder) {
         String hash = hashToken(rawToken);
-        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByTokenHash(hash);
+        // Bloqueo pesimista para evitar que peticiones concurrentes roten el mismo token dos veces
+        Optional<RefreshToken> tokenOpt = refreshTokenRepository.findByTokenHashForUpdate(hash);
 
         if (tokenOpt.isEmpty()) {
             return Optional.empty();
@@ -71,7 +71,7 @@ public class RefreshTokenService {
             return Optional.empty();
         }
 
-        // Rotar token: marcar actual como revocado y reemplazado
+        // Rotar token: marcar actual como revocado y registrar reemplazo
         token.setFechaRevocacion(LocalDateTime.now());
 
         String newRawToken = UUID.randomUUID().toString() + "-" + UUID.randomUUID().toString();
@@ -99,9 +99,16 @@ public class RefreshTokenService {
     public void revokeToken(String rawToken) {
         if (rawToken == null || rawToken.trim().isEmpty()) return;
         String hash = hashToken(rawToken);
-        refreshTokenRepository.findByTokenHash(hash).ifPresent(token -> {
+        refreshTokenRepository.findByTokenHashForUpdate(hash).ifPresent(token -> {
             token.setFechaRevocacion(LocalDateTime.now());
             refreshTokenRepository.save(token);
         });
+    }
+
+    @Transactional
+    public void revokeAllByUsuario(Usuario usuario) {
+        if (usuario != null) {
+            refreshTokenRepository.revokeAllByUsuario(usuario, LocalDateTime.now());
+        }
     }
 }

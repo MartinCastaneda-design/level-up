@@ -19,8 +19,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -119,7 +119,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta con rol ROLE_CLIENTE y valida duplicados con 409")
+    @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta con rol ROLE_CLIENTE y persiste los datos de perfil")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req, HttpServletResponse servletResponse) {
         String username = req.getUsername() != null ? req.getUsername().trim() : "";
         String correo = req.getCorreo() != null ? req.getCorreo().trim().toLowerCase() : "";
@@ -147,6 +147,9 @@ public class AuthController {
                 .apellido(apellido)
                 .rol("ROLE_CLIENTE")
                 .puntosLevelUp(100)
+                .fechaNacimiento(req.getFechaNacimiento())
+                .sexo(req.getSexo())
+                .codigoReferido(req.getCodigoReferido())
                 .build();
 
         Usuario guardado = usuarioRepository.save(nuevo);
@@ -164,6 +167,9 @@ public class AuthController {
         response.put("correo", guardado.getCorreo());
         response.put("rol", guardado.getRol());
         response.put("puntosLevelUp", guardado.getPuntosLevelUp());
+        response.put("fechaNacimiento", guardado.getFechaNacimiento());
+        response.put("sexo", guardado.getSexo());
+        response.put("codigoReferido", guardado.getCodigoReferido());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -234,12 +240,16 @@ public class AuthController {
         response.put("correo", usuario.getCorreo());
         response.put("rol", usuario.getRol());
         response.put("puntosLevelUp", usuario.getPuntosLevelUp() != null ? usuario.getPuntosLevelUp() : 0);
+        response.put("fechaNacimiento", usuario.getFechaNacimiento());
+        response.put("sexo", usuario.getSexo());
+        response.put("codigoReferido", usuario.getCodigoReferido());
 
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/me")
-    @Operation(summary = "Actualizar perfil propio", description = "Actualiza nombre, apellido o contraseña validando contraseña actual")
+    @Transactional
+    @Operation(summary = "Actualizar perfil propio", description = "Actualiza nombre, apellido o contraseña validando contraseña actual y revocando sesiones previas")
     public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest body, Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autenticado"));
@@ -271,6 +281,7 @@ public class AuthController {
         }
 
         // Si intenta cambiar contraseña
+        boolean passwordChanged = false;
         if (body.getNuevaContrasena() != null && !body.getNuevaContrasena().trim().isEmpty()) {
             if (body.getContrasenaActual() == null || !passwordEncoder.matches(body.getContrasenaActual(), usuario.getPassword())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La contraseña actual es incorrecta"));
@@ -279,9 +290,15 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La nueva contraseña debe tener al menos 6 caracteres"));
             }
             usuario.setPassword(passwordEncoder.encode(body.getNuevaContrasena().trim()));
+            passwordChanged = true;
         }
 
         Usuario guardado = usuarioRepository.save(usuario);
+
+        // Al cambiar contraseña, revocar todos los refresh tokens existentes por seguridad
+        if (passwordChanged) {
+            refreshTokenService.revokeAllByUsuario(guardado);
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("id", guardado.getId());

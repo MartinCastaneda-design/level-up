@@ -1,21 +1,16 @@
 package com.example.LevelUpGamer.controller;
 
+import com.example.LevelUpGamer.dto.CategoriaDto;
 import com.example.LevelUpGamer.model.Categoria;
 import com.example.LevelUpGamer.repository.CategoriaRepository;
+import com.example.LevelUpGamer.repository.ProductoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -26,9 +21,11 @@ import java.util.Map;
 public class CategoriaController {
 
     private final CategoriaRepository categoriaRepository;
+    private final ProductoRepository productoRepository;
 
-    public CategoriaController(CategoriaRepository categoriaRepository) {
+    public CategoriaController(CategoriaRepository categoriaRepository, ProductoRepository productoRepository) {
         this.categoriaRepository = categoriaRepository;
+        this.productoRepository = productoRepository;
     }
 
     @GetMapping
@@ -56,13 +53,22 @@ public class CategoriaController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Crear nueva categoría", description = "Solo Administrador")
-    public ResponseEntity<?> crear(@RequestBody Categoria categoria) {
-        if (categoria.getSlug() == null || categoria.getSlug().isBlank()) {
-            categoria.setSlug(categoria.getNombre().toLowerCase().trim().replace(" ", "-"));
+    public ResponseEntity<?> crear(@Valid @RequestBody CategoriaDto dto) {
+        String slug = (dto.getSlug() != null && !dto.getSlug().trim().isEmpty())
+                ? dto.getSlug().trim().toLowerCase().replace(" ", "-")
+                : dto.getNombre().toLowerCase().trim().replace(" ", "-");
+
+        if (categoriaRepository.existsBySlug(slug)) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Ya existe una categoría con ese slug"));
         }
-        if (categoriaRepository.existsBySlug(categoria.getSlug())) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Ya existe una categoría con ese slug"));
-        }
+
+        Categoria categoria = Categoria.builder()
+                .nombre(dto.getNombre().trim())
+                .slug(slug)
+                .descripcion(dto.getDescripcion())
+                .icono(dto.getIcono() != null ? dto.getIcono() : "bi-tag")
+                .build();
+
         Categoria guardada = categoriaRepository.save(categoria);
         return ResponseEntity.status(HttpStatus.CREATED).body(guardada);
     }
@@ -70,13 +76,21 @@ public class CategoriaController {
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Actualizar categoría existente", description = "Solo Administrador")
-    public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody Categoria nueva) {
+    public ResponseEntity<?> actualizar(@PathVariable Long id, @Valid @RequestBody CategoriaDto dto) {
         return categoriaRepository.findById(id).map(cat -> {
-            cat.setNombre(nueva.getNombre());
-            cat.setSlug(nueva.getSlug());
-            cat.setDescripcion(nueva.getDescripcion());
-            cat.setIcono(nueva.getIcono());
-            return ResponseEntity.ok(categoriaRepository.save(cat));
+            String slug = (dto.getSlug() != null && !dto.getSlug().trim().isEmpty())
+                    ? dto.getSlug().trim().toLowerCase().replace(" ", "-")
+                    : dto.getNombre().toLowerCase().trim().replace(" ", "-");
+
+            if (!cat.getSlug().equalsIgnoreCase(slug) && categoriaRepository.existsBySlug(slug)) {
+                return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Ya existe otra categoría con ese slug"));
+            }
+
+            cat.setNombre(dto.getNombre().trim());
+            cat.setSlug(slug);
+            cat.setDescripcion(dto.getDescripcion());
+            cat.setIcono(dto.getIcono());
+            return ResponseEntity.ok((Object) categoriaRepository.save(cat));
         }).orElse(ResponseEntity.notFound().build());
     }
 
@@ -84,9 +98,16 @@ public class CategoriaController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Eliminar categoría", description = "Solo Administrador")
     public ResponseEntity<?> eliminar(@PathVariable Long id) {
-        if (!categoriaRepository.existsById(id)) {
+        Categoria cat = categoriaRepository.findById(id).orElse(null);
+        if (cat == null) {
             return ResponseEntity.notFound().build();
         }
+
+        // Impedir eliminar si hay productos asociados a esta categoría
+        if (!productoRepository.findByCategoriaSlug(cat.getSlug()).isEmpty()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "No se puede eliminar la categoría porque tiene productos asociados en el catálogo"));
+        }
+
         categoriaRepository.deleteById(id);
         return ResponseEntity.ok(Map.of("mensaje", "Categoría eliminada con éxito"));
     }

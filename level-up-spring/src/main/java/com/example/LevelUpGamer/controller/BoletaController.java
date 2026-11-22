@@ -1,5 +1,7 @@
 package com.example.LevelUpGamer.controller;
 
+import com.example.LevelUpGamer.dto.CotizacionResponse;
+import com.example.LevelUpGamer.dto.CotizarOrdenRequest;
 import com.example.LevelUpGamer.dto.CrearOrdenRequest;
 import com.example.LevelUpGamer.dto.OrdenCreadaResponse;
 import com.example.LevelUpGamer.model.Boleta;
@@ -36,6 +38,15 @@ public class BoletaController {
         this.ordenService = ordenService;
         this.boletaRepository = boletaRepository;
         this.usuarioRepository = usuarioRepository;
+    }
+
+    @PostMapping("/cotizar")
+    @Operation(summary = "Cotizar / Previsualizar orden", description = "Calcula totales oficiales, ofertas, cupón y puntos máximos sin descontar stock")
+    public ResponseEntity<CotizacionResponse> cotizarOrden(@Valid @RequestBody CotizarOrdenRequest request,
+                                                           Authentication authentication) {
+        String username = authentication.getName();
+        CotizacionResponse response = ordenService.cotizarOrden(request, username);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping

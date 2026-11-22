@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +20,40 @@ export const Checkout = () => {
   const [comuna, setComuna] = useState('');
   const [metodoPago, setMetodoPago] = useState('Webpay Plus (Débito/Crédito)');
 
+  const [cotizacion, setCotizacion] = useState(null);
+  const [cargandoCotizacion, setCargandoCotizacion] = useState(false);
   const [ordenExitosa, setOrdenExitosa] = useState(null);
+
+  // Obtener cotización oficial del backend cada vez que cambien los items, cupón o método de pago
+  useEffect(() => {
+    if (!usuario || !carrito || carrito.length === 0) return;
+
+    let cancelado = false;
+    const obtenerCotizacion = async () => {
+      setCargandoCotizacion(true);
+      try {
+        const payload = {
+          items: carrito.map(item => ({
+            id: item.id,
+            cantidad: item.cantidad
+          })),
+          cupon: cupon?.codigo || null,
+          puntosUsados: metodoPago === 'Puntos LevelUp' ? Math.floor(total / 10) : 0
+        };
+        const res = await api.post('/ordenes/cotizar', payload);
+        if (!cancelado && res.data) {
+          setCotizacion(res.data);
+        }
+      } catch (err) {
+        console.warn('No se pudo obtener cotización oficial:', err);
+      } finally {
+        if (!cancelado) setCargandoCotizacion(false);
+      }
+    };
+
+    obtenerCotizacion();
+    return () => { cancelado = true; };
+  }, [carrito, cupon, metodoPago, usuario, total]);
 
   if (!usuario) {
     return (
@@ -97,7 +130,8 @@ export const Checkout = () => {
 
     let puntosACanjear = 0;
     if (metodoPago === 'Puntos LevelUp') {
-      puntosACanjear = Math.floor(total / 10); 
+      const maxPermitido = cotizacion?.puntosMaximosCanjeables ?? Math.floor(total / 10);
+      puntosACanjear = maxPermitido;
       if ((usuario.puntosLevelUp || 0) < puntosACanjear) {
         alert(`Saldo insuficiente. Necesitas ${puntosACanjear} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
         return; 
@@ -360,8 +394,8 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg w-100 py-3 fw-bold">
-                <i className="bi bi-lock-fill me-2"></i>Confirmar y Realizar Pedido ({formatCLP(total)})
+              <button type="submit" className="btn btn-primary btn-lg w-100 py-3 fw-bold" disabled={cargandoCotizacion}>
+                <i className="bi bi-lock-fill me-2"></i>Confirmar y Realizar Pedido ({formatCLP(cotizacion ? cotizacion.total : total)})
               </button>
               <button
                 type="button"
@@ -375,11 +409,11 @@ export const Checkout = () => {
 
           <div className="col-lg-5">
             <OrderSummary
-              subtotal={subtotal}
-              descuento={montoDescuento}
-              porcentajeDescuento={porcentajeDescuento}
-              total={total}
-              puntosGanar={Math.floor(total / 1000)}
+              subtotal={cotizacion ? cotizacion.subtotal : subtotal}
+              descuento={cotizacion ? (cotizacion.descuentoCupon + cotizacion.descuentoPuntos) : montoDescuento}
+              porcentajeDescuento={cotizacion && cotizacion.subtotal > 0 ? Math.round(((cotizacion.descuentoCupon) / cotizacion.subtotal) * 100) : porcentajeDescuento}
+              total={cotizacion ? cotizacion.total : total}
+              puntosGanar={cotizacion ? cotizacion.puntosGanar : Math.floor((total) / 100)}
             >
               <div className="mb-3" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                 <h6 className="text-white small fw-bold mb-2">Artículos en tu pedido:</h6>

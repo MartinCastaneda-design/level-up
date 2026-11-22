@@ -25,7 +25,7 @@ const Register = () => {
     const { id, value } = e.target;
     let key = id.replace(/txt|date|select/, '').toLowerCase();
     if (id === 'codigoReferido') key = 'codigoReferido';
-    if (id === 'fechaNacimiento') key = 'fechaNacimiento';
+    if (id === 'dateFechaNacimiento' || id === 'fechaNacimiento') key = 'fechaNacimiento';
     
     setFormData({ ...formData, [key]: value });
     if (errores[key]) {
@@ -43,15 +43,15 @@ const Register = () => {
     if (!formData.apellido.trim()) { nuevosErrores.apellido = "Por favor ingresa tu apellido."; hayErrores = true; }
 
     let difEdad = 0;
-    if (!formData.fechanacimiento) {
-      nuevosErrores.fechanacimiento = "Selecciona tu fecha de nacimiento."; hayErrores = true;
+    if (!formData.fechaNacimiento) {
+      nuevosErrores.fechaNacimiento = "Selecciona tu fecha de nacimiento."; hayErrores = true;
     } else {
-      const fechaNac = new Date(formData.fechanacimiento);
+      const fechaNac = new Date(formData.fechaNacimiento);
       const hoy = new Date();
       difEdad = hoy.getFullYear() - fechaNac.getFullYear();
       const m = hoy.getMonth() - fechaNac.getMonth();
       if (m < 0 || (m === 0 && hoy.getDate() < fechaNac.getDate())) difEdad--;
-      if (difEdad < 18) { nuevosErrores.fechanacimiento = `Tienes ${difEdad} años. Debes ser mayor de 18.`; hayErrores = true; }
+      if (difEdad < 18) { nuevosErrores.fechaNacimiento = `Tienes ${difEdad} años. Debes ser mayor de 18.`; hayErrores = true; }
     }
 
     if (!formData.sexo) { nuevosErrores.sexo = "Selecciona una opción de sexo."; hayErrores = true; }
@@ -78,9 +78,9 @@ const Register = () => {
         contrasena: formData.contrasena,
         nombre: formData.nombre.trim(),
         apellido: formData.apellido.trim(),
-        fechaNacimiento: formData.fechanacimiento,
+        fechaNacimiento: formData.fechaNacimiento,
         sexo: formData.sexo,
-        codigoReferido: formData.codigoreferido || ''
+        codigoReferido: formData.codigoReferido || ''
       });
 
       if (res.status === 201) {
@@ -159,8 +159,8 @@ const Register = () => {
             <div className="row">
               <div className="col-md-6 mb-3">
                 <label htmlFor="dateFechaNacimiento" className="form-label">Fecha de Nacimiento</label>
-                <input type="date" className={`form-control ${errores.fechanacimiento ? 'is-invalid' : ''}`} id="dateFechaNacimiento" value={formData.fechanacimiento || ''} onChange={handleChange} />
-                {errores.fechanacimiento && <div className="invalid-feedback-custom text-danger small mt-1"><i className="bi bi-exclamation-circle"></i> {errores.fechanacimiento}</div>}
+                <input type="date" className={`form-control ${errores.fechaNacimiento ? 'is-invalid' : ''}`} id="dateFechaNacimiento" value={formData.fechaNacimiento || ''} onChange={handleChange} />
+                {errores.fechaNacimiento && <div className="invalid-feedback-custom text-danger small mt-1"><i className="bi bi-exclamation-circle"></i> {errores.fechaNacimiento}</div>}
               </div>
               <div className="col-md-6 mb-3">
                 <label htmlFor="selectSexo" className="form-label">Sexo</label>
@@ -189,7 +189,7 @@ const Register = () => {
 
             <div className="mb-4">
               <label htmlFor="codigoReferido" className="form-label">Código de Referido (Opcional)</label>
-              <input type="text" className="form-control" id="codigoReferido" value={formData.codigoreferido || ''} onChange={handleChange} placeholder="Ej: GAMER2026" />
+              <input type="text" className="form-control" id="codigoReferido" value={formData.codigoReferido || ''} onChange={handleChange} placeholder="Ej: GAMER2026" />
             </div>
 
             <button type="submit" className="btn btn-primary w-100 py-2 mb-3" disabled={isSubmitting}>

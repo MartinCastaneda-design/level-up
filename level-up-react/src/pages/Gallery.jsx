@@ -8,27 +8,41 @@ export const Gallery = () => {
   const categoriaUrl = searchParams.get('cat') || 'todos';
 
   const [listaProductos, setListaProductos] = useState([]);
+  const [categoriasApi, setCategoriasApi] = useState([]);
   const [cargandoApi, setCargandoApi] = useState(true);
   const [errorApi, setErrorApi] = useState(null);
   const [inputBuscar, setInputBuscar] = useState('');
   const [selectCategoria, setSelectCategoria] = useState(categoriaUrl);
   const [selectOrden, setSelectOrden] = useState('destacados');
 
-  // Cargar productos exclusivamente desde el backend Spring Boot
+  // Cargar productos y categorías dinámicamente desde el backend
   useEffect(() => {
     let montado = true;
-    const fetchProductosBackend = async () => {
+    const fetchDatosBackend = async () => {
       try {
         setCargandoApi(true);
         setErrorApi(null);
-        const res = await api.get('/productos');
-        if (montado && res.data && Array.isArray(res.data)) {
-          setListaProductos(res.data);
-        } else if (montado) {
-          setListaProductos([]);
+
+        const [resProds, resCats] = await Promise.allSettled([
+          api.get('/productos'),
+          api.get('/categorias')
+        ]);
+
+        if (montado) {
+          if (resProds.status === 'fulfilled' && Array.isArray(resProds.value.data)) {
+            setListaProductos(resProds.value.data);
+          } else {
+            setListaProductos([]);
+          }
+
+          if (resCats.status === 'fulfilled' && Array.isArray(resCats.value.data)) {
+            setCategoriasApi(resCats.value.data);
+          } else {
+            setCategoriasApi([]);
+          }
         }
       } catch (err) {
-        console.error('Error al consultar productos:', err);
+        console.error('Error al consultar datos en Gallery:', err);
         if (montado) {
           setErrorApi('No fue posible cargar el catálogo desde el servidor.');
           setListaProductos([]);
@@ -37,7 +51,7 @@ export const Gallery = () => {
         if (montado) setCargandoApi(false);
       }
     };
-    fetchProductosBackend();
+    fetchDatosBackend();
     return () => { montado = false; };
   }, []);
 
@@ -80,7 +94,7 @@ export const Gallery = () => {
       } else if (categoria === 'destacados') {
         coincideCategoria = prod.destacado === true;
       } else if (categoria !== 'todos') {
-        coincideCategoria = prod.categoriaSlug === categoria;
+        coincideCategoria = prod.categoriaSlug === categoria || prod.categoria?.toLowerCase() === categoria.toLowerCase();
       }
 
       return coincideTexto && coincideCategoria;
@@ -92,8 +106,6 @@ export const Gallery = () => {
       productos.sort((a, b) => b.precio - a.precio);
     } else if (orden === 'nombre') {
       productos.sort((a, b) => a.nombre.localeCompare(b.nombre));
-    } else if (orden === 'destacados') {
-      productos.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
     }
 
     return productos;
@@ -101,10 +113,10 @@ export const Gallery = () => {
 
   return (
     <main className="container my-5 flex-grow-1">
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 className="h2 mb-1">🎮 Catálogo de Productos</h1>
-          <p className="text-muted mb-0">Explora todo nuestro equipamiento gamer disponible</p>
+          <h1 className="h2 mb-1">Catálogo Gamer</h1>
+          <p className="text-muted mb-0">Explora nuestro catálogo de productos oficiales.</p>
         </div>
         <div className="text-muted small">
           Mostrando <span id="contadorResultados" className="text-info fw-bold">{productosFiltrados.length}</span> productos
@@ -138,15 +150,11 @@ export const Gallery = () => {
               <option value="todos">Todas las Categorías</option>
               <option value="ofertas">🔥 En Oferta</option>
               <option value="destacados">⭐ Destacados</option>
-              <option value="juegos-de-mesa">Juegos de Mesa</option>
-              <option value="consolas">Consolas</option>
-              <option value="computadores-gamers">Computadores Gamers</option>
-              <option value="accesorios">Accesorios</option>
-              <option value="mouse">Mouse</option>
-              <option value="mousepad">Mousepad</option>
-              <option value="sillas-gamers">Sillas Gamers</option>
-              <option value="poleras-personalizadas">Poleras Personalizadas</option>
-              <option value="polerones-gamers">Polerones Gamers</option>
+              {categoriasApi.map((c) => (
+                <option key={c.id || c.slug} value={c.slug}>
+                  {c.nombre}
+                </option>
+              ))}
             </select>
           </div>
           <div className="col-12 col-sm-6 col-md-3">
@@ -189,27 +197,16 @@ export const Gallery = () => {
           >
             ⭐ Destacados
           </button>
-          <button
-            type="button"
-            className={`btn btn-sm btn-outline-light chip-filtro ${selectCategoria === 'consolas' ? 'active' : ''}`}
-            onClick={() => actualizarCategoria('consolas')}
-          >
-            Consolas
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm btn-outline-light chip-filtro ${selectCategoria === 'computadores-gamers' ? 'active' : ''}`}
-            onClick={() => actualizarCategoria('computadores-gamers')}
-          >
-            PC Gamers
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm btn-outline-light chip-filtro ${selectCategoria === 'juegos-de-mesa' ? 'active' : ''}`}
-            onClick={() => actualizarCategoria('juegos-de-mesa')}
-          >
-            Juegos de Mesa
-          </button>
+          {categoriasApi.slice(0, 4).map((c) => (
+            <button
+              key={c.id || c.slug}
+              type="button"
+              className={`btn btn-sm btn-outline-light chip-filtro ${selectCategoria === c.slug ? 'active' : ''}`}
+              onClick={() => actualizarCategoria(c.slug)}
+            >
+              {c.nombre}
+            </button>
+          ))}
         </div>
       </section>
 

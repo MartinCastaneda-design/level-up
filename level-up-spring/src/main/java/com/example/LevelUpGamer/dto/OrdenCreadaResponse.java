@@ -35,7 +35,7 @@ public class OrdenCreadaResponse {
     @AllArgsConstructor
     @Builder
     public static class DetalleItemResponse {
-        private Long productoId;
+        private String productoId;
         private String nombreProducto;
         private Integer cantidad;
         private Integer precioUnitario;

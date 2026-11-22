@@ -1,19 +1,13 @@
 package com.example.LevelUpGamer.controller;
 
+import com.example.LevelUpGamer.dto.ProductoDto;
 import com.example.LevelUpGamer.model.Producto;
 import com.example.LevelUpGamer.repository.ProductoRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +26,7 @@ public class ProductoController {
     @GetMapping
     @Operation(summary = "Listar catálogo", description = "Obtiene todos los productos o filtra por categoría")
     public List<Producto> listar(@RequestParam(required = false) String categoria) {
-        if (categoria != null && !categoria.trim().isEmpty() && !categoria.equalsIgnoreCase("Todas")) {
+        if (categoria != null && !categoria.trim().isEmpty() && !categoria.equalsIgnoreCase("Todas") && !categoria.equalsIgnoreCase("todos")) {
             return productoRepository.findByCategoriaSlug(categoria.toLowerCase());
         }
         return productoRepository.findAll();
@@ -47,34 +41,62 @@ public class ProductoController {
     }
 
     @PostMapping
-    @Operation(summary = "Crear producto", description = "Agrega un nuevo producto al catálogo (requiere ROLE_ADMIN)")
-    public ResponseEntity<Producto> crear(@RequestBody Producto producto) {
-        if (producto.getId() == null || producto.getId().trim().isEmpty()) {
-            producto.setId("PROD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+    @Operation(summary = "Crear producto", description = "Agrega un nuevo producto al catálogo con validación (requiere ROLE_ADMIN)")
+    public ResponseEntity<Producto> crear(@Valid @RequestBody ProductoDto dto) {
+        String prodId = (dto.getId() != null && !dto.getId().trim().isEmpty())
+                ? dto.getId().trim()
+                : "PROD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        if (productoRepository.existsById(prodId)) {
+            return ResponseEntity.status(409).build();
         }
-        if (producto.getCategoriaSlug() == null && producto.getCategoria() != null) {
-            producto.setCategoriaSlug(producto.getCategoria().toLowerCase().replace(" ", "-"));
+
+        String catSlug = dto.getCategoriaSlug();
+        if (catSlug == null || catSlug.trim().isEmpty()) {
+            catSlug = dto.getCategoria().toLowerCase().replace(" ", "-");
         }
-        Producto guardado = productoRepository.save(producto);
+
+        Producto nuevo = Producto.builder()
+                .id(prodId)
+                .nombre(dto.getNombre().trim())
+                .categoria(dto.getCategoria().trim())
+                .categoriaSlug(catSlug)
+                .precio(dto.getPrecio())
+                .stock(dto.getStock())
+                .imagen(dto.getImagen() != null ? dto.getImagen() : "/img/productos/default.jpg")
+                .destacado(Boolean.TRUE.equals(dto.getDestacado()))
+                .enOferta(Boolean.TRUE.equals(dto.getEnOferta()))
+                .descuento(dto.getDescuento() != null ? dto.getDescuento() : 0)
+                .descripcionCorta(dto.getDescripcionCorta())
+                .descripcionLarga(dto.getDescripcionLarga())
+                .rating(5.0)
+                .numReviews(0)
+                .build();
+
+        Producto guardado = productoRepository.save(nuevo);
         return ResponseEntity.status(201).body(guardado);
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Actualizar producto", description = "Modifica un producto existente (requiere ROLE_ADMIN)")
-    public ResponseEntity<Producto> actualizar(@PathVariable String id, @RequestBody Producto actualizado) {
+    @Operation(summary = "Actualizar producto", description = "Modifica un producto existente con validación (requiere ROLE_ADMIN)")
+    public ResponseEntity<Producto> actualizar(@PathVariable String id, @Valid @RequestBody ProductoDto dto) {
         return productoRepository.findById(id)
                 .map(p -> {
-                    p.setNombre(actualizado.getNombre());
-                    p.setCategoria(actualizado.getCategoria());
-                    p.setCategoriaSlug(actualizado.getCategoriaSlug());
-                    p.setPrecio(actualizado.getPrecio());
-                    p.setImagen(actualizado.getImagen());
-                    p.setStock(actualizado.getStock());
-                    p.setDestacado(actualizado.getDestacado());
-                    p.setEnOferta(actualizado.getEnOferta());
-                    p.setDescuento(actualizado.getDescuento());
-                    p.setDescripcionCorta(actualizado.getDescripcionCorta());
-                    p.setDescripcionLarga(actualizado.getDescripcionLarga());
+                    p.setNombre(dto.getNombre().trim());
+                    p.setCategoria(dto.getCategoria().trim());
+                    String catSlug = dto.getCategoriaSlug();
+                    if (catSlug == null || catSlug.trim().isEmpty()) {
+                        catSlug = dto.getCategoria().toLowerCase().replace(" ", "-");
+                    }
+                    p.setCategoriaSlug(catSlug);
+                    p.setPrecio(dto.getPrecio());
+                    p.setStock(dto.getStock());
+                    if (dto.getImagen() != null) p.setImagen(dto.getImagen());
+                    p.setDestacado(Boolean.TRUE.equals(dto.getDestacado()));
+                    p.setEnOferta(Boolean.TRUE.equals(dto.getEnOferta()));
+                    p.setDescuento(dto.getDescuento() != null ? dto.getDescuento() : 0);
+                    if (dto.getDescripcionCorta() != null) p.setDescripcionCorta(dto.getDescripcionCorta());
+                    if (dto.getDescripcionLarga() != null) p.setDescripcionLarga(dto.getDescripcionLarga());
                     return ResponseEntity.ok(productoRepository.save(p));
                 })
                 .orElse(ResponseEntity.notFound().build());

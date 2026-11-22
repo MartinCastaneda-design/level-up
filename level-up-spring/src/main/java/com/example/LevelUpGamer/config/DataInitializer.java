@@ -7,9 +7,11 @@ import com.example.LevelUpGamer.repository.CategoriaRepository;
 import com.example.LevelUpGamer.repository.ProductoRepository;
 import com.example.LevelUpGamer.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.env.Environment;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -19,20 +21,27 @@ public class DataInitializer implements CommandLineRunner {
     private final ProductoRepository productoRepository;
     private final CategoriaRepository categoriaRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Environment environment;
 
     public DataInitializer(UsuarioRepository usuarioRepository,
                            ProductoRepository productoRepository,
                            CategoriaRepository categoriaRepository,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           Environment environment) {
         this.usuarioRepository = usuarioRepository;
         this.productoRepository = productoRepository;
         this.categoriaRepository = categoriaRepository;
         this.passwordEncoder = passwordEncoder;
+        this.environment = environment;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        if (usuarioRepository.count() == 0) {
+        boolean isDevOrTest = Arrays.stream(environment.getActiveProfiles())
+                .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("test"));
+
+        // En perfil prod NO sembrar usuarios demo con contraseñas públicas
+        if (isDevOrTest && usuarioRepository.count() == 0) {
             Usuario admin = Usuario.builder()
                     .username("admin")
                     .correo("admin@levelup.cl")
