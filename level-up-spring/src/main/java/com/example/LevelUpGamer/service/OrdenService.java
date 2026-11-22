@@ -85,13 +85,8 @@ public class OrdenService {
             int precioOriginal = prod.getPrecio() != null ? prod.getPrecio() : 0;
             int descPorc = (Boolean.TRUE.equals(prod.getEnOferta()) && prod.getDescuento() != null) ? Math.min(100, Math.max(0, prod.getDescuento())) : 0;
             int precioFinal = calcularPrecioFinal(prod);
-            long itemSubtotal;
-            try {
-                itemSubtotal = Math.multiplyExact((long) precioFinal, (long) cant);
-                subtotal = Math.addExact(subtotal, itemSubtotal);
-            } catch (ArithmeticException ex) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Desbordamiento en el cálculo de subtotal");
-            }
+            long itemSubtotal = (long) precioFinal * cant;
+            subtotal += itemSubtotal;
 
             itemsResp.add(CotizacionResponse.ItemCotizadoResponse.builder()
                     .productoId(prod.getId())
@@ -249,9 +244,6 @@ public class OrdenService {
             int cant = entry.getValue();
             int precioUnit = calcularPrecioFinal(prod);
             long itemSubtotal = (long) precioUnit * cant;
-            if (itemSubtotal > Integer.MAX_VALUE) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El subtotal del item excede el límite máximo permitido");
-            }
 
             DetalleBoleta det = DetalleBoleta.builder()
                     .boleta(boletaGuardada)
@@ -304,15 +296,7 @@ public class OrdenService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad no puede exceder 999 unidades por línea");
             }
             String pId = item.getId().trim();
-            try {
-                int totalCant = Math.addExact(agrupados.getOrDefault(pId, 0), item.getCantidad());
-                if (totalCant > 9999) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad total agregada supera el límite permitido para: " + pId);
-                }
-                agrupados.put(pId, totalCant);
-            } catch (ArithmeticException ex) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Desbordamiento aritmético en la cantidad solicitada para: " + pId);
-            }
+            agrupados.put(pId, agrupados.getOrDefault(pId, 0) + item.getCantidad());
         }
         return agrupados;
     }

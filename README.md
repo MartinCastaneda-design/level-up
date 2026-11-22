@@ -194,13 +194,17 @@ La API opera de manera **Stateless** mediante Bearer Tokens en el encabezado `Au
    ```bash
    cd level-up-spring
    ```
-2. Iniciar la aplicación usando el Maven Wrapper incluido:
+2. Exportar las variables requeridas e iniciar la aplicación usando el Maven Wrapper:
    * **Linux / macOS / Git Bash:**
      ```bash
+     export SPRING_PROFILES_ACTIVE=dev
+     export JWT_SECRET="$(openssl rand -base64 32)"
      bash ./mvnw spring-boot:run
      ```
-   * **Windows (PowerShell o CMD):**
+   * **Windows PowerShell:**
      ```powershell
+     $env:SPRING_PROFILES_ACTIVE = "dev"
+     $env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
      .\mvnw.cmd spring-boot:run
      ```
 3. El backend estará listo en el puerto **`8089`**:
@@ -219,10 +223,11 @@ La API opera de manera **Stateless** mediante Bearer Tokens en el encabezado `Au
    ```bash
    cd level-up-react
    ```
-2. Instalar dependencias:
+2. Instalar dependencias y configurar variables de entorno:
    ```bash
    npm install
    ```
+   *(Opcional: Crear `.env.local` a partir de `.env.example` asegurando `VITE_API_BASE_URL=http://localhost:8089/api`)*
 3. Iniciar el servidor Vite de desarrollo:
    ```bash
    npm run dev
