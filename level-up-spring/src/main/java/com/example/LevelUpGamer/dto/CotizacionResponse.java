@@ -23,6 +23,7 @@ public class CotizacionResponse {
     private Integer puntosMaximosCanjeables;
     private Integer puntosGanar;
     private Integer saldoPuntosDisponible;
+    private Boolean pagoTotalConPuntosDisponible;
     private List<ItemCotizadoResponse> items;
 
     @Data

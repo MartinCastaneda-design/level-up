@@ -43,6 +43,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       - name: Verify and Test Backend
-        run: ./mvnw -B clean verify
+        run: bash ./mvnw -B clean verify
         env:
           JWT_SECRET: "ClaveSecretaDePruebaParaGithubActionsCiBuild2026Base64!"

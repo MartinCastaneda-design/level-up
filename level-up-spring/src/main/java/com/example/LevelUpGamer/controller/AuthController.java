@@ -44,15 +44,48 @@ public class AuthController {
     @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://localhost:4173}")
     private String allowedOrigins;
 
-    private boolean isValidOrigin(HttpServletRequest request) {
-        String origin = request.getHeader("Origin");
-        if (origin == null || origin.trim().isEmpty()) {
-            String referer = request.getHeader("Referer");
-            if (referer != null) origin = referer;
+    private String extractOriginFromUrl(String urlString) {
+        if (urlString == null || urlString.trim().isEmpty() || "null".equalsIgnoreCase(urlString.trim())) {
+            return null;
         }
-        if (origin == null) return true;
-        List<String> valid = Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList();
-        return valid.stream().anyMatch(origin::startsWith);
+        try {
+            java.net.URI uri = java.net.URI.create(urlString.trim());
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            int port = uri.getPort();
+            if (scheme == null || host == null) {
+                return null;
+            }
+            scheme = scheme.toLowerCase();
+            host = host.toLowerCase();
+            if (port == -1) {
+                if ("http".equals(scheme)) port = 80;
+                else if ("https".equals(scheme)) port = 443;
+            }
+            return scheme + "://" + host + (port > 0 ? ":" + port : "");
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private boolean isValidOrigin(HttpServletRequest request) {
+        String rawOrigin = request.getHeader("Origin");
+        String originToCheck = extractOriginFromUrl(rawOrigin);
+        if (originToCheck == null) {
+            String referer = request.getHeader("Referer");
+            originToCheck = extractOriginFromUrl(referer);
+        }
+        if (originToCheck == null) {
+            return false; // Fail-closed para endpoints basados en cookies
+        }
+        final String targetOrigin = originToCheck;
+        List<String> validOrigins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .map(this::extractOriginFromUrl)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        return validOrigins.stream().anyMatch(targetOrigin::equalsIgnoreCase);
     }
 
     public AuthController(UsuarioRepository usuarioRepository,

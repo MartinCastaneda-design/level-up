@@ -48,10 +48,10 @@ public class OrdenService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    private synchronized String generarNumeroOrdenUnico() {
+    private String generarNumeroOrdenUnico() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        long seq = ORDER_COUNTER.incrementAndGet();
-        return "LVL-" + timestamp + "-" + String.format("%04d", seq % 10000);
+        String uuidPart = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "LVL-" + timestamp + "-" + uuidPart;
     }
 
     public static int calcularPrecioFinal(Producto prod) {
@@ -118,6 +118,7 @@ public class OrdenService {
         long descuentoPuntos = puntosUsados * 10L;
         long totalOficial = Math.max(0L, montoTrasCupon - descuentoPuntos);
         int puntosGanar = (int) (totalOficial / 100L);
+        boolean pagoTotalPuntos = (saldoPuntos * 10L >= montoTrasCupon) && (montoTrasCupon % 10L == 0L);
 
         return CotizacionResponse.builder()
                 .subtotal(subtotal)
@@ -128,6 +129,7 @@ public class OrdenService {
                 .puntosMaximosCanjeables(maxPuntosCanjeables)
                 .puntosGanar(puntosGanar)
                 .saldoPuntosDisponible(saldoPuntos)
+                .pagoTotalConPuntosDisponible(pagoTotalPuntos)
                 .items(itemsResp)
                 .build();
     }
@@ -218,7 +220,11 @@ public class OrdenService {
 
         // 10. Actualizar puntos del usuario (1 punto por cada $100 CLP efectivamente pagados)
         int puntosGanados = (int) (totalOficial / 100L);
-        int nuevoSaldoPuntos = saldoPuntosActual - puntosUsados + puntosGanados;
+        long calculoSaldo = (long) saldoPuntosActual - (long) puntosUsados + (long) puntosGanados;
+        if (calculoSaldo < 0 || calculoSaldo > 10_000_000L) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El saldo resultante de puntos está fuera del rango permitido");
+        }
+        int nuevoSaldoPuntos = (int) calculoSaldo;
         usuario.setPuntosLevelUp(nuevoSaldoPuntos);
         usuarioRepository.save(usuario);
 

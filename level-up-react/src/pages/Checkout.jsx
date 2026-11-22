@@ -144,12 +144,11 @@ export const Checkout = () => {
 
     let puntosACanjear = 0;
     if (metodoPago === 'Puntos LevelUp') {
-      const maxPermitido = cotizacion?.puntosMaximosCanjeables ?? Math.floor(total / 10);
-      puntosACanjear = maxPermitido;
-      if ((usuario.puntosLevelUp || 0) < puntosACanjear) {
-        alert(`Saldo insuficiente. Necesitas ${puntosACanjear} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
-        return; 
+      if (!cotizacion.pagoTotalConPuntosDisponible) {
+        alert('Tus puntos LevelUp no cubren el 100% de la orden.');
+        return;
       }
+      puntosACanjear = cotizacion.puntosUsados;
     }
 
     let boletaOficial = null;
@@ -360,7 +359,7 @@ export const Checkout = () => {
                     </label>
                   </div>
 
-                  <div className="form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3">
+                  <div className={`form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3 ${cotizacion && !cotizacion.pagoTotalConPuntosDisponible ? 'opacity-50' : ''}`}>
                     <input
                       className="form-check-input ms-0 me-2"
                       type="radio"
@@ -369,9 +368,15 @@ export const Checkout = () => {
                       value="Puntos LevelUp"
                       checked={metodoPago === 'Puntos LevelUp'}
                       onChange={(e) => setMetodoPago(e.target.value)}
+                      disabled={cotizacion && !cotizacion.pagoTotalConPuntosDisponible}
                     />
                     <label className="form-check-label text-white w-100 cursor-pointer d-flex justify-content-between align-items-center" htmlFor="pagoPuntos">
-                      <span><strong>Puntos LevelUp</strong> (Canje Gamer)</span>
+                      <div>
+                        <span><strong>Puntos LevelUp</strong> (Canje Gamer 100% de la orden)</span>
+                        {cotizacion && !cotizacion.pagoTotalConPuntosDisponible && (
+                          <div className="small text-danger">Saldo insuficiente para cubrir el 100% del pedido</div>
+                        )}
+                      </div>
                       <i className="bi bi-star-fill text-warning fs-4"></i>
                     </label>
                   </div>
