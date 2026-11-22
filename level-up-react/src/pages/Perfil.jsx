@@ -1,11 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getProductById } from '../data/productsData';
 import { formatCLP } from '../utils/formatters';
 
 const Perfil = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const authContext = useAuth() || {};
+  const usuario = authContext.usuario !== undefined ? authContext.usuario : (() => {
+    try {
+      const u = localStorage.getItem('usuario_activo');
+      return u ? JSON.parse(u) : null;
+    } catch { return null; }
+  })();
+  const logout = authContext.logout || (() => {
+    localStorage.removeItem('usuario_activo');
+    localStorage.removeItem('token');
+    localStorage.removeItem('jwt_token');
+  });
   
   const [usuarioActivo, setUsuarioActivo] = useState(null);
   const [usuarioDetalles, setUsuarioDetalles] = useState(null);
@@ -26,38 +39,48 @@ const Perfil = () => {
   const [mensajeExito, setMensajeExito] = useState(null);
 
   useEffect(() => {
-    const userString = localStorage.getItem("usuario_activo");
-    if (!userString) {
+    if (!usuario) {
       navigate('/Login');
       return;
     }
 
-    const user = JSON.parse(userString);
-    setUsuarioActivo(user);
+    setUsuarioActivo(usuario);
 
     const registros = JSON.parse(localStorage.getItem("registros")) || [];
-    const userDb = registros.find(u => u.correo.toLowerCase() === user.correo.toLowerCase());
+    const userDb = registros.find(u => u.correo && u.correo.toLowerCase() === usuario.correo.toLowerCase());
     
     if (userDb) {
       setUsuarioDetalles(userDb);
-      const pts = userDb.puntosLevelUp || 0;
+      const pts = usuario.puntosLevelUp || userDb.puntosLevelUp || 0;
       setPuntos(pts);
       setNivel(calcularNivelGamer(pts));
       
       setFormData({
-        nombre: userDb.nombre || '',
-        apellido: userDb.apellido || '',
-        email: userDb.correo || '',
+        nombre: usuario.nombre || userDb.nombre || '',
+        apellido: usuario.apellido || userDb.apellido || '',
+        email: usuario.correo || userDb.correo || '',
+        contrasena: '' 
+      });
+    } else {
+      setUsuarioDetalles(usuario);
+      const pts = usuario.puntosLevelUp || 0;
+      setPuntos(pts);
+      setNivel(calcularNivelGamer(pts));
+      
+      setFormData({
+        nombre: usuario.nombre || '',
+        apellido: usuario.apellido || '',
+        email: usuario.correo || '',
         contrasena: '' 
       });
     }
 
     const todasLasCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
-    const misCompras = todasLasCompras.filter(compra => compra.correo.toLowerCase() === user.correo.toLowerCase());
+    const misCompras = todasLasCompras.filter(compra => compra.correo && compra.correo.toLowerCase() === usuario.correo.toLowerCase());
     setCompras(misCompras);
 
     const todosFavoritos = JSON.parse(localStorage.getItem('levelup_favoritos')) || [];
-    const misFavoritosIds = todosFavoritos.filter(fav => fav.correo.toLowerCase() === user.correo.toLowerCase());
+    const misFavoritosIds = todosFavoritos.filter(fav => fav.correo && fav.correo.toLowerCase() === usuario.correo.toLowerCase());
     
     const misFavoritosConDetalle = misFavoritosIds.map(fav => {
       const producto = getProductById(fav.idProducto);
@@ -71,7 +94,7 @@ const Perfil = () => {
       setTabActiva(tabParam);
     }
     
-  }, [navigate, searchParams]);
+  }, [navigate, searchParams, usuario]);
 
   const calcularNivelGamer = (pts) => {
     if (pts >= 2000) return { nombre: 'Leyenda', color: 'bg-info text-dark', icono: 'bi-gem' };
@@ -81,7 +104,7 @@ const Perfil = () => {
   };
 
   const handleCerrarSesion = () => {
-    localStorage.removeItem("usuario_activo");
+    logout();
     navigate('/Login');
   };
 

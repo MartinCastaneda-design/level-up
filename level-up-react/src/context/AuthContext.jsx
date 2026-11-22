@@ -39,6 +39,37 @@ export const AuthProvider = ({ children }) => {
     }
   }, [usuario]);
 
+  // Al cargar la app, si hay token, verificar validez en el backend (/api/auth/me)
+  useEffect(() => {
+    const verificarSesion = async () => {
+      const token = localStorage.getItem('token') || localStorage.getItem('jwt_token');
+      if (!token) return;
+
+      try {
+        const res = await api.get('/auth/me');
+        if (res.data) {
+          const u = res.data;
+          setUsuario((prev) => ({
+            ...prev,
+            id: u.id,
+            nombre: u.nombre || prev?.nombre || 'Usuario',
+            apellido: u.apellido || prev?.apellido || '',
+            correo: u.correo || prev?.correo,
+            rol: normalizarRol(u.rol),
+            puntosLevelUp: u.puntosLevelUp !== undefined ? u.puntosLevelUp : (prev?.puntosLevelUp || 0)
+          }));
+        }
+      } catch (err) {
+        // Si el backend responde 401 (token expirado o inválido), limpiar sesión
+        if (err.response && err.response.status === 401) {
+          logout();
+        }
+      }
+    };
+
+    verificarSesion();
+  }, []);
+
   const login = async (correo, contrasena) => {
     // 1. Intentar autenticar contra el backend Spring Boot con JWT
     try {
@@ -69,10 +100,15 @@ export const AuthProvider = ({ children }) => {
         return { exito: true, usuario: datosUsuario };
       }
     } catch (apiError) {
-      console.warn('Backend Spring Boot no disponible o credenciales inválidas en API, probando fallback local:', apiError.message);
+      // Si el backend respondió activamente con 401 o 400, las credenciales son incorrectas.
+      // NUNCA aceptar fallback en ese caso (vulnerabilidad H-05).
+      if (apiError.response && (apiError.response.status === 401 || apiError.response.status === 400)) {
+        return { exito: false, mensaje: 'Credenciales inválidas en el servidor.' };
+      }
+      console.warn('Backend Spring Boot no disponible o error de red, probando fallback offline:', apiError.message);
     }
 
-    // 2. Fallback de persistencia local (compatibilidad con tests y modo offline)
+    // 2. Fallback de persistencia local EXCLUSIVAMENTE para modo offline / tests sin backend
     const registros = JSON.parse(localStorage.getItem(CLAVE_REGISTROS)) || [];
     const encontrado = registros.find(
       (u) => (u.correo && u.correo.toLowerCase() === correo.toLowerCase()) && u.contrasena === contrasena

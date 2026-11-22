@@ -20,6 +20,10 @@ spring:
 server:
   port: 8089
 
+jwt:
+  secret: ClaveSecretaSuperSeguraNivelGamerFullstack2026DuocUCJWT!
+  expiration: 86400000
+
 springdoc:
   api-docs:
     path: /v3/api-docs

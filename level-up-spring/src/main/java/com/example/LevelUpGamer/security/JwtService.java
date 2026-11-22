@@ -3,6 +3,7 @@ package com.example.LevelUpGamer.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -12,17 +13,23 @@ import java.util.Date;
 @Service
 public class JwtService {
 
-    private static final String SECRET_STRING = "ClaveSecretaSuperSeguraNivelGamerFullstack2026DuocUCJWT!";
-    private static final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
-    private static final long EXPIRATION_TIME = 86400000; // 24 horas
+    private final SecretKey secretKey;
+    private final long expirationTime;
+
+    public JwtService(
+            @Value("${jwt.secret:ClaveSecretaSuperSeguraNivelGamerFullstack2026DuocUCJWT!}") String secretString,
+            @Value("${jwt.expiration:86400000}") long expirationTime) {
+        this.secretKey = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
+        this.expirationTime = expirationTime;
+    }
 
     public String generateToken(String username, String rol) {
         return Jwts.builder()
                 .subject(username)
                 .claim("rol", rol)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
-                .signWith(SECRET_KEY)
+                .expiration(new Date(System.currentTimeMillis() + expirationTime))
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -49,7 +56,7 @@ public class JwtService {
 
     private Claims extractClaims(String token) {
         return Jwts.parser()
-                .verifyWith(SECRET_KEY)
+                .verifyWith(secretKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

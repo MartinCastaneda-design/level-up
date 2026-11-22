@@ -112,11 +112,11 @@ level-up/
 
 ### Backend:
 * **Lenguaje:** Java 21 / OpenJDK
-* **Framework:** Spring Boot 3.4.x
-* **Seguridad:** Spring Security 6, JJWT (io.jsonwebtoken `0.11.5`), BCrypt Password Encoder
+* **Framework:** Spring Boot 4.1.x
+* **Seguridad:** Spring Security 6, JJWT (io.jsonwebtoken `0.12.6`), BCrypt Password Encoder
 * **Persistencia:** Spring Data JPA, Hibernate ORM
 * **Base de Datos:** H2 Database Engine (In-Memory)
-* **Documentación de API:** SpringDoc OpenAPI v2 / Swagger UI
+* **Documentación de API:** SpringDoc OpenAPI / Swagger UI
 * **Herramienta de Construcción:** Apache Maven
 
 ### Frontend:
@@ -135,11 +135,11 @@ El sistema implementa 5 entidades relacionales según los lineamientos de la rú
 
 | Entidad | Tabla en H2 | Descripción |
 | :--- | :--- | :--- |
-| `Usuario` | `usuarios` | Cuentas de usuario con roles (`ROLE_ADMIN`, `ROLE_VENDEDOR`, `ROLE_CLIENTE`), puntos acumulados y credenciales encriptadas en BCrypt. |
-| `Categoria` | `categorias` | Categorías de clasificación para el catálogo de productos. |
-| `Producto` | `productos` | Catálogo de productos con precio, stock, descripción, imagen y relación `@ManyToOne` con `Categoria`. |
-| `Boleta` | `boletas` | Registro de compra / documento tributario vinculado al `Usuario` comprador con total y fecha. |
-| `DetalleBoleta` | `detalle_boleta` | Desglose individual de cada ítem de una boleta, con cantidad, precio unitario y subtotal. |
+| `Usuario` | `usuarios` | Cuentas de usuario con roles (`ROLE_ADMIN`, `ROLE_VENDEDOR`, `ROLE_CLIENTE`), puntos acumulados y credenciales protegidas con BCrypt (WRITE_ONLY en respuestas JSON). |
+| `Categoria` | `categorias` | Categorías de clasificación para el catálogo de productos con nombre, slug e ícono. |
+| `Producto` | `productos` | Catálogo de productos con precio oficial, stock validado, descripción, imagen y slug de categoría. |
+| `Boleta` | `boletas` | Registro de compra / documento tributario vinculado al `Usuario` comprador con total oficial recalculado por el servidor, fecha y puntos. |
+| `DetalleBoleta` | `detalle_boleta` | Desglose individual de cada ítem de una boleta, con cantidad positiva, precio unitario oficial de BD y subtotal. |
 
 ---
 
@@ -155,6 +155,7 @@ Authorization: Bearer <token_jwt>
 | Recurso / Operación | Método | Endpoint | Roles Permitidos |
 | :--- | :---: | :--- | :--- |
 | Login / Registro | `POST` | `/api/auth/login`, `/api/auth/register` | *Público* |
+| Perfil en sesión | `GET` | `/api/auth/me` | Autenticado |
 | Documentación API | `GET` | `/swagger-ui/**`, `/v3/api-docs/**` | *Público* |
 | Consola H2 | `GET/POST`| `/h2-console/**` | *Público (Desarrollo)* |
 | Ver Catálogo | `GET` | `/api/productos`, `/api/productos/{id}` | *Público* |
@@ -163,15 +164,16 @@ Authorization: Bearer <token_jwt>
 | Gestión de Categorías | `POST/PUT/DELETE` | `/api/categorias/**` | `ROLE_ADMIN` |
 | Registrar Compra | `POST` | `/api/ordenes` | Autenticado (`ROLE_CLIENTE`, `ROLE_ADMIN`) |
 | Consultar Órdenes | `GET` | `/api/ordenes` | `ROLE_ADMIN`, `ROLE_VENDEDOR` |
+| Detalle de Orden | `GET` | `/api/ordenes/{id}` | Autenticado (Dueño, Vendedor o Admin) |
 | Mis Compras | `GET` | `/api/ordenes/mis-compras` | Autenticado |
 
 ### Usuarios Precargados para Pruebas (`DataInitializer`):
 
 | Rol | Correo / Username | Contraseña | Acceso en Frontend |
 | :--- | :--- | :--- | :--- |
-| **Administrador** | `admin@levelup.cl` | `admin123` | `/admin` (Panel Admin), CRUD de productos y órdenes |
-| **Vendedor** | `vendedor@levelup.cl` | `vendedor123` | `/vendedor` (Panel Ventas), supervisión de inventario y pedidos |
-| **Cliente** | `cliente@correo.cl` | `cliente123` | Catálogo, Carrito de compras, Checkout y Perfil |
+| **Administrador** | `admin@levelup.cl` (o `admin`) | `admin123` | `/admin` (Panel Admin), CRUD de productos y órdenes |
+| **Vendedor** | `vendedor@levelup.cl` (o `vendedor`) | `vendedor123` | `/vendedor` (Panel Ventas), supervisión de inventario y pedidos |
+| **Cliente** | `gamer@levelup.cl` (o `gamer`) | `gamer123` | Catálogo, Carrito de compras, Checkout y Perfil |
 
 ---
 

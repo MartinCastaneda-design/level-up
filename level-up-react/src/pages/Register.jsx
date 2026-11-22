@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import fondoImg from '../assets/fondo.jpg'; 
 import logoImg from '../assets/logo.png';
 
@@ -31,7 +32,7 @@ const Register = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     let nuevosErrores = {};
     let hayErrores = false;
@@ -61,21 +62,32 @@ const Register = () => {
     if (!formData.contrasena) { nuevosErrores.contrasena = "Define una contraseña."; hayErrores = true; } 
     else if (formData.contrasena.length < 4) { nuevosErrores.contrasena = "Mínimo 4 caracteres."; hayErrores = true; }
 
-    let registroUsuarios = JSON.parse(localStorage.getItem("registros")) || [];
-    if (formData.email && registroUsuarios.some(u => u.correo.toLowerCase() === formData.email.toLowerCase())) {
-      nuevosErrores.email = "Este correo ya está registrado.";
-      hayErrores = true;
-    }
-
     if (hayErrores) {
       setErrores(nuevosErrores);
       return; 
     }
 
     const esBeneficiario = formData.email.toLowerCase().endsWith("@duocuc.cl");
-    const rol = formData.email.toLowerCase().endsWith("@admin.cl") ? "admin" : "cliente";   
     const nuevoCodigo = Math.random().toString(36).substring(2, 8).toUpperCase();
 
+    // 1. Intentar registrar en Spring Boot vía POST /api/auth/register
+    try {
+      await api.post('/auth/register', {
+        username: formData.email.trim(),
+        correo: formData.email.trim(),
+        contrasena: formData.contrasena,
+        nombre: formData.nombre.trim(),
+        apellido: formData.apellido.trim()
+      });
+    } catch (apiError) {
+      if (apiError.response && apiError.response.status === 409) {
+        setErrores({ email: "Este correo o nombre de usuario ya está registrado en el sistema." });
+        return;
+      }
+      console.warn("Backend no disponible, guardando respaldo local:", apiError.message);
+    }
+
+    // 2. Mantener perfil complementario local para datos extendidos (edad, sexo, código referido)
     const nuevoUsuario = {
         id: Date.now(),
         nombre: formData.nombre.trim(),
@@ -84,13 +96,18 @@ const Register = () => {
         sexo: formData.sexo,
         correo: formData.email.trim(),
         esBeneficiario: esBeneficiario,
-        rol: rol,
-        contrasena: formData.contrasena,
+        rol: 'cliente',
         codigo: nuevoCodigo,
         puntosLevelUp: 0
     };
 
-    registroUsuarios.push(nuevoUsuario);
+    let registroUsuarios = JSON.parse(localStorage.getItem("registros")) || [];
+    const indexExistente = registroUsuarios.findIndex(u => u.correo && u.correo.toLowerCase() === formData.email.trim().toLowerCase());
+    if (indexExistente >= 0) {
+      registroUsuarios[indexExistente] = nuevoUsuario;
+    } else {
+      registroUsuarios.push(nuevoUsuario);
+    }
     localStorage.setItem("registros", JSON.stringify(registroUsuarios));
 
     setMensajeExito({ nombre: formData.nombre, esBeneficiario: esBeneficiario });

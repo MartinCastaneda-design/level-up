@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getProductById, PRODUCTOS_DATA, getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
+import api from '../services/api';
 import { formatCLP } from '../utils/formatters';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -25,7 +26,24 @@ export const ProductDetail = () => {
   const [esFavorito, setEsFavorito] = useState(false);
 
   const idProducto = id || 'CO001';
-  const producto = getProductById(idProducto);
+  const [producto, setProducto] = useState(() => getProductById(idProducto));
+
+  useEffect(() => {
+    let activo = true;
+    api.get(`/productos/${idProducto}`)
+      .then((res) => {
+        if (activo && res.data) {
+          setProducto(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback a datos estáticos si el backend no responde
+        if (activo) {
+          setProducto(getProductById(idProducto));
+        }
+      });
+    return () => { activo = false; };
+  }, [idProducto]);
 
   const cargarResenas = useCallback(() => {
     const todas = obtenerTodasLasResenas();

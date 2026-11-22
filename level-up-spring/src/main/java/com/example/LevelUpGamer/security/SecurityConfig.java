@@ -59,7 +59,8 @@ public class SecurityConfig {
                 }))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
@@ -72,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/categorias/**").hasRole("ADMIN")
                         .requestMatchers("/api/ordenes/mis-compras").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/ordenes/{id}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/ordenes").hasAnyRole("ADMIN", "VENDEDOR")
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/**").hasAnyRole("ADMIN", "VENDEDOR")
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()

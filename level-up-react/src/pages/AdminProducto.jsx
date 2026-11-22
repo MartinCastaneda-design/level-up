@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-
+import api from '../services/api';
 import { PRODUCTOS_DATA } from '../data/productsData';
 
 export default function AdminProducto() {
@@ -21,28 +21,33 @@ export default function AdminProducto() {
         descripcion: ''
     });
 
-useEffect(() => {
-    const productosGuardados = localStorage.getItem('levelup_productos');
-
-    if (productosGuardados) {
-        try {
-            setProductos(JSON.parse(productosGuardados));
-        } catch (e) {
-            console.error('Error al parsear productos:', e);
-            setProductos(PRODUCTOS_DATA);
-            localStorage.setItem(
-                'levelup_productos',
-                JSON.stringify(PRODUCTOS_DATA)
-            );
-        }
-    } else {
-        setProductos(PRODUCTOS_DATA);
-        localStorage.setItem(
-            'levelup_productos',
-            JSON.stringify(PRODUCTOS_DATA)
-        );
-    }
+    useEffect(() => {
+        cargarProductos();
     }, []);
+
+    const cargarProductos = async () => {
+        try {
+            const res = await api.get('/productos');
+            if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+                setProductos(res.data);
+                localStorage.setItem('levelup_productos', JSON.stringify(res.data));
+                return;
+            }
+        } catch (e) {
+            console.warn('Backend no disponible para listar productos, usando respaldo local:', e);
+        }
+
+        const productosGuardados = localStorage.getItem('levelup_productos');
+        if (productosGuardados) {
+            try {
+                setProductos(JSON.parse(productosGuardados));
+            } catch {
+                setProductos(PRODUCTOS_DATA);
+            }
+        } else {
+            setProductos(PRODUCTOS_DATA);
+        }
+    };
 
     const guardarProductos = (nuevosProductos) => {
         setProductos(nuevosProductos);
@@ -65,7 +70,7 @@ useEffect(() => {
         setModoEdicion(false);
 
         setFormProducto({
-            id: Date.now().toString(),
+            id: '',
             nombre: '',
             categoria: 'Consolas',
             precio: '',
@@ -83,7 +88,7 @@ useEffect(() => {
         setModalAbierto(true);
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formProducto.nombre || !formProducto.precio) {
@@ -91,19 +96,38 @@ useEffect(() => {
             return;
         }
 
-        let nuevosProductos;
+        const payload = {
+            id: formProducto.id || undefined,
+            nombre: formProducto.nombre.trim(),
+            categoria: formProducto.categoria,
+            categoriaSlug: formProducto.categoria.toLowerCase().replace(/ /g, '-'),
+            precio: Number(formProducto.precio),
+            stock: Number(formProducto.stock) || 0,
+            imagen: formProducto.imagen || '/img/productos/default.jpg',
+            descripcionCorta: formProducto.descripcion || formProducto.descripcionCorta || '',
+            descripcionLarga: formProducto.descripcion || formProducto.descripcionLarga || ''
+        };
 
-        if (modoEdicion) {
-            nuevosProductos = productos.map((p) =>
-                p.id === formProducto.id ? formProducto : p
-            );
-        } else {
-            nuevosProductos = [...productos, formProducto];
+        try {
+            if (modoEdicion) {
+                await api.put(`/productos/${formProducto.id}`, payload);
+            } else {
+                await api.post('/productos', payload);
+            }
+            await cargarProductos();
+        } catch (err) {
+            console.warn('No se pudo sincronizar producto con la API, guardando en local:', err);
+            let nuevosProductos;
+            if (modoEdicion) {
+                nuevosProductos = productos.map((p) => p.id === formProducto.id ? { ...p, ...payload } : p);
+            } else {
+                const nuevoLocal = { ...payload, id: payload.id || Date.now().toString() };
+                nuevosProductos = [...productos, nuevoLocal];
+            }
+            guardarProductos(nuevosProductos);
         }
 
-        guardarProductos(nuevosProductos);
         setModalAbierto(false);
-
         alert(
             modoEdicion
                 ? '¡Producto actualizado correctamente!'
@@ -111,14 +135,20 @@ useEffect(() => {
         );
     };
 
-    const handleEliminar = (id, nombre) => {
+    const handleEliminar = async (id, nombre) => {
         if (
             window.confirm(
                 `¿Seguro que deseas eliminar "${nombre}" del catálogo?`
             )
         ) {
-            const nuevos = productos.filter((p) => p.id !== id);
-            guardarProductos(nuevos);
+            try {
+                await api.delete(`/productos/${id}`);
+                await cargarProductos();
+            } catch (err) {
+                console.warn('Error al eliminar en API, aplicando borrado local:', err);
+                const nuevos = productos.filter((p) => p.id !== id);
+                guardarProductos(nuevos);
+            }
         }
     };
 
