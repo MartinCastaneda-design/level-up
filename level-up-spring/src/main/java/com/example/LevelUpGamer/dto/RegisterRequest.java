@@ -35,7 +35,14 @@ public class RegisterRequest {
     @Size(max = 50)
     private String apellido;
 
+    @NotBlank(message = "La fecha de nacimiento es obligatoria")
+    @jakarta.validation.constraints.Pattern(regexp = "^\\d{4}-\\d{2}-\\d{2}$", message = "La fecha debe tener formato yyyy-MM-dd")
     private String fechaNacimiento;
+
+    @NotBlank(message = "El sexo es obligatorio")
+    @jakarta.validation.constraints.Pattern(regexp = "^(femenino|masculino|otro)$", message = "El sexo debe ser 'femenino', 'masculino' u 'otro'")
     private String sexo;
+
+    @Size(max = 30, message = "El código de referido no puede exceder 30 caracteres")
     private String codigoReferido;
 }

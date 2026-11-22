@@ -41,6 +41,7 @@ public class ProductoDto {
     private Boolean enOferta;
 
     @Min(value = 0, message = "El descuento no puede ser menor a 0")
+    @jakarta.validation.constraints.Max(value = 100, message = "El descuento no puede ser superior a 100%")
     private Integer descuento;
 
     private String descripcionCorta;

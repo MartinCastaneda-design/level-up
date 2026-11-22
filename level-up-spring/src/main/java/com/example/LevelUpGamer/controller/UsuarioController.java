@@ -85,7 +85,7 @@ public class UsuarioController {
             }
 
             if ("ROLE_ADMIN".equals(usuario.getRol()) && !nuevoRol.equals("ROLE_ADMIN")) {
-                long totalAdmins = usuarioRepository.countByRol("ROLE_ADMIN");
+                long totalAdmins = usuarioRepository.countByRolForUpdate("ROLE_ADMIN");
                 if (totalAdmins <= 1) {
                     return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "No se puede degradar al último administrador del sistema"));
                 }

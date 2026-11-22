@@ -21,5 +21,6 @@ public class ItemOrdenRequest {
 
     @NotNull(message = "La cantidad es obligatoria")
     @Min(value = 1, message = "La cantidad debe ser al menos 1")
+    @jakarta.validation.constraints.Max(value = 999, message = "La cantidad no puede exceder 999 unidades por línea")
     private Integer cantidad;
 }

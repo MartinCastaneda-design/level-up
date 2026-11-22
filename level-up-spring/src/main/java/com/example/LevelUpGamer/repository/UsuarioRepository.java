@@ -21,6 +21,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     long countByRol(String rol);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT COUNT(u) FROM Usuario u WHERE u.rol = :rol")
+    long countByRolForUpdate(@Param("rol") String rol);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT u FROM Usuario u WHERE u.id = :id")
     Optional<Usuario> findByIdForUpdate(@Param("id") Long id);
 

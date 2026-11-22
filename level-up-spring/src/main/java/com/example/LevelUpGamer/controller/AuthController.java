@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
+import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,20 @@ public class AuthController {
 
     @Value("${spring.profiles.active:dev}")
     private String activeProfile;
+
+    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://localhost:4173}")
+    private String allowedOrigins;
+
+    private boolean isValidOrigin(HttpServletRequest request) {
+        String origin = request.getHeader("Origin");
+        if (origin == null || origin.trim().isEmpty()) {
+            String referer = request.getHeader("Referer");
+            if (referer != null) origin = referer;
+        }
+        if (origin == null) return true;
+        List<String> valid = Arrays.stream(allowedOrigins.split(",")).map(String::trim).toList();
+        return valid.stream().anyMatch(origin::startsWith);
+    }
 
     public AuthController(UsuarioRepository usuarioRepository,
                           PasswordEncoder passwordEncoder,
@@ -139,6 +154,22 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "El correo o nombre de usuario ya está registrado"));
         }
 
+        // Validar mayoría de edad (18 años) en servidor
+        if (req.getFechaNacimiento() != null) {
+            try {
+                java.time.LocalDate fechaNac = java.time.LocalDate.parse(req.getFechaNacimiento());
+                java.time.LocalDate hoy = java.time.LocalDate.now();
+                if (fechaNac.isAfter(hoy)) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "La fecha de nacimiento no puede ser futura"));
+                }
+                if (java.time.Period.between(fechaNac, hoy).getYears() < 18) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Debes ser mayor de 18 años para registrarte"));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Formato de fecha de nacimiento inválido (use yyyy-MM-dd)"));
+            }
+        }
+
         Usuario nuevo = Usuario.builder()
                 .username(username)
                 .correo(correo)
@@ -177,6 +208,9 @@ public class AuthController {
     @PostMapping("/refresh")
     @Operation(summary = "Renovar JWT con Refresh Token", description = "Valida cookie refreshToken, aplica rotación y emite nuevo access token")
     public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse servletResponse) {
+        if (!isValidOrigin(request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Origen no permitido o sospecha de CSRF"));
+        }
         String rawToken = extractRefreshTokenFromCookies(request);
         if (rawToken == null || rawToken.trim().isEmpty()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No se encontró cookie de refresh token"));
@@ -210,6 +244,9 @@ public class AuthController {
     @PostMapping("/logout")
     @Operation(summary = "Cerrar sesión", description = "Revoca el refresh token y limpia la cookie de autenticación")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse servletResponse) {
+        if (!isValidOrigin(request)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Origen no permitido o sospecha de CSRF"));
+        }
         String rawToken = extractRefreshTokenFromCookies(request);
         if (rawToken != null) {
             refreshTokenService.revokeToken(rawToken);

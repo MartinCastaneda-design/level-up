@@ -80,6 +80,7 @@ public class DataInitializer implements CommandLineRunner {
                     Categoria.builder().nombre("Consolas").slug("consolas").descripcion("PlayStation, Xbox y Nintendo").icono("bi-controller").build(),
                     Categoria.builder().nombre("Computadores Gamers").slug("computadores-gamers").descripcion("Torres y Notebooks Gamer").icono("bi-pc-display-horizontal").build(),
                     Categoria.builder().nombre("Periféricos").slug("perifericos").descripcion("Teclados, mouse y audífonos").icono("bi-mouse").build(),
+                    Categoria.builder().nombre("Accesorios").slug("accesorios").descripcion("Mousepads, soportes y cables").icono("bi-headset").build(),
                     Categoria.builder().nombre("Sillas Gamers").slug("sillas-gamers").descripcion("Ergonomía pro gamer").icono("bi-person-workspace").build(),
                     Categoria.builder().nombre("Juegos de Mesa").slug("juegos-de-mesa").descripcion("Estrategia y cartas coleccionables").icono("bi-dice-5").build()
             );

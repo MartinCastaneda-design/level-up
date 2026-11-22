@@ -22,6 +22,8 @@ export const Checkout = () => {
 
   const [cotizacion, setCotizacion] = useState(null);
   const [cargandoCotizacion, setCargandoCotizacion] = useState(false);
+  const [errorCotizacion, setErrorCotizacion] = useState(null);
+  const [reintentarContador, setReintentarContador] = useState(0);
   const [ordenExitosa, setOrdenExitosa] = useState(null);
 
   // Obtener cotización oficial del backend cada vez que cambien los items, cupón o método de pago
@@ -29,8 +31,11 @@ export const Checkout = () => {
     if (!usuario || !carrito || carrito.length === 0) return;
 
     let cancelado = false;
+    setCotizacion(null);
+    setErrorCotizacion(null);
+    setCargandoCotizacion(true);
+
     const obtenerCotizacion = async () => {
-      setCargandoCotizacion(true);
       try {
         const payload = {
           items: carrito.map(item => ({
@@ -43,9 +48,14 @@ export const Checkout = () => {
         const res = await api.post('/ordenes/cotizar', payload);
         if (!cancelado && res.data) {
           setCotizacion(res.data);
+          setErrorCotizacion(null);
         }
       } catch (err) {
-        console.warn('No se pudo obtener cotización oficial:', err);
+        if (!cancelado) {
+          const msg = err.response?.data?.message || err.response?.data?.error || 'No se pudo obtener la cotización oficial del servidor.';
+          setErrorCotizacion(msg);
+          setCotizacion(null);
+        }
       } finally {
         if (!cancelado) setCargandoCotizacion(false);
       }
@@ -53,7 +63,7 @@ export const Checkout = () => {
 
     obtenerCotizacion();
     return () => { cancelado = true; };
-  }, [carrito, cupon, metodoPago, usuario, total]);
+  }, [carrito, cupon, metodoPago, usuario, total, reintentarContador]);
 
   if (!usuario) {
     return (
@@ -123,6 +133,10 @@ export const Checkout = () => {
 
   const handleProcesarPago = async (e) => {
     e.preventDefault();
+    if (!cotizacion) {
+      alert('Debes esperar a que se cargue la cotización oficial del servidor o reintentar si ocurrió un error.');
+      return;
+    }
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !direccion.trim() || !region || !comuna.trim()) {
       alert('Por favor completa todos los campos requeridos con asterisco (*).');
       return;
@@ -394,8 +408,29 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg w-100 py-3 fw-bold" disabled={cargandoCotizacion}>
-                <i className="bi bi-lock-fill me-2"></i>Confirmar y Realizar Pedido ({formatCLP(cotizacion ? cotizacion.total : total)})
+              {errorCotizacion && (
+                <div className="alert alert-danger d-flex justify-content-between align-items-center mb-4">
+                  <div>
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Error de cotización:</strong> {errorCotizacion}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-light btn-sm ms-3"
+                    onClick={() => setReintentarContador(c => c + 1)}
+                  >
+                    <i className="bi bi-arrow-clockwise me-1"></i>Reintentar
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn btn-primary btn-lg w-100 py-3 fw-bold"
+                disabled={cargandoCotizacion || !cotizacion}
+              >
+                <i className="bi bi-lock-fill me-2"></i>
+                {cargandoCotizacion ? 'Cotizando con el servidor...' : `Confirmar y Realizar Pedido (${formatCLP(cotizacion ? cotizacion.total : total)})`}
               </button>
               <button
                 type="button"
@@ -417,18 +452,43 @@ export const Checkout = () => {
             >
               <div className="mb-3" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                 <h6 className="text-white small fw-bold mb-2">Artículos en tu pedido:</h6>
-                {carrito.map((item) => (
-                  <div key={item.id} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
-                    <div className="d-flex align-items-center gap-2">
-                      <img src={item.imagen} alt={item.nombre} className="rounded-2" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
-                      <div>
-                        <h6 className="text-white mb-0 small text-truncate" style={{ maxWidth: '170px' }}>{item.nombre}</h6>
-                        <span className="text-muted small">Cant: {item.cantidad}</span>
+                {cotizacion && cotizacion.items ? (
+                  cotizacion.items.map((itemCotizado) => {
+                    const itemCarrito = carrito.find(c => c.id === itemCotizado.productoId);
+                    return (
+                      <div key={itemCotizado.productoId} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                        <div className="d-flex align-items-center gap-2">
+                          {itemCarrito && (
+                            <img src={itemCarrito.imagen} alt={itemCotizado.nombreProducto} className="rounded-2" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
+                          )}
+                          <div>
+                            <h6 className="text-white mb-0 small text-truncate" style={{ maxWidth: '170px' }}>{itemCotizado.nombreProducto}</h6>
+                            <span className="text-muted small">
+                              Cant: {itemCotizado.cantidad} × {formatCLP(itemCotizado.precioUnitarioFinal)}
+                              {itemCotizado.descuentoPorcentaje > 0 && (
+                                <span className="badge bg-danger ms-1">-{itemCotizado.descuentoPorcentaje}%</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-light small fw-bold">{formatCLP(itemCotizado.subtotal)}</span>
                       </div>
+                    );
+                  })
+                ) : (
+                  carrito.map((item) => (
+                    <div key={item.id} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                      <div className="d-flex align-items-center gap-2">
+                        <img src={item.imagen} alt={item.nombre} className="rounded-2" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
+                        <div>
+                          <h6 className="text-white mb-0 small text-truncate" style={{ maxWidth: '170px' }}>{item.nombre}</h6>
+                          <span className="text-muted small">Cant: {item.cantidad} (Pendiente cotizar)</span>
+                        </div>
+                      </div>
+                      <span className="text-light small fw-bold">{formatCLP(item.precio * item.cantidad)}</span>
                     </div>
-                    <span className="text-light small fw-bold">{formatCLP(item.precio * item.cantidad)}</span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               <div className="p-3 bg-dark rounded-3 border border-secondary text-muted small mt-3">

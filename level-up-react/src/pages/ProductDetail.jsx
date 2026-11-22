@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { PRODUCTOS_DATA, getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
+import { getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
 import api from '../services/api';
 import { formatCLP } from '../utils/formatters';
 import { useCart } from '../context/CartContext';
@@ -29,6 +29,23 @@ export const ProductDetail = () => {
   const [producto, setProducto] = useState(null);
   const [cargandoProducto, setCargandoProducto] = useState(true);
   const [errorProducto, setErrorProducto] = useState(null);
+  const [relacionados, setRelacionados] = useState([]);
+
+  useEffect(() => {
+    let activo = true;
+    api.get('/productos')
+      .then((res) => {
+        if (activo && Array.isArray(res.data) && producto) {
+          const rel = res.data
+            .filter((p) => p.id !== producto.id)
+            .sort((a) => (a.categoriaSlug === producto.categoriaSlug ? -1 : 1))
+            .slice(0, 4);
+          setRelacionados(rel);
+        }
+      })
+      .catch(() => {});
+    return () => { activo = false; };
+  }, [producto]);
 
   useEffect(() => {
     let activo = true;
@@ -234,10 +251,6 @@ const handleAgregar = () => {
 
   const urlActual = encodeURIComponent(window.location.href);
   const textoCompartir = encodeURIComponent(`¡Mira este producto en Level-Up Gamer: ${producto.nombre}!`);
-
-  const relacionados = (PRODUCTOS_DATA || []).filter((p) => p.id !== producto.id)
-    .sort((a) => (a.categoriaSlug === producto.categoriaSlug ? -1 : 1))
-    .slice(0, 4);
 
   return (
     <main className="container my-5 flex-grow-1">

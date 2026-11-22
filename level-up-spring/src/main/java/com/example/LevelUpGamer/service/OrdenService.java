@@ -54,6 +54,14 @@ public class OrdenService {
         return "LVL-" + timestamp + "-" + String.format("%04d", seq % 10000);
     }
 
+    public static int calcularPrecioFinal(Producto prod) {
+        int precioOriginal = prod.getPrecio() != null ? prod.getPrecio() : 0;
+        int descPorc = (Boolean.TRUE.equals(prod.getEnOferta()) && prod.getDescuento() != null) ? prod.getDescuento() : 0;
+        if (descPorc < 0) descPorc = 0;
+        if (descPorc > 100) descPorc = 100;
+        return descPorc > 0 ? (int) Math.round(precioOriginal * (1.0 - (descPorc / 100.0))) : precioOriginal;
+    }
+
     @Transactional(readOnly = true)
     public CotizacionResponse cotizarOrden(CotizarOrdenRequest req, String username) {
         if (req.getItems() == null || req.getItems().isEmpty()) {
@@ -75,10 +83,15 @@ public class OrdenService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado: " + pId));
 
             int precioOriginal = prod.getPrecio() != null ? prod.getPrecio() : 0;
-            int descPorc = (Boolean.TRUE.equals(prod.getEnOferta()) && prod.getDescuento() != null) ? prod.getDescuento() : 0;
-            int precioFinal = descPorc > 0 ? (int) Math.round(precioOriginal * (1.0 - (descPorc / 100.0))) : precioOriginal;
-            long itemSubtotal = (long) precioFinal * cant;
-            subtotal = Math.addExact(subtotal, itemSubtotal);
+            int descPorc = (Boolean.TRUE.equals(prod.getEnOferta()) && prod.getDescuento() != null) ? Math.min(100, Math.max(0, prod.getDescuento())) : 0;
+            int precioFinal = calcularPrecioFinal(prod);
+            long itemSubtotal;
+            try {
+                itemSubtotal = Math.multiplyExact((long) precioFinal, (long) cant);
+                subtotal = Math.addExact(subtotal, itemSubtotal);
+            } catch (ArithmeticException ex) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Desbordamiento en el cálculo de subtotal");
+            }
 
             itemsResp.add(CotizacionResponse.ItemCotizadoResponse.builder()
                     .productoId(prod.getId())
@@ -157,11 +170,13 @@ public class OrdenService {
         for (Map.Entry<String, Integer> entry : itemsAgrupados.entrySet()) {
             Producto prod = productosBloqueados.get(entry.getKey());
             int cant = entry.getValue();
-            long precioFinal = prod.getPrecio() != null ? prod.getPrecio() : 0L;
-            if (Boolean.TRUE.equals(prod.getEnOferta()) && prod.getDescuento() != null && prod.getDescuento() > 0) {
-                precioFinal = Math.round(precioFinal * (1.0 - (prod.getDescuento() / 100.0)));
+            int precioFinal = calcularPrecioFinal(prod);
+            try {
+                long itemSubtotal = Math.multiplyExact((long) precioFinal, (long) cant);
+                subtotal = Math.addExact(subtotal, itemSubtotal);
+            } catch (ArithmeticException ex) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Desbordamiento aritmético en el cálculo de subtotal");
             }
-            subtotal = Math.addExact(subtotal, Math.multiplyExact(precioFinal, (long) cant));
         }
 
         // 6. Validar cupón de descuento en backend
@@ -211,6 +226,10 @@ public class OrdenService {
         String numOrden = generarNumeroOrdenUnico();
         String metodoGuardado = metodoPagoFinal.contains("Simulado") ? metodoPagoFinal : (metodoPagoFinal.equalsIgnoreCase("Puntos LevelUp") ? "Puntos LevelUp" : metodoPagoFinal + " (Simulado)");
 
+        if (subtotal > Integer.MAX_VALUE || totalOficial > Integer.MAX_VALUE) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El monto de la orden excede el límite máximo permitido por el sistema");
+        }
+
         Boleta boleta = Boleta.builder()
                 .numeroOrden(numOrden)
                 .fecha(LocalDateTime.now())
@@ -234,11 +253,11 @@ public class OrdenService {
         for (Map.Entry<String, Integer> entry : itemsAgrupados.entrySet()) {
             Producto prod = productosBloqueados.get(entry.getKey());
             int cant = entry.getValue();
-            int precioUnit = prod.getPrecio() != null ? prod.getPrecio() : 0;
-            if (Boolean.TRUE.equals(prod.getEnOferta()) && prod.getDescuento() != null && prod.getDescuento() > 0) {
-                precioUnit = (int) Math.round(precioUnit * (1.0 - (prod.getDescuento() / 100.0)));
-            }
+            int precioUnit = calcularPrecioFinal(prod);
             long itemSubtotal = (long) precioUnit * cant;
+            if (itemSubtotal > Integer.MAX_VALUE) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El subtotal del item excede el límite máximo permitido");
+            }
 
             DetalleBoleta det = DetalleBoleta.builder()
                     .boleta(boletaGuardada)
@@ -287,8 +306,19 @@ public class OrdenService {
             if (item.getCantidad() == null || item.getCantidad() <= 0) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad debe ser mayor a 0");
             }
+            if (item.getCantidad() > 999) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad no puede exceder 999 unidades por línea");
+            }
             String pId = item.getId().trim();
-            agrupados.put(pId, Math.addExact(agrupados.getOrDefault(pId, 0), item.getCantidad()));
+            try {
+                int totalCant = Math.addExact(agrupados.getOrDefault(pId, 0), item.getCantidad());
+                if (totalCant > 9999) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cantidad total agregada supera el límite permitido para: " + pId);
+                }
+                agrupados.put(pId, totalCant);
+            } catch (ArithmeticException ex) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Desbordamiento aritmético en la cantidad solicitada para: " + pId);
+            }
         }
         return agrupados;
     }

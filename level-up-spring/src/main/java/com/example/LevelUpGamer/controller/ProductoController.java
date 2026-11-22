@@ -51,6 +51,15 @@ public class ProductoController {
             return ResponseEntity.status(409).build();
         }
 
+        int desc = dto.getDescuento() != null ? dto.getDescuento() : 0;
+        if (desc < 0 || desc > 100) {
+            return ResponseEntity.badRequest().build();
+        }
+        boolean enOferta = Boolean.TRUE.equals(dto.getEnOferta());
+        if (!enOferta) {
+            desc = 0;
+        }
+
         String catSlug = dto.getCategoriaSlug();
         if (catSlug == null || catSlug.trim().isEmpty()) {
             catSlug = dto.getCategoria().toLowerCase().replace(" ", "-");
@@ -65,8 +74,8 @@ public class ProductoController {
                 .stock(dto.getStock())
                 .imagen(dto.getImagen() != null ? dto.getImagen() : "/img/productos/default.jpg")
                 .destacado(Boolean.TRUE.equals(dto.getDestacado()))
-                .enOferta(Boolean.TRUE.equals(dto.getEnOferta()))
-                .descuento(dto.getDescuento() != null ? dto.getDescuento() : 0)
+                .enOferta(enOferta)
+                .descuento(desc)
                 .descripcionCorta(dto.getDescripcionCorta())
                 .descripcionLarga(dto.getDescripcionLarga())
                 .rating(5.0)
@@ -82,6 +91,14 @@ public class ProductoController {
     public ResponseEntity<Producto> actualizar(@PathVariable String id, @Valid @RequestBody ProductoDto dto) {
         return productoRepository.findById(id)
                 .map(p -> {
+                    int desc = dto.getDescuento() != null ? dto.getDescuento() : 0;
+                    if (desc < 0 || desc > 100) {
+                        desc = 0;
+                    }
+                    boolean enOferta = Boolean.TRUE.equals(dto.getEnOferta());
+                    if (!enOferta) {
+                        desc = 0;
+                    }
                     p.setNombre(dto.getNombre().trim());
                     p.setCategoria(dto.getCategoria().trim());
                     String catSlug = dto.getCategoriaSlug();
@@ -93,8 +110,8 @@ public class ProductoController {
                     p.setStock(dto.getStock());
                     if (dto.getImagen() != null) p.setImagen(dto.getImagen());
                     p.setDestacado(Boolean.TRUE.equals(dto.getDestacado()));
-                    p.setEnOferta(Boolean.TRUE.equals(dto.getEnOferta()));
-                    p.setDescuento(dto.getDescuento() != null ? dto.getDescuento() : 0);
+                    p.setEnOferta(enOferta);
+                    p.setDescuento(desc);
                     if (dto.getDescripcionCorta() != null) p.setDescripcionCorta(dto.getDescripcionCorta());
                     if (dto.getDescripcionLarga() != null) p.setDescripcionLarga(dto.getDescripcionLarga());
                     return ResponseEntity.ok(productoRepository.save(p));
