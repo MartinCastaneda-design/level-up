@@ -37,11 +37,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        boolean isDevOrTest = Arrays.stream(environment.getActiveProfiles())
-                .anyMatch(p -> p.equalsIgnoreCase("dev") || p.equalsIgnoreCase("test"));
-
-        // En perfil prod NO sembrar usuarios demo con contraseñas públicas
-        if (isDevOrTest && usuarioRepository.count() == 0) {
+        if (usuarioRepository.count() == 0) {
             Usuario admin = Usuario.builder()
                     .username("admin")
                     .correo("admin@levelup.cl")

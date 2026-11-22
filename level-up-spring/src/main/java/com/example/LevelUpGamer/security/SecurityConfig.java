@@ -71,15 +71,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
-                        .requestMatchers("/api/auth/me").authenticated();
-
-                    if (isDev) {
-                        auth.requestMatchers("/h2-console/**").permitAll();
-                    } else {
-                        auth.requestMatchers("/h2-console/**").denyAll();
-                    }
-
-                    auth.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/api/auth/me").authenticated()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/productos/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/categorias/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/productos/**").hasRole("ADMIN")
@@ -98,9 +92,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated();
                 })
                 .headers(headers -> {
-                    if (isDev) {
-                        headers.frameOptions(frame -> frame.sameOrigin());
-                    }
+                    headers.frameOptions(frame -> frame.sameOrigin());
                 })
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

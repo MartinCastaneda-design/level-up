@@ -48,7 +48,7 @@
 ```text
        ┌─────────────────────────────────────────────────────────┐
        │                   Navegador / Cliente                   │
-       │           React 18 + Vite (Puerto: 5173)                │
+       │           React 18 + Vite (Puerto: 3000)                │
        └────────────────────────────┬────────────────────────────┘
                                     │ Peticiones HTTP / Axios
                                     │ Header: Authorization Bearer <JWT>
@@ -194,23 +194,19 @@ La API opera de manera **Stateless** mediante Bearer Tokens en el encabezado `Au
    ```bash
    cd level-up-spring
    ```
-2. Exportar las variables requeridas e iniciar la aplicación usando el Maven Wrapper:
+2. Iniciar directamente la aplicación con el Maven Wrapper (no requiere configurar variables obligatorias):
    * **Linux / macOS / Git Bash:**
      ```bash
-     export SPRING_PROFILES_ACTIVE=dev
-     export JWT_SECRET="$(openssl rand -base64 32)"
      bash ./mvnw spring-boot:run
      ```
-   * **Windows PowerShell:**
+   * **Windows (PowerShell o CMD):**
      ```powershell
-     $env:SPRING_PROFILES_ACTIVE = "dev"
-     $env:JWT_SECRET = [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
      .\mvnw.cmd spring-boot:run
      ```
-3. El backend estará listo en el puerto **`8089`**:
+3. El backend iniciará de inmediato en el puerto **`8089`**:
    * **API Base:** `http://localhost:8089/api`
    * **Swagger UI:** `http://localhost:8089/swagger-ui.html`
-   * **Consola H2 (perfil dev):** `http://localhost:8089/h2-console`
+   * **Consola H2:** `http://localhost:8089/h2-console`
      - *JDBC URL:* `jdbc:h2:mem:levelupdb`
      - *Usuario:* `sa`
      - *Contraseña:* *(vacío)*
@@ -232,7 +228,7 @@ La API opera de manera **Stateless** mediante Bearer Tokens en el encabezado `Au
    ```bash
    npm run dev
    ```
-4. Acceder en el navegador a: **`http://localhost:5173`**
+4. Acceder en el navegador a: **`http://localhost:3000`**
 
 ---
 
