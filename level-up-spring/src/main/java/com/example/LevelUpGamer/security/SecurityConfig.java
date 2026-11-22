@@ -71,6 +71,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/categorias/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/categorias/**").hasRole("ADMIN")
+                        .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
                         .requestMatchers("/api/ordenes/mis-compras").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/ordenes").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/ordenes/{id}").authenticated()

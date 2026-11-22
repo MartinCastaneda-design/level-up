@@ -142,4 +142,42 @@ public class AuthController {
 
         return ResponseEntity.ok(response);
     }
+
+    @org.springframework.web.bind.annotation.PutMapping("/me")
+    @Operation(summary = "Actualizar perfil propio", description = "Actualiza nombre, apellido o contraseña del usuario autenticado")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body(Map.of("error", "No autenticado"));
+        }
+
+        String username = authentication.getName();
+        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(username, username).orElse(null);
+
+        if (usuario == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "Usuario no encontrado"));
+        }
+
+        if (body.containsKey("nombre") && body.get("nombre") != null && !body.get("nombre").trim().isEmpty()) {
+            usuario.setNombre(body.get("nombre").trim());
+        }
+        if (body.containsKey("apellido") && body.get("apellido") != null && !body.get("apellido").trim().isEmpty()) {
+            usuario.setApellido(body.get("apellido").trim());
+        }
+        if (body.containsKey("contrasena") && body.get("contrasena") != null && body.get("contrasena").trim().length() >= 4) {
+            usuario.setPassword(passwordEncoder.encode(body.get("contrasena").trim()));
+        }
+
+        Usuario guardado = usuarioRepository.save(usuario);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", guardado.getId());
+        response.put("username", guardado.getUsername());
+        response.put("nombre", guardado.getNombre());
+        response.put("apellido", guardado.getApellido());
+        response.put("correo", guardado.getCorreo());
+        response.put("rol", guardado.getRol());
+        response.put("puntosLevelUp", guardado.getPuntosLevelUp());
+
+        return ResponseEntity.ok(response);
+    }
 }

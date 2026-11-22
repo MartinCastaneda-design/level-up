@@ -123,7 +123,7 @@ const Perfil = () => {
     if (errores[key]) setErrores({ ...errores, [key]: null });
   };
 
-  const handleActualizarPerfil = (e) => {
+  const handleActualizarPerfil = async (e) => {
     e.preventDefault();
     let nuevosErrores = {};
     let hayErrores = false;
@@ -137,8 +137,22 @@ const Perfil = () => {
       return;
     }
 
+    // 1. Intentar actualizar en Spring Boot vía PUT /api/auth/me
+    try {
+      const payload = {
+        nombre: formData.nombre.trim(),
+        apellido: formData.apellido.trim()
+      };
+      if (formData.contrasena && formData.contrasena.trim().length >= 4) {
+        payload.contrasena = formData.contrasena.trim();
+      }
+      await api.put('/auth/me', payload);
+    } catch (apiErr) {
+      console.warn("Backend no disponible para actualizar perfil, usando persistencia local:", apiErr.message);
+    }
+
     let registros = JSON.parse(localStorage.getItem("registros")) || [];
-    const usuarioIndex = registros.findIndex(u => u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
+    const usuarioIndex = registros.findIndex(u => u.correo && u.correo.toLowerCase() === usuarioActivo.correo.toLowerCase());
     
     if (usuarioIndex !== -1) {
       registros[usuarioIndex].nombre = formData.nombre;

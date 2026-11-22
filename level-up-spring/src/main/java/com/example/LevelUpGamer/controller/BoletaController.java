@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -101,10 +102,10 @@ public class BoletaController {
             return ResponseEntity.badRequest().body(Map.of("error", "La orden debe contener al menos un producto"));
         }
 
-        // 1. Validar productos, cantidades positivas y stock disponible antes de cualquier descuento
+        // 1. Fase de Validación estricta en memoria SIN tocar ni modificar entidades todavía
         int subtotalCalculado = 0;
         List<DetalleBoleta> detalles = new ArrayList<>();
-        List<Producto> productosAActualizar = new ArrayList<>();
+        Map<String, Integer> cantidadesAgrupadas = new HashMap<>();
 
         for (Map<String, Object> item : items) {
             String prodId = String.valueOf(item.get("id"));
@@ -112,7 +113,13 @@ public class BoletaController {
             if (cantNum == null || cantNum.intValue() <= 0) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Cantidad inválida para el producto ID: " + prodId));
             }
-            int cantidad = cantNum.intValue();
+            cantidadesAgrupadas.put(prodId, cantidadesAgrupadas.getOrDefault(prodId, 0) + cantNum.intValue());
+        }
+
+        List<Producto> productosAfectados = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : cantidadesAgrupadas.entrySet()) {
+            String prodId = entry.getKey();
+            int cantidadTotal = entry.getValue();
 
             Producto prod = productoRepository.findById(prodId).orElse(null);
             if (prod == null) {
@@ -120,19 +127,23 @@ public class BoletaController {
             }
 
             int stockActual = prod.getStock() != null ? prod.getStock() : 0;
-            if (stockActual < cantidad) {
+            if (stockActual < cantidadTotal) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
-                        "error", "Stock insuficiente para el producto: " + prod.getNombre() + " (Disponible: " + stockActual + ", Solicitado: " + cantidad + ")"
+                        "error", "Stock insuficiente para el producto: " + prod.getNombre() + " (Disponible: " + stockActual + ", Solicitado: " + cantidadTotal + ")"
                 ));
             }
+            productosAfectados.add(prod);
+        }
 
-            // Precio oficial tomado directamente de la base de datos (seguridad H-02)
+        // Construir detalles con precio oficial de base de datos
+        for (Map<String, Object> item : items) {
+            String prodId = String.valueOf(item.get("id"));
+            int cantidad = ((Number) item.get("cantidad")).intValue();
+            Producto prod = productosAfectados.stream().filter(p -> p.getId().equals(prodId)).findFirst().get();
+
             int precioOficial = prod.getPrecio() != null ? prod.getPrecio() : 0;
             int itemSubtotal = precioOficial * cantidad;
             subtotalCalculado += itemSubtotal;
-
-            prod.setStock(stockActual - cantidad);
-            productosAActualizar.add(prod);
 
             DetalleBoleta det = DetalleBoleta.builder()
                     .producto(prod)
@@ -143,7 +154,28 @@ public class BoletaController {
             detalles.add(det);
         }
 
-        // 2. Validar puntos usados contra saldo real del usuario
+        // 2. Validación de Cupón de Descuento (P0-05)
+        String codigoCupon = payload.get("codigoCupon") != null ? String.valueOf(payload.get("codigoCupon")).trim().toUpperCase() : null;
+        int descuentoCupon = 0;
+        if (codigoCupon != null && !codigoCupon.isEmpty()) {
+            if ("ESTUDIANTE20".equals(codigoCupon)) {
+                // Requiere correo Duoc UC o beneficiario
+                boolean esDuoc = usuario.getCorreo() != null && usuario.getCorreo().toLowerCase().endsWith("@duocuc.cl");
+                if (esDuoc) {
+                    descuentoCupon = (int) Math.round(subtotalCalculado * 0.20);
+                } else {
+                    return ResponseEntity.badRequest().body(Map.of("error", "El cupón ESTUDIANTE20 es exclusivo para correos @duocuc.cl"));
+                }
+            } else if ("LEVELUP10".equals(codigoCupon)) {
+                descuentoCupon = (int) Math.round(subtotalCalculado * 0.10);
+            } else if ("PROMO20".equals(codigoCupon)) {
+                descuentoCupon = (int) Math.round(subtotalCalculado * 0.20);
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "Cupón no válido o expirado"));
+            }
+        }
+
+        // 3. Validación de Puntos LevelUp canjeados
         int puntosActuales = usuario.getPuntosLevelUp() != null ? usuario.getPuntosLevelUp() : 0;
         int puntosUsados = payload.get("puntosUsados") != null ? Math.max(0, ((Number) payload.get("puntosUsados")).intValue()) : 0;
 
@@ -151,19 +183,23 @@ public class BoletaController {
             return ResponseEntity.badRequest().body(Map.of("error", "No tienes suficientes puntos LevelUp (Disponibles: " + puntosActuales + ")"));
         }
 
-        // Descuento por puntos (10 puntos = $100 CLP => 1 punto = $10 CLP)
+        // Descuento por puntos (1 punto = $10 CLP)
         int descuentoPuntos = puntosUsados * 10;
-        int totalCalculado = Math.max(0, subtotalCalculado - descuentoPuntos);
+        int descuentoTotal = descuentoCupon + descuentoPuntos;
+        int totalCalculado = Math.max(0, subtotalCalculado - descuentoTotal);
 
-        // Puntos ganados: 1 punto por cada $100 gastados sobre el total final pagado
+        // Puntos ganados: 1 punto por cada $100 CLP efectivamente pagados
         int puntosGanados = totalCalculado / 100;
 
-        // Actualizar saldo de puntos
+        // 4. FASE DE APLICACIÓN ATÓMICA (solo tras superar todas las validaciones)
+        for (Producto prod : productosAfectados) {
+            int cantTotal = cantidadesAgrupadas.get(prod.getId());
+            prod.setStock(prod.getStock() - cantTotal);
+        }
+        productoRepository.saveAll(productosAfectados);
+
         usuario.setPuntosLevelUp(puntosActuales - puntosUsados + puntosGanados);
         usuarioRepository.save(usuario);
-
-        // Descontar stock verificado de productos
-        productoRepository.saveAll(productosAActualizar);
 
         String numeroOrden = "#LVL-" + (int)(10000 + Math.random() * 90000);
         String metodoPago = (String) payload.getOrDefault("metodoPago", "Webpay Plus");
@@ -177,7 +213,7 @@ public class BoletaController {
                 .fecha(LocalDateTime.now())
                 .total(totalCalculado)
                 .subtotal(subtotalCalculado)
-                .descuento(descuentoPuntos)
+                .descuento(descuentoTotal)
                 .metodoPago(metodoPago)
                 .estado("Completada")
                 .direccionDespacho(direccion)

@@ -118,19 +118,16 @@ export const Checkout = () => {
     // Intentar registrar la orden en el Backend Spring Boot
     try {
       const ordenPayload = {
-        total: total,
-        subtotal: subtotal,
-        descuento: montoDescuento,
-        metodoPago: metodoPago,
-        direccion: direccion,
-        comuna: comuna,
-        region: region,
-        telefono: telefono,
+        codigoCupon: cuponAplicado?.codigo || null,
         puntosUsados: puntosUsados,
+        metodoPago: metodoPago,
+        direccion: direccion.trim(),
+        comuna: comuna.trim(),
+        region: region,
+        telefono: telefono.trim(),
         items: carrito.map(item => ({
           id: item.id,
-          cantidad: item.cantidad,
-          precio: item.precio
+          cantidad: item.cantidad
         }))
       };
 
@@ -139,7 +136,10 @@ export const Checkout = () => {
         numOrden = res.data.numeroOrden;
       }
     } catch (apiError) {
-      console.warn('Backend Spring Boot no disponible para guardar orden, usando almacenamiento local:', apiError.message);
+      console.error('Error al procesar orden en Backend:', apiError);
+      const msg = apiError.response?.data?.error || apiError.response?.data?.message || 'No se pudo procesar la compra en el servidor';
+      alert(`Error en el checkout: ${msg}`);
+      return;
     }
     
     const nuevaCompra = {

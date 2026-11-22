@@ -21,8 +21,8 @@ server:
   port: 8089
 
 jwt:
-  secret: ClaveSecretaSuperSeguraNivelGamerFullstack2026DuocUCJWT!
-  expiration: 86400000
+  secret: ${JWT_SECRET:ClaveSecretaSuperSeguraNivelGamerFullstack2026DuocUCJWT!}
+  expiration: ${JWT_EXPIRATION:86400000}
 
 springdoc:
   api-docs:

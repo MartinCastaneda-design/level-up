@@ -115,24 +115,17 @@ export default function AdminProducto() {
                 await api.post('/productos', payload);
             }
             await cargarProductos();
+            setModalAbierto(false);
+            alert(
+                modoEdicion
+                    ? '¡Producto actualizado correctamente!'
+                    : '¡Producto agregado al inventario!'
+            );
         } catch (err) {
-            console.warn('No se pudo sincronizar producto con la API, guardando en local:', err);
-            let nuevosProductos;
-            if (modoEdicion) {
-                nuevosProductos = productos.map((p) => p.id === formProducto.id ? { ...p, ...payload } : p);
-            } else {
-                const nuevoLocal = { ...payload, id: payload.id || Date.now().toString() };
-                nuevosProductos = [...productos, nuevoLocal];
-            }
-            guardarProductos(nuevosProductos);
+            console.error('Error al guardar producto en API:', err);
+            const msg = err.response?.data?.error || err.response?.data?.message || 'Error al comunicarse con el servidor';
+            alert(`No se pudo guardar el producto: ${msg}`);
         }
-
-        setModalAbierto(false);
-        alert(
-            modoEdicion
-                ? '¡Producto actualizado correctamente!'
-                : '¡Producto agregado al inventario!'
-        );
     };
 
     const handleEliminar = async (id, nombre) => {
@@ -144,10 +137,11 @@ export default function AdminProducto() {
             try {
                 await api.delete(`/productos/${id}`);
                 await cargarProductos();
+                alert(`Producto "${nombre}" eliminado correctamente.`);
             } catch (err) {
-                console.warn('Error al eliminar en API, aplicando borrado local:', err);
-                const nuevos = productos.filter((p) => p.id !== id);
-                guardarProductos(nuevos);
+                console.error('Error al eliminar en API:', err);
+                const msg = err.response?.data?.error || err.response?.data?.message || 'No se pudo eliminar del servidor';
+                alert(`Error al eliminar: ${msg}`);
             }
         }
     };

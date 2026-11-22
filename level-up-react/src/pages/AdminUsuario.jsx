@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 export default function AdminUsuario() {
   const [usuarios, setUsuarios] = useState([]);
@@ -8,18 +9,31 @@ export default function AdminUsuario() {
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
 
   useEffect(() => {
+    cargarUsuarios();
+  }, []);
+
+  const cargarUsuarios = async () => {
+    try {
+      const res = await api.get('/usuarios');
+      if (res.data && Array.isArray(res.data)) {
+        setUsuarios(res.data);
+        return;
+      }
+    } catch (e) {
+      console.warn("Backend no disponible para listar usuarios, usando respaldo local:", e);
+    }
+
     const registrosGuardados = localStorage.getItem('registros');
     if (registrosGuardados) {
       try {
         setUsuarios(JSON.parse(registrosGuardados));
-      } catch (e) {
-        console.error("Error al parsear usuarios:", e);
+      } catch {
         setUsuarios([]);
       }
     } else {
       setUsuarios([]);
     }
-  }, []);
+  };
 
   useEffect(() => {
     const comprasGuardadas = localStorage.getItem('levelup_compras');
@@ -35,20 +49,31 @@ export default function AdminUsuario() {
     }
   }, []);
 
-  const guardarUsuarios = (nuevosUsuarios) => {
-    setUsuarios(nuevosUsuarios);
-    localStorage.setItem('registros', JSON.stringify(nuevosUsuarios));
-  };
+  const toggleRol = async (u) => {
+    const rolActual = (u.rol || '').toLowerCase();
+    const proximoRol = rolActual.includes('admin') ? 'ROLE_CLIENTE' : 'ROLE_ADMIN';
 
-  const toggleRol = (email) => {
-    const nuevos = usuarios.map(u => {
-      if (u.correo === email) {
-        const nuevoRol = u.rol === 'admin' ? 'cliente' : 'admin';
-        return { ...u, rol: nuevoRol };
+    try {
+      if (u.id) {
+        await api.patch(`/usuarios/${u.id}/rol`, { rol: proximoRol });
+        await cargarUsuarios();
+        alert(`Rol del usuario actualizado a ${proximoRol}`);
+        return;
       }
-      return u;
+    } catch (err) {
+      console.error('Error al actualizar rol en API:', err);
+      alert('No se pudo actualizar el rol en el servidor.');
+    }
+
+    // Fallback local
+    const nuevos = usuarios.map(item => {
+      if (item.correo === u.correo) {
+        return { ...item, rol: proximoRol.toLowerCase().replace('role_', '') };
+      }
+      return item;
     });
-    guardarUsuarios(nuevos);
+    setUsuarios(nuevos);
+    localStorage.setItem('registros', JSON.stringify(nuevos));
   };
 
   const toggleEstado = (email) => {
@@ -135,7 +160,7 @@ export default function AdminUsuario() {
                     <div className="d-flex gap-2">
                       <button
                         className="btn btn-sm btn-outline-info"
-                        onClick={() => toggleRol(u.correo)}
+                        onClick={() => toggleRol(u)}
                         title="Cambiar rol"
                       >
                         <i className="bi bi-person-gear"></i>
