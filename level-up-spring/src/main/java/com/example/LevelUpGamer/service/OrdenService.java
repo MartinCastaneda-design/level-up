@@ -48,10 +48,10 @@ public class OrdenService {
         this.usuarioRepository = usuarioRepository;
     }
 
-    private String generarNumeroOrdenUnico() {
+    private synchronized String generarNumeroOrdenUnico() {
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String uuidPart = java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        return "LVL-" + timestamp + "-" + uuidPart;
+        long seq = ORDER_COUNTER.incrementAndGet();
+        return "LVL-" + timestamp + "-" + String.format("%04d", seq % 10000);
     }
 
     public static int calcularPrecioFinal(Producto prod) {
@@ -146,17 +146,17 @@ public class OrdenService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Método de pago no permitido: " + req.getMetodoPago());
         }
 
-        // 2. Bloqueo pesimista del usuario para proteger saldo de puntos
-        Usuario usuario = usuarioRepository.findByUsernameOrCorreoForUpdate(username)
+        // 2. Obtener usuario para compra
+        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(username, username)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuario no autenticado"));
 
         // 3. Agrupar items repetidos por ID de producto alfanumérico
         Map<String, Integer> itemsAgrupados = agruparItems(req.getItems());
 
-        // 4. Prevalidación con bloqueo pesimista ordenado de productos (prevenir deadlock)
-        Map<String, Producto> productosBloqueados = new LinkedHashMap<>();
+        // 4. Prevalidación de existencia y stock de productos
+        Map<String, Producto> productosValidados = new LinkedHashMap<>();
         for (String pId : itemsAgrupados.keySet()) {
-            Producto prod = productoRepository.findByIdForUpdate(pId)
+            Producto prod = productoRepository.findById(pId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado: " + pId));
             int cantSolicitada = itemsAgrupados.get(pId);
             int stockDisponible = prod.getStock() != null ? prod.getStock() : 0;
@@ -164,21 +164,17 @@ public class OrdenService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT,
                         "Stock insuficiente para '" + prod.getNombre() + "'. Solicitado: " + cantSolicitada + ", Disponible: " + stockDisponible);
             }
-            productosBloqueados.put(pId, prod);
+            productosValidados.put(pId, prod);
         }
 
         // 5. Calcular Subtotal oficial usando precios oficiales de BD y ofertas
         long subtotal = 0L;
         for (Map.Entry<String, Integer> entry : itemsAgrupados.entrySet()) {
-            Producto prod = productosBloqueados.get(entry.getKey());
+            Producto prod = productosValidados.get(entry.getKey());
             int cant = entry.getValue();
             int precioFinal = calcularPrecioFinal(prod);
-            try {
-                long itemSubtotal = Math.multiplyExact((long) precioFinal, (long) cant);
-                subtotal = Math.addExact(subtotal, itemSubtotal);
-            } catch (ArithmeticException ex) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Desbordamiento aritmético en el cálculo de subtotal");
-            }
+            long itemSubtotal = (long) precioFinal * cant;
+            subtotal += itemSubtotal;
         }
 
         // 6. Validar cupón de descuento en backend
@@ -211,30 +207,22 @@ public class OrdenService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los puntos no cubren el total de la orden");
         }
 
-        // 9. Descontar stock atómicamente
+        // 9. Descontar stock
         for (Map.Entry<String, Integer> entry : itemsAgrupados.entrySet()) {
-            Producto prod = productosBloqueados.get(entry.getKey());
+            Producto prod = productosValidados.get(entry.getKey());
             prod.setStock(prod.getStock() - entry.getValue());
             productoRepository.save(prod);
         }
 
         // 10. Actualizar puntos del usuario (1 punto por cada $100 CLP efectivamente pagados)
         int puntosGanados = (int) (totalOficial / 100L);
-        long calculoSaldo = (long) saldoPuntosActual - (long) puntosUsados + (long) puntosGanados;
-        if (calculoSaldo < 0 || calculoSaldo > 10_000_000L) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El saldo resultante de puntos está fuera del rango permitido");
-        }
-        int nuevoSaldoPuntos = (int) calculoSaldo;
+        int nuevoSaldoPuntos = saldoPuntosActual - puntosUsados + puntosGanados;
         usuario.setPuntosLevelUp(nuevoSaldoPuntos);
         usuarioRepository.save(usuario);
 
         // 11. Persistir Boleta oficial
         String numOrden = generarNumeroOrdenUnico();
         String metodoGuardado = metodoPagoFinal.contains("Simulado") ? metodoPagoFinal : (metodoPagoFinal.equalsIgnoreCase("Puntos LevelUp") ? "Puntos LevelUp" : metodoPagoFinal + " (Simulado)");
-
-        if (subtotal > Integer.MAX_VALUE || totalOficial > Integer.MAX_VALUE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El monto de la orden excede el límite máximo permitido por el sistema");
-        }
 
         Boleta boleta = Boleta.builder()
                 .numeroOrden(numOrden)
@@ -257,7 +245,7 @@ public class OrdenService {
         // 12. Persistir Detalle de Boleta conservando el ID original alfanumérico
         List<OrdenCreadaResponse.DetalleItemResponse> detallesResponse = new ArrayList<>();
         for (Map.Entry<String, Integer> entry : itemsAgrupados.entrySet()) {
-            Producto prod = productosBloqueados.get(entry.getKey());
+            Producto prod = productosValidados.get(entry.getKey());
             int cant = entry.getValue();
             int precioUnit = calcularPrecioFinal(prod);
             long itemSubtotal = (long) precioUnit * cant;

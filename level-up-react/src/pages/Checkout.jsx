@@ -43,7 +43,7 @@ export const Checkout = () => {
             cantidad: item.cantidad
           })),
           cupon: cupon?.codigo || null,
-          puntosUsados: metodoPago === 'Puntos LevelUp' ? Math.floor(total / 10) : 0
+          puntosUsados: metodoPago === 'Puntos LevelUp' ? (usuario.puntosLevelUp || 0) : 0
         };
         const res = await api.post('/ordenes/cotizar', payload);
         if (!cancelado && res.data) {

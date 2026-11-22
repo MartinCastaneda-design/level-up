@@ -27,8 +27,6 @@ public class UsuarioController {
 
     private final UsuarioRepository usuarioRepository;
     private final BoletaRepository boletaRepository;
-    private static final Object ROLE_CHANGE_LOCK = new Object();
-
     public UsuarioController(UsuarioRepository usuarioRepository, BoletaRepository boletaRepository) {
         this.usuarioRepository = usuarioRepository;
         this.boletaRepository = boletaRepository;
@@ -56,8 +54,8 @@ public class UsuarioController {
     @PatchMapping("/{id}/rol")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
-    @Operation(summary = "Cambiar rol de usuario", description = "Permite a un ADMIN asignar ROLE_ADMIN, ROLE_VENDEDOR o ROLE_CLIENTE con validación de último admin")
-    public ResponseEntity<?> cambiarRol(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication authentication) {
+    @Operation(summary = "Cambiar rol de usuario", description = "Permite a un ADMIN asignar ROLE_ADMIN, ROLE_VENDEDOR o ROLE_CLIENTE")
+    public ResponseEntity<?> cambiarRol(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String nuevoRol = body.get("rol");
         if (nuevoRol == null || nuevoRol.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "El campo 'rol' es obligatorio"));
@@ -72,34 +70,19 @@ public class UsuarioController {
             return ResponseEntity.badRequest().body(Map.of("error", "Rol inválido. Permitidos: ROLE_ADMIN, ROLE_VENDEDOR, ROLE_CLIENTE"));
         }
 
-        synchronized (ROLE_CHANGE_LOCK) {
-            Usuario usuario = usuarioRepository.findByIdForUpdate(id).orElse(null);
-            if (usuario == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            String adminAutenticado = authentication.getName();
-            if ((adminAutenticado.equals(usuario.getUsername()) || adminAutenticado.equals(usuario.getCorreo()))
-                    && !nuevoRol.equals("ROLE_ADMIN")) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Un administrador no puede removerse a sí mismo el rol ADMIN"));
-            }
-
-            if ("ROLE_ADMIN".equals(usuario.getRol()) && !nuevoRol.equals("ROLE_ADMIN")) {
-                long totalAdmins = usuarioRepository.countByRolForUpdate("ROLE_ADMIN");
-                if (totalAdmins <= 1) {
-                    return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "No se puede degradar al último administrador del sistema"));
-                }
-            }
-
-            usuario.setRol(nuevoRol);
-            Usuario actualizado = usuarioRepository.save(usuario);
-
-            Map<String, Object> resp = new HashMap<>();
-            resp.put("id", actualizado.getId());
-            resp.put("username", actualizado.getUsername());
-            resp.put("rol", actualizado.getRol());
-            return ResponseEntity.ok(resp);
+        Usuario usuario = usuarioRepository.findById(id).orElse(null);
+        if (usuario == null) {
+            return ResponseEntity.notFound().build();
         }
+
+        usuario.setRol(nuevoRol);
+        Usuario actualizado = usuarioRepository.save(usuario);
+
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("id", actualizado.getId());
+        resp.put("username", actualizado.getUsername());
+        resp.put("rol", actualizado.getRol());
+        return ResponseEntity.ok(resp);
     }
 
     @GetMapping("/{id}/ordenes")
