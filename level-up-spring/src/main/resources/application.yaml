@@ -14,15 +14,20 @@ spring:
     show-sql: false
   h2:
     console:
-      enabled: true
+      enabled: false
       path: /h2-console
 
 server:
   port: 8089
 
 jwt:
-  secret: ${JWT_SECRET:ClaveSecretaSuperSeguraNivelGamerFullstack2026DuocUCJWT!}
-  expiration: ${JWT_EXPIRATION:86400000}
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:900000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:4173}
 
 springdoc:
   api-docs:

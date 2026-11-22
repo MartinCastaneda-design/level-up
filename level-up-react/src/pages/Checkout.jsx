@@ -9,7 +9,7 @@ import api from '../services/api';
 export const Checkout = () => {
   const navigate = useNavigate();
   const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, cupon, vaciarCarrito } = useCart();
-  const { usuario, agregarPuntos, descontarPuntos } = useAuth();
+  const { usuario, setUsuarioDesdeBackend } = useAuth();
 
   const [nombre, setNombre] = useState(usuario ? usuario.nombre : '');
   const [apellido, setApellido] = useState(usuario ? (usuario.apellido || '') : '');
@@ -104,13 +104,12 @@ export const Checkout = () => {
       }
     }
 
-    let numOrden = '#LVL-' + Math.floor(10000 + Math.random() * 90000);
     let boletaOficial = null;
 
-    // Intentar registrar la orden en el Backend Spring Boot
+    // Registrar la orden en el Backend Spring Boot vía POST /api/ordenes
     try {
       const ordenPayload = {
-        codigoCupon: cupon?.codigo || null,
+        cupon: cupon?.codigo || null,
         puntosUsados: puntosACanjear,
         metodoPago: metodoPago,
         direccion: direccion.trim(),
@@ -124,11 +123,11 @@ export const Checkout = () => {
       };
 
       const res = await api.post('/ordenes', ordenPayload);
-      if (res.data) {
+      if (res.status === 201 && res.data && res.data.numeroOrden) {
         boletaOficial = res.data;
-        if (boletaOficial.numeroOrden) {
-          numOrden = boletaOficial.numeroOrden;
-        }
+      } else {
+        alert('Respuesta inesperada del servidor. La compra no fue confirmada.');
+        return;
       }
     } catch (apiError) {
       console.error('Error al procesar orden en Backend:', apiError);
@@ -137,49 +136,19 @@ export const Checkout = () => {
       return;
     }
 
-    // Actualizar puntos de la sesión SOLO tras confirmación 201 exitosa del backend (P0-02)
-    const puntosUsadosOficial = boletaOficial?.puntosUsados ?? puntosACanjear;
-    const puntosGanadosOficial = boletaOficial?.puntosGanados ?? (metodoPago === 'Puntos LevelUp' ? 0 : Math.floor(total / 100));
-
-    if (puntosUsadosOficial > 0) {
-      descontarPuntos(puntosUsadosOficial);
+    // Sincronizar el saldo oficial de puntos y datos de usuario directamente desde el backend
+    if (setUsuarioDesdeBackend && boletaOficial.saldoFinalPuntos !== undefined) {
+      setUsuarioDesdeBackend({ puntosLevelUp: boletaOficial.saldoFinalPuntos });
     }
-    if (puntosGanadosOficial > 0) {
-      agregarPuntos(puntosGanadosOficial);
-    }
-
-    const totalOficial = boletaOficial?.total ?? total;
-    
-    const nuevaCompra = {
-      idOrden: numOrden,
-      fecha: new Date().toLocaleDateString('es-CL'),
-      correo: usuario.correo,
-      nombreComprador: `${nombre} ${apellido}`,
-      direccionComprador: `${direccion}, ${comuna}, ${region}`, 
-      metodo: metodoPago,
-      cantidadItems: carrito.reduce((acc, item) => acc + item.cantidad, 0),
-      totalPagado: totalOficial,
-      puntosGanados: puntosGanadosOficial, 
-      puntosUsados: puntosUsadosOficial, 
-      estado: 'En preparación / Pagado',  
-      productos: carrito.map(item => ({
-        nombre: item.nombre,
-        precio: item.precio,
-        cantidad: item.cantidad,
-        imagen: item.imagen
-      }))
-    };
-
-    let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
-    historialCompras.unshift(nuevaCompra);
-    localStorage.setItem('levelup_compras', JSON.stringify(historialCompras));
 
     const orden = {
-      numOrden,
+      numOrden: boletaOficial.numeroOrden,
       destinatario: `${nombre} ${apellido}`,
-      total: totalOficial,
-      metodoPago: metodoPago,
-      direccion: `${direccion}, ${comuna}, ${region}`
+      total: boletaOficial.total,
+      metodoPago: boletaOficial.metodoPago,
+      direccion: `${direccion}, ${comuna}, ${region}`,
+      puntosGanados: boletaOficial.puntosGanados,
+      puntosUsados: boletaOficial.puntosUsados
     };
 
     setOrdenExitosa(orden);

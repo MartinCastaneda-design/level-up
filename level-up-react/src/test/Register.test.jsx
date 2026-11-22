@@ -1,13 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import Register from '../pages/Register'; 
+import Register from '../pages/Register';
 
 const mockNavigate = vi.fn();
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return { ...actual, useNavigate: () => mockNavigate };
 });
+
+vi.mock('../services/api', () => ({
+  default: {
+    post: vi.fn().mockResolvedValue({ status: 201, data: {} })
+  }
+}));
 
 describe('Pruebas Unitarias: Componente Register', () => {
   beforeEach(() => {
@@ -43,7 +49,7 @@ describe('Pruebas Unitarias: Componente Register', () => {
     const añoActual = new Date().getFullYear();
     fireEvent.change(inputFecha, { target: { value: `${añoActual}-01-01`, id: 'dateFechaNacimiento' } });
 
-    const btnSubmit = screen.getByRole('button', { name: /Hecho/i });
+    const btnSubmit = screen.getByRole('button', { name: /Registrarse/i });
     fireEvent.click(btnSubmit);
 
     const mensajeError = screen.getByText(/Debes ser mayor de 18/i);

@@ -1,40 +1,91 @@
 package com.example.LevelUpGamer.controller;
 
+import com.example.LevelUpGamer.dto.RegisterRequest;
+import com.example.LevelUpGamer.dto.UpdateProfileRequest;
+import com.example.LevelUpGamer.model.RefreshToken;
 import com.example.LevelUpGamer.model.Usuario;
 import com.example.LevelUpGamer.repository.UsuarioRepository;
 import com.example.LevelUpGamer.security.JwtService;
+import com.example.LevelUpGamer.service.RefreshTokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name = "Autenticación", description = "Endpoints de Login, Registro y Sesión con JWT")
+@Tag(name = "Autenticación", description = "Endpoints de Login, Registro, Sesión, Refresh y Logout con JWT")
 public class AuthController {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    @Value("${spring.profiles.active:dev}")
+    private String activeProfile;
+
+    public AuthController(UsuarioRepository usuarioRepository,
+                          PasswordEncoder passwordEncoder,
+                          JwtService jwtService,
+                          RefreshTokenService refreshTokenService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokenService = refreshTokenService;
+    }
+
+    private void attachRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
+        boolean isProd = "prod".equalsIgnoreCase(activeProfile);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(isProd)
+                .path("/")
+                .maxAge(jwtService.getRefreshExpirationTime() / 1000)
+                .sameSite("Lax")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        boolean isProd = "prod".equalsIgnoreCase(activeProfile);
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(isProd)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    private String extractRefreshTokenFromCookies(HttpServletRequest request) {
+        if (request.getCookies() == null) return null;
+        return Arrays.stream(request.getCookies())
+                .filter(c -> "refreshToken".equals(c.getName()))
+                .findFirst()
+                .map(Cookie::getValue)
+                .orElse(null);
     }
 
     @PostMapping("/login")
-    @Operation(summary = "Iniciar sesión", description = "Valida credenciales y genera token JWT")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+    @Operation(summary = "Iniciar sesión", description = "Valida credenciales, genera access token JWT y refresh cookie HttpOnly")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest, HttpServletResponse servletResponse) {
         String identifier = loginRequest.containsKey("correo") ? loginRequest.get("correo")
                 : (loginRequest.containsKey("email") ? loginRequest.get("email") : loginRequest.get("username"));
         String password = loginRequest.containsKey("contrasena") ? loginRequest.get("contrasena") : loginRequest.get("password");
@@ -43,18 +94,16 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Credenciales incompletas"));
         }
 
-        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(identifier, identifier).orElse(null);
+        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(identifier.trim(), identifier.trim()).orElse(null);
 
-        if (usuario == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Usuario no encontrado"));
-        }
-
-        if (!passwordEncoder.matches(password, usuario.getPassword())) {
-            return ResponseEntity.status(401).body(Map.of("error", "Contraseña incorrecta"));
+        if (usuario == null || !passwordEncoder.matches(password, usuario.getPassword())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Credenciales incorrectas"));
         }
 
         String rol = usuario.getRol() != null ? usuario.getRol() : "ROLE_CLIENTE";
         String token = jwtService.generateToken(usuario.getUsername(), rol);
+        String refreshToken = refreshTokenService.createRefreshToken(usuario);
+        attachRefreshTokenCookie(servletResponse, refreshToken);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
@@ -70,68 +119,77 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta con rol ROLE_CLIENTE")
-    public ResponseEntity<?> register(@RequestBody Map<String, Object> req) {
-        String username = (String) req.get("username");
-        String correo = req.containsKey("correo") ? (String) req.get("correo") : (String) req.get("email");
-        String password = req.containsKey("contrasena") ? (String) req.get("contrasena") : (String) req.get("password");
-        String nombre = (String) req.get("nombre");
-        String apellido = (String) req.get("apellido");
+    @Operation(summary = "Registrar nuevo usuario", description = "Crea una nueva cuenta con rol ROLE_CLIENTE y valida duplicados con 409")
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req, HttpServletResponse servletResponse) {
+        String username = req.getUsername() != null ? req.getUsername().trim() : "";
+        String correo = req.getCorreo() != null ? req.getCorreo().trim().toLowerCase() : "";
+        String password = req.getContrasena();
+        String nombre = req.getNombre() != null ? req.getNombre().trim() : "Gamer";
+        String apellido = req.getApellido() != null ? req.getApellido().trim() : "";
 
-        if (correo == null || password == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Correo y contraseña son obligatorios"));
+        if (correo.isEmpty() || password == null || password.length() < 6) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Correo válido y contraseña de al menos 6 caracteres son obligatorios"));
         }
 
-        if (username == null || username.trim().isEmpty()) {
+        if (username.isEmpty()) {
             username = correo;
         }
 
         if (usuarioRepository.existsByUsername(username) || usuarioRepository.existsByCorreo(correo)) {
-            return ResponseEntity.status(409).body(Map.of("error", "El correo o nombre de usuario ya está registrado"));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "El correo o nombre de usuario ya está registrado"));
         }
 
         Usuario nuevo = Usuario.builder()
                 .username(username)
                 .correo(correo)
                 .password(passwordEncoder.encode(password))
-                .nombre(nombre != null ? nombre : "Gamer")
-                .apellido(apellido != null ? apellido : "")
+                .nombre(nombre)
+                .apellido(apellido)
                 .rol("ROLE_CLIENTE")
                 .puntosLevelUp(100)
                 .build();
 
-        usuarioRepository.save(nuevo);
+        Usuario guardado = usuarioRepository.save(nuevo);
 
-        String token = jwtService.generateToken(nuevo.getUsername(), nuevo.getRol());
+        String token = jwtService.generateToken(guardado.getUsername(), guardado.getRol());
+        String refreshToken = refreshTokenService.createRefreshToken(guardado);
+        attachRefreshTokenCookie(servletResponse, refreshToken);
 
         Map<String, Object> response = new HashMap<>();
         response.put("token", token);
-        response.put("id", nuevo.getId());
-        response.put("username", nuevo.getUsername());
-        response.put("nombre", nuevo.getNombre());
-        response.put("apellido", nuevo.getApellido());
-        response.put("correo", nuevo.getCorreo());
-        response.put("rol", nuevo.getRol());
-        response.put("puntosLevelUp", nuevo.getPuntosLevelUp());
+        response.put("id", guardado.getId());
+        response.put("username", guardado.getUsername());
+        response.put("nombre", guardado.getNombre());
+        response.put("apellido", guardado.getApellido());
+        response.put("correo", guardado.getCorreo());
+        response.put("rol", guardado.getRol());
+        response.put("puntosLevelUp", guardado.getPuntosLevelUp());
 
-        return ResponseEntity.status(201).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/me")
-    @Operation(summary = "Obtener perfil autenticado", description = "Retorna la información del usuario en sesión")
-    public ResponseEntity<?> getProfile(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(401).body(Map.of("error", "No autenticado"));
+    @PostMapping("/refresh")
+    @Operation(summary = "Renovar JWT con Refresh Token", description = "Valida cookie refreshToken, aplica rotación y emite nuevo access token")
+    public ResponseEntity<?> refreshToken(HttpServletRequest request, HttpServletResponse servletResponse) {
+        String rawToken = extractRefreshTokenFromCookies(request);
+        if (rawToken == null || rawToken.trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No se encontró cookie de refresh token"));
         }
 
-        String username = authentication.getName();
-        Usuario usuario = usuarioRepository.findByUsername(username).orElse(null);
+        String[] newRawTokenHolder = new String[1];
+        Optional<RefreshToken> oldTokenOpt = refreshTokenService.verifyAndRotate(rawToken, newRawTokenHolder);
 
-        if (usuario == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "Usuario no encontrado"));
+        if (oldTokenOpt.isEmpty()) {
+            clearRefreshTokenCookie(servletResponse);
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Refresh token inválido, expirado o ya utilizado"));
         }
+
+        Usuario usuario = oldTokenOpt.get().getUsuario();
+        String newAccessToken = jwtService.generateToken(usuario.getUsername(), usuario.getRol());
+        attachRefreshTokenCookie(servletResponse, newRawTokenHolder[0]);
 
         Map<String, Object> response = new HashMap<>();
+        response.put("token", newAccessToken);
         response.put("id", usuario.getId());
         response.put("username", usuario.getUsername());
         response.put("nombre", usuario.getNombre());
@@ -143,28 +201,84 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @org.springframework.web.bind.annotation.PutMapping("/me")
-    @Operation(summary = "Actualizar perfil propio", description = "Actualiza nombre, apellido o contraseña del usuario autenticado")
-    public ResponseEntity<?> updateProfile(@RequestBody Map<String, String> body, Authentication authentication) {
+    @PostMapping("/logout")
+    @Operation(summary = "Cerrar sesión", description = "Revoca el refresh token y limpia la cookie de autenticación")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse servletResponse) {
+        String rawToken = extractRefreshTokenFromCookies(request);
+        if (rawToken != null) {
+            refreshTokenService.revokeToken(rawToken);
+        }
+        clearRefreshTokenCookie(servletResponse);
+        return ResponseEntity.ok(Map.of("mensaje", "Sesión cerrada correctamente"));
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Obtener perfil autenticado", description = "Retorna la información del usuario en sesión")
+    public ResponseEntity<?> getProfile(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(401).body(Map.of("error", "No autenticado"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autenticado"));
         }
 
         String username = authentication.getName();
         Usuario usuario = usuarioRepository.findByUsernameOrCorreo(username, username).orElse(null);
 
         if (usuario == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "Usuario no encontrado"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuario no encontrado"));
         }
 
-        if (body.containsKey("nombre") && body.get("nombre") != null && !body.get("nombre").trim().isEmpty()) {
-            usuario.setNombre(body.get("nombre").trim());
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", usuario.getId());
+        response.put("username", usuario.getUsername());
+        response.put("nombre", usuario.getNombre());
+        response.put("apellido", usuario.getApellido());
+        response.put("correo", usuario.getCorreo());
+        response.put("rol", usuario.getRol());
+        response.put("puntosLevelUp", usuario.getPuntosLevelUp() != null ? usuario.getPuntosLevelUp() : 0);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/me")
+    @Operation(summary = "Actualizar perfil propio", description = "Actualiza nombre, apellido o contraseña validando contraseña actual")
+    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest body, Authentication authentication) {
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "No autenticado"));
         }
-        if (body.containsKey("apellido") && body.get("apellido") != null && !body.get("apellido").trim().isEmpty()) {
-            usuario.setApellido(body.get("apellido").trim());
+
+        String username = authentication.getName();
+        Usuario usuario = usuarioRepository.findByUsernameOrCorreo(username, username).orElse(null);
+
+        if (usuario == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Usuario no encontrado"));
         }
-        if (body.containsKey("contrasena") && body.get("contrasena") != null && body.get("contrasena").trim().length() >= 4) {
-            usuario.setPassword(passwordEncoder.encode(body.get("contrasena").trim()));
+
+        if (body.getNombre() != null && !body.getNombre().trim().isEmpty()) {
+            usuario.setNombre(body.getNombre().trim());
+        }
+        if (body.getApellido() != null && !body.getApellido().trim().isEmpty()) {
+            usuario.setApellido(body.getApellido().trim());
+        }
+
+        // Si intenta cambiar correo
+        if (body.getCorreo() != null && !body.getCorreo().trim().isEmpty()) {
+            String nuevoCorreo = body.getCorreo().trim().toLowerCase();
+            if (!nuevoCorreo.equalsIgnoreCase(usuario.getCorreo())) {
+                if (usuarioRepository.existsByCorreo(nuevoCorreo)) {
+                    return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "El correo ya está en uso por otro usuario"));
+                }
+                usuario.setCorreo(nuevoCorreo);
+            }
+        }
+
+        // Si intenta cambiar contraseña
+        if (body.getNuevaContrasena() != null && !body.getNuevaContrasena().trim().isEmpty()) {
+            if (body.getContrasenaActual() == null || !passwordEncoder.matches(body.getContrasenaActual(), usuario.getPassword())) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La contraseña actual es incorrecta"));
+            }
+            if (body.getNuevaContrasena().trim().length() < 6) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "La nueva contraseña debe tener al menos 6 caracteres"));
+            }
+            usuario.setPassword(passwordEncoder.encode(body.getNuevaContrasena().trim()));
         }
 
         Usuario guardado = usuarioRepository.save(usuario);

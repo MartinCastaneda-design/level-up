@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
-import { PRODUCTOS_DATA } from '../data/productsData';
 
 export default function AdminProducto() {
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
-
     const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false);
-
     const [modalAbierto, setModalAbierto] = useState(false);
     const [modoEdicion, setModoEdicion] = useState(false);
 
@@ -21,40 +18,30 @@ export default function AdminProducto() {
         descripcion: ''
     });
 
+    const [cargando, setCargando] = useState(false);
+    const [errorCarga, setErrorCarga] = useState(null);
+
     useEffect(() => {
         cargarProductos();
     }, []);
 
     const cargarProductos = async () => {
+        setCargando(true);
+        setErrorCarga(null);
         try {
             const res = await api.get('/productos');
-            if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+            if (res.data && Array.isArray(res.data)) {
                 setProductos(res.data);
-                localStorage.setItem('levelup_productos', JSON.stringify(res.data));
-                return;
+            } else {
+                setProductos([]);
             }
         } catch (e) {
-            console.warn('Backend no disponible para listar productos, usando respaldo local:', e);
+            console.error('Error al listar productos desde el backend:', e);
+            setErrorCarga('No fue posible conectar con el servidor para obtener el inventario.');
+            setProductos([]);
+        } finally {
+            setCargando(false);
         }
-
-        const productosGuardados = localStorage.getItem('levelup_productos');
-        if (productosGuardados) {
-            try {
-                setProductos(JSON.parse(productosGuardados));
-            } catch {
-                setProductos(PRODUCTOS_DATA);
-            }
-        } else {
-            setProductos(PRODUCTOS_DATA);
-        }
-    };
-
-    const guardarProductos = (nuevosProductos) => {
-        setProductos(nuevosProductos);
-        localStorage.setItem(
-            'levelup_productos',
-            JSON.stringify(nuevosProductos)
-        );
     };
 
     const handleChange = (e) => {
@@ -186,6 +173,20 @@ return (
                     </button>
                 </div>
             </div>
+
+            {errorCarga && (
+                <div className="alert alert-danger d-flex justify-content-between align-items-center mb-3">
+                    <div><i className="bi bi-exclamation-octagon-fill me-2"></i>{errorCarga}</div>
+                    <button className="btn btn-sm btn-outline-light" onClick={cargarProductos}>Reintentar</button>
+                </div>
+            )}
+
+            {cargando && (
+                <div className="text-center py-4">
+                    <div className="spinner-border text-info" role="status"></div>
+                    <p className="text-muted mt-2">Cargando inventario oficial...</p>
+                </div>
+            )}
 
             <div className="table-responsive">
                 <table className="table table-dark table-striped table-hover align-middle">

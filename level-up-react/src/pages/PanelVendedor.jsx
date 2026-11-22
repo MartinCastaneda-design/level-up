@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { formatCLP } from '../utils/formatters';
 
@@ -10,32 +9,44 @@ export default function PanelVendedor() {
   const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
   const [cargando, setCargando] = useState(true);
 
+  const [errorOrdenes, setErrorOrdenes] = useState(null);
+  const [errorProductos, setErrorProductos] = useState(null);
+
   useEffect(() => {
     cargarDatos();
   }, []);
 
   const cargarDatos = async () => {
     setCargando(true);
-    // 1. Cargar Órdenes desde Backend (o fallback local)
+    setErrorOrdenes(null);
+    setErrorProductos(null);
+
+    // 1. Cargar Órdenes desde Backend oficial
     try {
       const res = await api.get('/ordenes');
       if (res.data && Array.isArray(res.data)) {
         setOrdenes(res.data);
+      } else {
+        setOrdenes([]);
       }
-    } catch {
-      const locales = JSON.parse(localStorage.getItem('levelup_compras')) || [];
-      setOrdenes(locales);
+    } catch (e) {
+      console.error('Error al cargar órdenes en panel vendedor:', e);
+      setErrorOrdenes('No fue posible cargar las órdenes oficiales desde el servidor.');
+      setOrdenes([]);
     }
 
-    // 2. Cargar Productos desde Backend (o fallback local)
+    // 2. Cargar Productos desde Backend oficial
     try {
       const resProd = await api.get('/productos');
       if (resProd.data && Array.isArray(resProd.data)) {
         setProductos(resProd.data);
+      } else {
+        setProductos([]);
       }
-    } catch {
-      const prodsLocales = JSON.parse(localStorage.getItem('levelup_productos')) || [];
-      setProductos(prodsLocales);
+    } catch (e) {
+      console.error('Error al cargar productos en panel vendedor:', e);
+      setErrorProductos('No fue posible cargar el inventario oficial desde el servidor.');
+      setProductos([]);
     } finally {
       setCargando(false);
     }
@@ -68,6 +79,16 @@ export default function PanelVendedor() {
           </button>
         </div>
       </div>
+
+      {(errorOrdenes || errorProductos) && (
+        <div className="alert alert-danger d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <i className="bi bi-exclamation-octagon-fill me-2"></i>
+            {errorOrdenes || errorProductos}
+          </div>
+          <button className="btn btn-sm btn-outline-light" onClick={cargarDatos}>Reintentar</button>
+        </div>
+      )}
 
       {cargando ? (
         <div className="text-center py-5">

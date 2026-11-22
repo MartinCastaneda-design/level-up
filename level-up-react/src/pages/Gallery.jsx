@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { PRODUCTOS_DATA } from '../data/productsData';
 import { ProductCard } from '../components/ProductCard';
 import api from '../services/api';
 
@@ -8,24 +7,32 @@ export const Gallery = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const categoriaUrl = searchParams.get('cat') || 'todos';
 
-  const [listaProductos, setListaProductos] = useState(PRODUCTOS_DATA);
-  const [cargandoApi, setCargandoApi] = useState(false);
+  const [listaProductos, setListaProductos] = useState([]);
+  const [cargandoApi, setCargandoApi] = useState(true);
+  const [errorApi, setErrorApi] = useState(null);
   const [inputBuscar, setInputBuscar] = useState('');
   const [selectCategoria, setSelectCategoria] = useState(categoriaUrl);
   const [selectOrden, setSelectOrden] = useState('destacados');
 
-  // Intentar cargar productos desde el backend Spring Boot
+  // Cargar productos exclusivamente desde el backend Spring Boot
   useEffect(() => {
     let montado = true;
     const fetchProductosBackend = async () => {
       try {
         setCargandoApi(true);
+        setErrorApi(null);
         const res = await api.get('/productos');
-        if (montado && res.data && Array.isArray(res.data) && res.data.length > 0) {
+        if (montado && res.data && Array.isArray(res.data)) {
           setListaProductos(res.data);
+        } else if (montado) {
+          setListaProductos([]);
         }
       } catch (err) {
-        console.warn('Backend no disponible, usando datos de catálogo local:', err.message);
+        console.error('Error al consultar productos:', err);
+        if (montado) {
+          setErrorApi('No fue posible cargar el catálogo desde el servidor.');
+          setListaProductos([]);
+        }
       } finally {
         if (montado) setCargandoApi(false);
       }
@@ -206,7 +213,17 @@ export const Gallery = () => {
         </div>
       </section>
 
-      {productosFiltrados.length > 0 ? (
+      {cargandoApi ? (
+        <div className="card gamer-card p-5 text-center my-4">
+          <div className="spinner-border text-info mb-3" role="status"></div>
+          <h4 className="text-white">Cargando catálogo oficial...</h4>
+        </div>
+      ) : errorApi ? (
+        <div className="alert alert-danger d-flex align-items-center justify-content-between p-4 my-4">
+          <div><i className="bi bi-exclamation-octagon-fill me-2"></i>{errorApi}</div>
+          <button className="btn btn-sm btn-outline-light" onClick={() => window.location.reload()}>Reintentar</button>
+        </div>
+      ) : productosFiltrados.length > 0 ? (
         <div id="contenedorProductos" className="row g-4">
           {productosFiltrados.map((prod) => (
             <div key={prod.id} className="col-sm-6 col-md-4 col-lg-3">
@@ -217,7 +234,7 @@ export const Gallery = () => {
       ) : (
         <div id="sinResultados" className="card gamer-card p-5 text-center my-4">
           <i className="bi bi-emoji-frown fs-1 text-info mb-3"></i>
-          <h4 className="text-white">No encontramos productos con esos filtros</h4>
+          <h4 className="text-white">No encontramos productos en el catálogo</h4>
           <p className="text-muted mb-3">Intenta buscar con otros términos o selecciona otra categoría.</p>
           <div>
             <button id="btnLimpiarFiltros" className="btn btn-primary btn-sm" onClick={limpiarFiltros}>

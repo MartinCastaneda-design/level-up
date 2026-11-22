@@ -2,10 +2,23 @@ import { useAuth } from "../context/AuthContext";
 import { Navigate, Link } from "react-router-dom";
 
 export const RutaProtegida = ({ children, rolesPermitidos = ['admin'] }) => {
-  const { usuario } = useAuth();
+  const { usuario, authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <main className="container my-5 text-center flex-grow-1">
+        <div className="card gamer-card p-5 my-4">
+          <div className="spinner-border text-info mb-3" role="status">
+            <span className="visually-hidden">Cargando...</span>
+          </div>
+          <h4 className="text-white brand-font">Verificando sesión...</h4>
+        </div>
+      </main>
+    );
+  }
 
   if (!usuario) {
-    return <Navigate to="/Login" />;
+    return <Navigate to="/Login" replace />;
   }
 
   const rolUsuario = (usuario.rol || '').toLowerCase().replace('role_', '');
