@@ -67,7 +67,8 @@ export default function AdminRespaldo() {
         carrito y cupones) o restaura un respaldo anterior desde un archivo .json.
       </p>
 
-      <div className="d-flex gap-3">
+      <div className="d-flex flex-column flex-sm-row gap-3">
+
         {/* Conectamos el evento onClick */}
         <button className="btn btn-primary" onClick={handleExportar}>
           <i className="bi bi-download me-2"></i>Exportar respaldo

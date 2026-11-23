@@ -152,7 +152,8 @@ export default function AdminProducto() {
     return (
         <main className="container py-4">
             {/* Encabezado y botón Agregar */}
-            <div className="d-flex justify-content-between align-items-center mb-4">
+            <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
+
                 <div>
                     <h2>Gestión de Inventario</h2>
                     <p>
