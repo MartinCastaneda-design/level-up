@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -32,7 +32,7 @@ const Login = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     let nuevosErrores = {};
     let hayErrores = false;
@@ -51,7 +51,7 @@ const Login = () => {
       return;
     }
 
-    const resultado = login(formData.email.trim(), formData.contrasena);
+    const resultado = await login(formData.email.trim(), formData.contrasena);
 
     if (resultado.exito) {
       if (resultado.usuario.esBeneficiario) {

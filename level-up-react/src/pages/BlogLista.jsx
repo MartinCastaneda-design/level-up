@@ -1,46 +1,44 @@
-import React, { useState, useEffect } from 'react';
+const noticiasIniciales = [
+    {
+        id: 1,
+        titulo: 'Lanzamiento de nuevas GPU RTX',
+        categoria: 'Hardware',
+        resumen:
+            'La nueva generación de tarjetas gráficas promete un salto enorme en rendimiento para gaming en 4K.',
+        contenidoCompleto:
+            'NVIDIA presentó oficialmente su nueva línea de tarjetas gráficas RTX, con mejoras significativas en trazado de rayos y rendimiento por watt.',
+        fecha: '2026-09-01'
+    },
+    {
+        id: 2,
+        titulo: 'Torneo de Esports Duoc 2026',
+        categoria: 'Esports',
+        resumen:
+            'Duoc UC abre las inscripciones para su torneo interno de League of Legends y Valorant.',
+        contenidoCompleto:
+            'El torneo de Esports Duoc 2026 reunirá a estudiantes de todas las sedes en competencias de League of Legends y Valorant.',
+        fecha: '2026-09-05'
+    },
+    {
+        id: 3,
+        titulo: 'Consejos de Mantenimiento de PC',
+        categoria: 'Hardware',
+        resumen:
+            'Aprende a limpiar y optimizar tu PC gamer para alargar su vida útil.',
+        contenidoCompleto:
+            'Un buen mantenimiento periódico puede alargar la vida útil de tu equipo. Recomendamos limpiar los ventiladores cada 3 meses.',
+        fecha: '2026-08-20'
+    }
+];
+
+import { useState, useEffect } from 'react';
 
 export default function BlogLista() {
     const [noticias, setNoticias] = useState([]);
     const [categoria, setCategoria] = useState('Todas');
     const [noticiaModal, setNoticiaModal] = useState(null);
 
-    // Noticias iniciales
-    const noticiasIniciales = [
-        {
-            id: 1,
-            titulo: 'Lanzamiento de nuevas GPU RTX',
-            categoria: 'Hardware',
-            resumen:
-                'La nueva generación de tarjetas gráficas promete un salto enorme en rendimiento para gaming en 4K.',
-            contenidoCompleto:
-                'NVIDIA presentó oficialmente su nueva línea de tarjetas gráficas RTX, con mejoras significativas en trazado de rayos y rendimiento por watt.',
-            fecha: '2026-09-01'
-        },
-        {
-            id: 2,
-            titulo: 'Torneo de Esports Duoc 2026',
-            categoria: 'Esports',
-            resumen:
-                'Duoc UC abre las inscripciones para su torneo interno de League of Legends y Valorant.',
-            contenidoCompleto:
-                'El torneo de Esports Duoc 2026 reunirá a estudiantes de todas las sedes en competencias de League of Legends y Valorant.',
-            fecha: '2026-09-05'
-        },
-        {
-            id: 3,
-            titulo: 'Consejos de Mantenimiento de PC',
-            categoria: 'Hardware',
-            resumen:
-                'Aprende a limpiar y optimizar tu PC gamer para alargar su vida útil.',
-            contenidoCompleto:
-                'Un buen mantenimiento periódico puede alargar la vida útil de tu equipo. Recomendamos limpiar los ventiladores cada 3 meses.',
-            fecha: '2026-08-20'
-        }
-    ];
-
-    // Cargar noticias desde localStorage
-    useEffect(() => {
+useEffect(() => {
         const guardadas = localStorage.getItem(
             'levelup_blog_noticias'
         );
@@ -71,7 +69,6 @@ export default function BlogLista() {
         }
     }, []);
 
-    // Filtrar noticias por categoría
     const noticiasFiltradas =
         categoria === 'Todas'
             ? noticias
@@ -84,7 +81,6 @@ export default function BlogLista() {
 
     return (
         <main className="container py-4">
-            {/* Encabezado */}
             <div className="mb-4">
                 <h2>Blog y Noticias Gamer</h2>
 
@@ -94,7 +90,6 @@ export default function BlogLista() {
                 </p>
             </div>
 
-            {/* Filtros por categoría */}
             <div className="d-flex flex-wrap gap-2 mb-4">
                 {[
                     'Todas',
@@ -117,7 +112,6 @@ export default function BlogLista() {
                 ))}
             </div>
 
-            {/* Noticias */}
             {noticiasFiltradas.length === 0 ? (
                 <div className="alert alert-info text-center">
                     No hay noticias disponibles en esta categoría.
@@ -131,29 +125,24 @@ export default function BlogLista() {
                         >
                             <article className="card gamer-card h-100">
                                 <div className="card-body d-flex flex-column">
-                                    {/* Categoría */}
                                     <div className="mb-3">
                                         <span className="badge bg-primary">
                                             {noticia.categoria}
                                         </span>
                                     </div>
 
-                                    {/* Título */}
                                     <h5 className="card-title">
                                         {noticia.titulo}
                                     </h5>
 
-                                    {/* Fecha */}
                                     <p className="small text-muted mb-3">
                                         {noticia.fecha}
                                     </p>
 
-                                    {/* Resumen */}
                                     <p className="card-text">
                                         {noticia.resumen}
                                     </p>
 
-                                    {/* Botón */}
                                     <div className="mt-auto">
                                         <button
                                             type="button"
@@ -174,7 +163,6 @@ export default function BlogLista() {
                 </div>
             )}
 
-            {/* Modal para leer noticia completa */}
             {noticiaModal && (
                 <div
                     className="modal d-block"
@@ -186,7 +174,6 @@ export default function BlogLista() {
                 >
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content">
-                            {/* Encabezado */}
                             <div className="modal-header">
                                 <div>
                                     <span className="badge bg-primary mb-2">
@@ -208,7 +195,6 @@ export default function BlogLista() {
                                 ></button>
                             </div>
 
-                            {/* Contenido */}
                             <div className="modal-body">
                                 <p className="text-muted">
                                     {noticiaModal.fecha}
@@ -227,7 +213,6 @@ export default function BlogLista() {
                                 </p>
                             </div>
 
-                            {/* Pie */}
                             <div className="modal-footer">
                                 <button
                                     type="button"

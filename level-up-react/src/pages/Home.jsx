@@ -1,24 +1,35 @@
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { PRODUCTOS_DATA } from '../data/productsData';
+import api from '../services/api';
 import { ProductCard } from '../components/ProductCard';
 import { CategoryCard } from '../components/CategoryCard';
 
 export const Home = () => {
-  const productosDestacados = PRODUCTOS_DATA.filter((p) => p.destacado).slice(0, 4);
+  const [destacados, setDestacados] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [cargando, setCargando] = useState(true);
 
-  const categoriasPopulares = [
-    { slug: 'consolas', nombre: 'Consolas', icono: 'bi-controller' },
-    { slug: 'computadores-gamers', nombre: 'PC Gamers', icono: 'bi-pc-display-horizontal' },
-    { slug: 'mouse', nombre: 'Mouse', icono: 'bi-mouse' },
-    { slug: 'accesorios', nombre: 'Accesorios', icono: 'bi-headset' },
-    { slug: 'sillas-gamers', nombre: 'Sillas', icono: 'bi-person-workspace' },
-    { slug: 'juegos-de-mesa', nombre: 'Juegos de Mesa', icono: 'bi-dice-5' }
-  ];
+  useEffect(() => {
+    let activo = true;
+    Promise.allSettled([
+      api.get('/productos'),
+      api.get('/categorias')
+    ]).then(([resProd, resCat]) => {
+      if (!activo) return;
+      if (resProd.status === 'fulfilled' && Array.isArray(resProd.value.data)) {
+        const dest = resProd.value.data.filter((p) => p.destacado).slice(0, 4);
+        setDestacados(dest.length > 0 ? dest : resProd.value.data.slice(0, 4));
+      }
+      if (resCat.status === 'fulfilled' && Array.isArray(resCat.value.data)) {
+        setCategorias(resCat.value.data);
+      }
+      setCargando(false);
+    });
+    return () => { activo = false; };
+  }, []);
 
   return (
     <main className="container my-4">
-      {/* Banner Hero Principal */}
       <section className="hero-banner p-4 p-md-5 mb-5 text-white position-relative">
         <div className="row align-items-center">
           <div className="col-lg-7">
@@ -49,7 +60,6 @@ export const Home = () => {
         </div>
       </section>
 
-      {/* Accesos Rápidos por Categoría */}
       <section className="mb-5">
         <div className="d-flex justify-content-between align-items-end mb-4">
           <div>
@@ -61,18 +71,17 @@ export const Home = () => {
           </Link>
         </div>
         <div className="row g-3 text-center">
-          {categoriasPopulares.map((cat) => (
+          {categorias.map((cat) => (
             <CategoryCard
-              key={cat.slug}
+              key={cat.slug || cat.id}
               slug={cat.slug}
               nombre={cat.nombre}
-              icono={cat.icono}
+              icono={cat.icono || 'bi-tag'}
             />
           ))}
         </div>
       </section>
 
-      {/* Productos Destacados */}
       <section id="destacados" className="mb-5">
         <div className="d-flex justify-content-between align-items-end mb-4">
           <div>
@@ -83,16 +92,22 @@ export const Home = () => {
             Ver Catálogo Completo
           </Link>
         </div>
-        <div className="row g-4" id="contenedorDestacados">
-          {productosDestacados.map((prod) => (
-            <div key={prod.id} className="col-sm-6 col-md-3">
-              <ProductCard producto={prod} />
-            </div>
-          ))}
-        </div>
+        {cargando ? (
+          <div className="text-center py-4 text-info">
+            <div className="spinner-border spinner-border-sm me-2" role="status"></div>
+            Cargando productos destacados...
+          </div>
+        ) : (
+          <div className="row g-4" id="contenedorDestacados">
+            {destacados.map((prod) => (
+              <div key={prod.id} className="col-sm-6 col-md-3">
+                <ProductCard producto={prod} />
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Beneficios y Descuento Especial */}
       <section id="info-descuento" className="card gamer-card p-4 p-md-5 my-5 border-info">
         <div className="row align-items-center">
           <div className="col-lg-8">

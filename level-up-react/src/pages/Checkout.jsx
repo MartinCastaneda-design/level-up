@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { formatCLP } from '../utils/formatters';
 import { OrderSummary } from '../components/OrderSummary';
+import api from '../services/api';
 
 export const Checkout = () => {
-  const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, vaciarCarrito } = useCart();
-  const { usuario, agregarPuntos, descontarPuntos } = useAuth();
+  const navigate = useNavigate();
+  const { carrito, subtotal, montoDescuento, porcentajeDescuento, total, cupon, vaciarCarrito } = useCart();
+  const { usuario, setUsuarioDesdeBackend } = useAuth();
 
-  // Estados del Formulario de Envío
   const [nombre, setNombre] = useState(usuario ? usuario.nombre : '');
   const [apellido, setApellido] = useState(usuario ? (usuario.apellido || '') : '');
   const [email, setEmail] = useState(usuario ? usuario.correo : '');
@@ -19,10 +20,51 @@ export const Checkout = () => {
   const [comuna, setComuna] = useState('');
   const [metodoPago, setMetodoPago] = useState('Webpay Plus (Débito/Crédito)');
 
-  // Modal de Compra Exitosa
+  const [cotizacion, setCotizacion] = useState(null);
+  const [cargandoCotizacion, setCargandoCotizacion] = useState(false);
+  const [errorCotizacion, setErrorCotizacion] = useState(null);
+  const [reintentarContador, setReintentarContador] = useState(0);
   const [ordenExitosa, setOrdenExitosa] = useState(null);
 
-  // Si no hay usuario activo registrado/logueado
+  // Obtener cotización oficial del backend cada vez que cambien los items, cupón o método de pago
+  useEffect(() => {
+    if (!usuario || !carrito || carrito.length === 0) return;
+
+    let cancelado = false;
+    setCotizacion(null);
+    setErrorCotizacion(null);
+    setCargandoCotizacion(true);
+
+    const obtenerCotizacion = async () => {
+      try {
+        const payload = {
+          items: carrito.map(item => ({
+            id: item.id,
+            cantidad: item.cantidad
+          })),
+          cupon: cupon?.codigo || null,
+          puntosUsados: metodoPago === 'Puntos LevelUp' ? (usuario.puntosLevelUp || 0) : 0
+        };
+        const res = await api.post('/ordenes/cotizar', payload);
+        if (!cancelado && res.data) {
+          setCotizacion(res.data);
+          setErrorCotizacion(null);
+        }
+      } catch (err) {
+        if (!cancelado) {
+          const msg = err.response?.data?.message || err.response?.data?.error || 'No se pudo obtener la cotización oficial del servidor.';
+          setErrorCotizacion(msg);
+          setCotizacion(null);
+        }
+      } finally {
+        if (!cancelado) setCargandoCotizacion(false);
+      }
+    };
+
+    obtenerCotizacion();
+    return () => { cancelado = true; };
+  }, [carrito, cupon, metodoPago, usuario, total, reintentarContador]);
+
   if (!usuario) {
     return (
       <main className="container my-5 flex-grow-1">
@@ -55,7 +97,6 @@ export const Checkout = () => {
     );
   }
 
-  // Si no hay productos en el carrito y no hay orden finalizada
   if ((!carrito || carrito.length === 0) && !ordenExitosa) {
     return (
       <main className="container my-5 flex-grow-1">
@@ -83,66 +124,78 @@ export const Checkout = () => {
     );
   }
 
-  const handleProcesarPago = (e) => {
+  // Simulación temporal para pruebas de rechazo de pago
+  const handleSimularErrorPago = (motivoError = 'Tarjeta vencida o bloqueada por la entidad emisora') => {
+    navigate('/pago-fallido', {
+      state: { motivo: motivoError }
+    });
+  };
+
+  const handleProcesarPago = async (e) => {
     e.preventDefault();
+    if (!cotizacion) {
+      alert('Debes esperar a que se cargue la cotización oficial del servidor o reintentar si ocurrió un error.');
+      return;
+    }
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !direccion.trim() || !region || !comuna.trim()) {
       alert('Por favor completa todos los campos requeridos con asterisco (*).');
       return;
     }
 
-    let puntosUsados = 0;
-    let puntosGanados = 0;
-
-    // Lógica condicional de pago
+    let puntosACanjear = 0;
     if (metodoPago === 'Puntos LevelUp') {
-      const puntosNecesarios = Math.floor(total / 10); // 1 punto equivale a $10 CLP
-      
-      if ((usuario.puntosLevelUp || 0) < puntosNecesarios) {
-        alert(`Saldo insuficiente. Necesitas ${puntosNecesarios} pts, pero tienes ${usuario.puntosLevelUp || 0} pts.`);
-        return; // Detiene la compra instantáneamente
+      if (!cotizacion.pagoTotalConPuntosDisponible) {
+        alert('Tus puntos LevelUp no cubren el 100% de la orden.');
+        return;
       }
-      
-      // Ejecutamos el descuento de puntos
-      descontarPuntos(puntosNecesarios);
-      puntosUsados = puntosNecesarios;
-    } else {
-      // Si paga con otro método (Webpay, Transferencia), GANA puntos
-      puntosGanados = Math.floor(total / 1000);
-      agregarPuntos(puntosGanados);
+      puntosACanjear = cotizacion.puntosUsados;
     }
-    
-    const numOrden = '#LVL-' + Math.floor(10000 + Math.random() * 90000);
-    
-    const nuevaCompra = {
-      idOrden: numOrden,
-      fecha: new Date().toLocaleDateString('es-CL'),
-      correo: usuario.correo,
-      nombreComprador: `${nombre} ${apellido}`,
-      direccionComprador: `${direccion}, ${comuna}, ${region}`, 
-      metodo: metodoPago,
-      cantidadItems: carrito.reduce((acc, item) => acc + item.cantidad, 0),
-      totalPagado: total,
-      puntosGanados: puntosGanados, 
-      puntosUsados: puntosUsados, 
-      estado: 'En preparación / Pagado',  
-      productos: carrito.map(item => ({
-        nombre: item.nombre,
-        precio: item.precio,
-        cantidad: item.cantidad,
-        imagen: item.imagen
-      }))
-    };
 
-    let historialCompras = JSON.parse(localStorage.getItem('levelup_compras')) || [];
-    historialCompras.unshift(nuevaCompra);
-    localStorage.setItem('levelup_compras', JSON.stringify(historialCompras));
+    let boletaOficial = null;
+
+    // Registrar la orden en el Backend Spring Boot vía POST /api/ordenes
+    try {
+      const ordenPayload = {
+        cupon: cupon?.codigo || null,
+        puntosUsados: puntosACanjear,
+        metodoPago: metodoPago,
+        direccion: direccion.trim(),
+        comuna: comuna.trim(),
+        region: region,
+        telefono: telefono.trim(),
+        items: carrito.map(item => ({
+          id: item.id,
+          cantidad: item.cantidad
+        }))
+      };
+
+      const res = await api.post('/ordenes', ordenPayload);
+      if (res.status === 201 && res.data && res.data.numeroOrden) {
+        boletaOficial = res.data;
+      } else {
+        alert('Respuesta inesperada del servidor. La compra no fue confirmada.');
+        return;
+      }
+    } catch (apiError) {
+      console.error('Error al procesar orden en Backend:', apiError);
+      const msg = apiError.response?.data?.error || apiError.response?.data?.message || 'No se pudo procesar la compra en el servidor';
+      alert(`Error en el checkout: ${msg}`);
+      return;
+    }
+
+    // Sincronizar el saldo oficial de puntos y datos de usuario directamente desde el backend
+    if (setUsuarioDesdeBackend && boletaOficial.saldoFinalPuntos !== undefined) {
+      setUsuarioDesdeBackend({ puntosLevelUp: boletaOficial.saldoFinalPuntos });
+    }
 
     const orden = {
-      numOrden,
+      numOrden: boletaOficial.numeroOrden,
       destinatario: `${nombre} ${apellido}`,
-      total: total,
-      metodoPago: metodoPago,
-      direccion: `${direccion}, ${comuna}, ${region}`
+      total: boletaOficial.total,
+      metodoPago: boletaOficial.metodoPago,
+      direccion: `${direccion}, ${comuna}, ${region}`,
+      puntosGanados: boletaOficial.puntosGanados,
+      puntosUsados: boletaOficial.puntosUsados
     };
 
     setOrdenExitosa(orden);
@@ -163,10 +216,8 @@ export const Checkout = () => {
 
       <div id="contenedorCheckout">
         <div className="row g-4">
-          {/* Formulario de Despacho y Pago */}
           <div className="col-lg-7">
             <form id="formCheckout" onSubmit={handleProcesarPago} noValidate>
-              {/* 1. Datos Personales */}
               <div className="card gamer-card p-4 mb-4">
                 <h4 className="h5 text-white brand-font mb-3">
                   <i className="bi bi-person-lines-fill text-info me-2"></i>1. Datos de Contacto y Facturación
@@ -220,7 +271,6 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              {/* 2. Dirección de Envío */}
               <div className="card gamer-card p-4 mb-4">
                 <h4 className="h5 text-white brand-font mb-3">
                   <i className="bi bi-geo-alt-fill text-info me-2"></i>2. Dirección de Despacho (Chile)
@@ -272,7 +322,6 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              {/* 3. Selección de Método de Pago */}
               <div className="card gamer-card p-4 mb-4">
                 <h4 className="h5 text-white brand-font mb-3">
                   <i className="bi bi-wallet2 text-info me-2"></i>3. Método de Pago Simulado
@@ -310,7 +359,7 @@ export const Checkout = () => {
                     </label>
                   </div>
 
-                  <div className="form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3">
+                  <div className={`form-check p-3 bg-dark rounded-3 border border-secondary d-flex align-items-center gap-3 ${cotizacion && !cotizacion.pagoTotalConPuntosDisponible ? 'opacity-50' : ''}`}>
                     <input
                       className="form-check-input ms-0 me-2"
                       type="radio"
@@ -319,15 +368,20 @@ export const Checkout = () => {
                       value="Puntos LevelUp"
                       checked={metodoPago === 'Puntos LevelUp'}
                       onChange={(e) => setMetodoPago(e.target.value)}
+                      disabled={cotizacion && !cotizacion.pagoTotalConPuntosDisponible}
                     />
                     <label className="form-check-label text-white w-100 cursor-pointer d-flex justify-content-between align-items-center" htmlFor="pagoPuntos">
-                      <span><strong>Puntos LevelUp</strong> (Canje Gamer)</span>
+                      <div>
+                        <span><strong>Puntos LevelUp</strong> (Canje Gamer 100% de la orden)</span>
+                        {cotizacion && !cotizacion.pagoTotalConPuntosDisponible && (
+                          <div className="small text-danger">Saldo insuficiente para cubrir el 100% del pedido</div>
+                        )}
+                      </div>
                       <i className="bi bi-star-fill text-warning fs-4"></i>
                     </label>
                   </div>
                 </div>
 
-                {/* Detalle del Pago Simulado */}
                 <div id="panelDetallePago" className="p-3 bg-dark rounded-3 border border-secondary mt-3">
                   {metodoPago.includes('Webpay') && (
                     <>
@@ -359,35 +413,87 @@ export const Checkout = () => {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg w-100 py-3 fw-bold">
-                <i className="bi bi-lock-fill me-2"></i>Confirmar y Realizar Pedido ({formatCLP(total)})
+              {errorCotizacion && (
+                <div className="alert alert-danger d-flex justify-content-between align-items-center mb-4">
+                  <div>
+                    <i className="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Error de cotización:</strong> {errorCotizacion}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline-light btn-sm ms-3"
+                    onClick={() => setReintentarContador(c => c + 1)}
+                  >
+                    <i className="bi bi-arrow-clockwise me-1"></i>Reintentar
+                  </button>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn btn-primary btn-lg w-100 py-3 fw-bold"
+                disabled={cargandoCotizacion || !cotizacion}
+              >
+                <i className="bi bi-lock-fill me-2"></i>
+                {cargandoCotizacion ? 'Cotizando con el servidor...' : `Confirmar y Realizar Pedido (${formatCLP(cotizacion ? cotizacion.total : total)})`}
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger btn-lg w-100 py-2 fw-bold mt-3"
+                onClick={() => handleSimularErrorPago("Tarjeta inválida o rechazada por la entidad emisora (Transacción fallida).")}
+              >
+                <i className="bi bi-x-octagon-fill me-2"></i>Simular pago fallido
               </button>
             </form>
           </div>
 
-          {/* Resumen del Pedido */}
           <div className="col-lg-5">
             <OrderSummary
-              subtotal={subtotal}
-              descuento={montoDescuento}
-              porcentajeDescuento={porcentajeDescuento}
-              total={total}
-              puntosGanar={Math.floor(total / 1000)}
+              subtotal={cotizacion ? cotizacion.subtotal : subtotal}
+              descuento={cotizacion ? (cotizacion.descuentoCupon + cotizacion.descuentoPuntos) : montoDescuento}
+              porcentajeDescuento={cotizacion && cotizacion.subtotal > 0 ? Math.round(((cotizacion.descuentoCupon) / cotizacion.subtotal) * 100) : porcentajeDescuento}
+              total={cotizacion ? cotizacion.total : total}
+              puntosGanar={cotizacion ? cotizacion.puntosGanar : Math.floor((total) / 100)}
             >
               <div className="mb-3" style={{ maxHeight: '250px', overflowY: 'auto' }}>
                 <h6 className="text-white small fw-bold mb-2">Artículos en tu pedido:</h6>
-                {carrito.map((item) => (
-                  <div key={item.id} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
-                    <div className="d-flex align-items-center gap-2">
-                      <img src={item.imagen} alt={item.nombre} className="rounded-2" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
-                      <div>
-                        <h6 className="text-white mb-0 small text-truncate" style={{ maxWidth: '170px' }}>{item.nombre}</h6>
-                        <span className="text-muted small">Cant: {item.cantidad}</span>
+                {cotizacion && cotizacion.items ? (
+                  cotizacion.items.map((itemCotizado) => {
+                    const itemCarrito = carrito.find(c => c.id === itemCotizado.productoId);
+                    return (
+                      <div key={itemCotizado.productoId} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                        <div className="d-flex align-items-center gap-2">
+                          {itemCarrito && (
+                            <img src={itemCarrito.imagen} alt={itemCotizado.nombreProducto} className="rounded-2" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
+                          )}
+                          <div>
+                            <h6 className="text-white mb-0 small text-truncate" style={{ maxWidth: '170px' }}>{itemCotizado.nombreProducto}</h6>
+                            <span className="text-muted small">
+                              Cant: {itemCotizado.cantidad} × {formatCLP(itemCotizado.precioUnitarioFinal)}
+                              {itemCotizado.descuentoPorcentaje > 0 && (
+                                <span className="badge bg-danger ms-1">-{itemCotizado.descuentoPorcentaje}%</span>
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-light small fw-bold">{formatCLP(itemCotizado.subtotal)}</span>
                       </div>
+                    );
+                  })
+                ) : (
+                  carrito.map((item) => (
+                    <div key={item.id} className="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                      <div className="d-flex align-items-center gap-2">
+                        <img src={item.imagen} alt={item.nombre} className="rounded-2" style={{ width: '45px', height: '45px', objectFit: 'cover' }} />
+                        <div>
+                          <h6 className="text-white mb-0 small text-truncate" style={{ maxWidth: '170px' }}>{item.nombre}</h6>
+                          <span className="text-muted small">Cant: {item.cantidad} (Pendiente cotizar)</span>
+                        </div>
+                      </div>
+                      <span className="text-light small fw-bold">{formatCLP(item.precio * item.cantidad)}</span>
                     </div>
-                    <span className="text-light small fw-bold">{formatCLP(item.precio * item.cantidad)}</span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
 
               <div className="p-3 bg-dark rounded-3 border border-secondary text-muted small mt-3">
@@ -402,7 +508,6 @@ export const Checkout = () => {
         </div>
       </div>
 
-      {/* Modal de Confirmación de Compra Exitosa */}
       {ordenExitosa && (
         <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 1060 }} tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">

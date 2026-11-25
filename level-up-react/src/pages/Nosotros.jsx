@@ -1,13 +1,10 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 export const Nosotros = () => {
   return (
     <>
-      {/* Contenido Principal */}
       <main className="container my-5 flex-grow-1">
         
-        {/* Hero Nosotros */}
         <section className="hero-banner p-4 p-md-5 mb-5 text-white">
           <div className="row align-items-center">
             <div className="col-lg-7">
@@ -22,7 +19,6 @@ export const Nosotros = () => {
                 <Link to="/catalogo" className="btn btn-primary btn-lg px-4">
                   <i className="bi bi-controller me-2"></i>Explorar Catálogo
                 </Link>
-                {/* Usamos una etiqueta <a> normal para enlaces ancla (anchor) de la misma página */}
                 <a href="#mision-vision" className="btn btn-outline-info btn-lg px-4">
                   Misión & Visión
                 </a>
@@ -39,7 +35,6 @@ export const Nosotros = () => {
           </div>
         </section>
 
-        {/* Estadísticas Clave */}
         <section className="mb-5">
           <div className="row g-3 text-center">
             <div className="col-6 col-md-3">
@@ -69,7 +64,6 @@ export const Nosotros = () => {
           </div>
         </section>
 
-        {/* Misión, Visión y Valores */}
         <section id="mision-vision" className="mb-5">
           <div className="row g-4">
             <div className="col-md-6">
@@ -101,7 +95,6 @@ export const Nosotros = () => {
           </div>
         </section>
 
-        {/* Nuestros Valores y Pilares */}
         <section className="mb-5">
           <div className="text-center mb-4">
             <h2 className="h3 text-white brand-font mb-2">🎮 Por Qué Elegir Level-Up Gamer</h2>
@@ -138,7 +131,6 @@ export const Nosotros = () => {
           </div>
         </section>
 
-        {/* Historia */}
         <section className="card gamer-card p-4 p-md-5 my-5">
           <div className="row align-items-center">
             <div className="col-lg-6">
@@ -164,7 +156,6 @@ export const Nosotros = () => {
         </section>
       </main>
 
-      {/* Botón Flotante de WhatsApp */}
       <a 
         href="https://wa.me/56912345678?text=Hola%20Level-Up%20Gamer,%20quiero%20conocer%20m%C3%A1s%20sobre%20ustedes" 
         target="_blank" 

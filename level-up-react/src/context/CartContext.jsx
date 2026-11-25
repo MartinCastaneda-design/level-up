@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 
 const CartContext = createContext();
 
@@ -96,7 +96,6 @@ export const CartProvider = ({ children }) => {
     setCupon(null);
   };
 
-  // Cálculos de Totales
   const totalArticulos = carrito.reduce((acc, item) => acc + item.cantidad, 0);
   const subtotal = carrito.reduce((acc, item) => acc + item.precio * item.cantidad, 0);
   const porcentajeDescuento = cupon ? cupon.porcentaje : 0;

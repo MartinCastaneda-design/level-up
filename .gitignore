@@ -1,0 +1,19 @@
+# Ignorar dependencias y builds
+node_modules/
+dist/
+coverage/
+target/
+*.class
+
+# Entornos y secretos locales
+.env
+.env.local
+.env.*.local
+*.log
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

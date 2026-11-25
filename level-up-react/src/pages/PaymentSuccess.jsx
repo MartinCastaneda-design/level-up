@@ -1,12 +1,9 @@
-import React from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { formatCLP } from '../utils/formatters';
 
 export const PaymentSuccess = () => {
   const location = useLocation();
-  const navigate = useNavigate();
 
-  // Obtener datos pasados por state en la navegación, o fallback a última orden en localStorage
   const stateOrder = location.state?.order;
   let orden = stateOrder;
 
@@ -16,12 +13,11 @@ export const PaymentSuccess = () => {
       if (historial.length > 0) {
         orden = historial[0];
       }
-    } catch (e) {
+    } catch {
       orden = null;
     }
   }
 
-  // Fallback por defecto si se accede directamente a la URL
   const ordenFinal = orden || {
     id: 'ORD-DEMO',
     fecha: new Date().toLocaleDateString('es-CL'),
@@ -35,7 +31,6 @@ export const PaymentSuccess = () => {
     <main className="container my-5 flex-grow-1">
       <div className="row justify-content-center">
         <div className="col-12 col-lg-8">
-          {/* Tarjeta de Éxito */}
           <div className="card gamer-card border-success p-4 p-md-5 text-center shadow-lg position-relative overflow-hidden mb-4">
             <div className="mb-3">
               <div
@@ -51,7 +46,6 @@ export const PaymentSuccess = () => {
               Tu transacción ha sido procesada correctamente. Hemos enviado el comprobante a tu correo electrónico.
             </p>
 
-            {/* Ficha Resumen de Orden */}
             <div className="bg-dark rounded-3 p-3 p-md-4 text-start border border-secondary mb-4">
               <div className="row g-3">
                 <div className="col-6 col-sm-3">
@@ -74,7 +68,6 @@ export const PaymentSuccess = () => {
 
               <hr className="border-secondary my-3" />
 
-              {/* Detalle de Artículos */}
               <h5 className="text-white h6 mb-3">
                 <i className="bi bi-bag-check me-2 text-info"></i>Resumen de Productos:
               </h5>
@@ -103,7 +96,6 @@ export const PaymentSuccess = () => {
               </div>
             </div>
 
-            {/* Acciones */}
             <div className="d-flex flex-column flex-sm-row justify-content-center gap-3">
               <Link to="/perfil" className="btn btn-outline-info">
                 <i className="bi bi-clock-history me-2"></i>Ver en Mi Historial

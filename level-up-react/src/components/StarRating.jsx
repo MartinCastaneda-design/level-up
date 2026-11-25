@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const StarRating = ({ rating = 5 }) => {
   const estrellasLlenas = Math.floor(rating);

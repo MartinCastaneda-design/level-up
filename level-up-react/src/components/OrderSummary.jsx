@@ -1,4 +1,3 @@
-import React from 'react';
 import { formatCLP } from '../utils/formatters';
 
 export const OrderSummary = ({ subtotal = 0, descuento = 0, porcentajeDescuento = 0, total = 0, puntosGanar = 0, children }) => {
@@ -36,7 +35,7 @@ export const OrderSummary = ({ subtotal = 0, descuento = 0, porcentajeDescuento 
             <i className="bi bi-coin text-warning fs-4"></i>
             <div>
               <strong className="text-white small d-block">Puntos LevelUp que ganarás:</strong>
-              <span className="text-muted" style={{ fontSize: '0.75rem' }}>1 punto por cada $1.000 gastados</span>
+              <span className="text-muted" style={{ fontSize: '0.75rem' }}>1 punto por cada $100 gastados (confirmado por servidor)</span>
             </div>
           </div>
           <span className="badge bg-warning text-dark fs-6 fw-bold px-3 py-2 shadow-sm">

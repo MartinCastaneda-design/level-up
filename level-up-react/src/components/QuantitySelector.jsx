@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const QuantitySelector = ({ cantidad, stock = 99, onIncrementar, onDecrementar, onChange, disabled = false }) => {
   return (

@@ -1,20 +1,13 @@
-import React, { useState, useEffect } from 'react';
-
-import { PRODUCTOS_DATA } from '../data/productsData';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 export default function AdminProducto() {
-    // 1. Estado para almacenar productos y filtro de búsqueda
     const [productos, setProductos] = useState([]);
     const [busqueda, setBusqueda] = useState('');
-
-    //Estado donde ver los producto con poco stock
     const [mostrarSoloCriticos, setMostrarSoloCriticos] = useState(false);
-
-    // Estado para controlar la visibilidad del modal y el modo (crear o editar)
     const [modalAbierto, setModalAbierto] = useState(false);
     const [modoEdicion, setModoEdicion] = useState(false);
 
-    // Estado para el formulario del producto
     const [formProducto, setFormProducto] = useState({
         id: '',
         nombre: '',
@@ -25,42 +18,32 @@ export default function AdminProducto() {
         descripcion: ''
     });
 
+    const [cargando, setCargando] = useState(false);
+    const [errorCarga, setErrorCarga] = useState(null);
 
-    // 2. Cargar productos desde localStorage al cargar la página
     useEffect(() => {
-    const productosGuardados = localStorage.getItem('levelup_productos');
-
-    if (productosGuardados) {
-        try {
-            setProductos(JSON.parse(productosGuardados));
-        } catch (e) {
-            console.error('Error al parsear productos:', e);
-            setProductos(PRODUCTOS_DATA);
-            localStorage.setItem(
-                'levelup_productos',
-                JSON.stringify(PRODUCTOS_DATA)
-            );
-        }
-    } else {
-        // Si el localStorage está vacío, copiamos el catálogo base inicial
-        setProductos(PRODUCTOS_DATA);
-        localStorage.setItem(
-            'levelup_productos',
-            JSON.stringify(PRODUCTOS_DATA)
-        );
-    }
+        cargarProductos();
     }, []);
 
-    // Guardar productos en localStorage y actualizar la vista
-    const guardarProductos = (nuevosProductos) => {
-        setProductos(nuevosProductos);
-        localStorage.setItem(
-            'levelup_productos',
-            JSON.stringify(nuevosProductos)
-        );
+    const cargarProductos = async () => {
+        setCargando(true);
+        setErrorCarga(null);
+        try {
+            const res = await api.get('/productos');
+            if (res.data && Array.isArray(res.data)) {
+                setProductos(res.data);
+            } else {
+                setProductos([]);
+            }
+        } catch (e) {
+            console.error('Error al listar productos desde el backend:', e);
+            setErrorCarga('No fue posible conectar con el servidor para obtener el inventario.');
+            setProductos([]);
+        } finally {
+            setCargando(false);
+        }
     };
 
-    // Manejar cambios en las cajas de texto del formulario
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -70,12 +53,11 @@ export default function AdminProducto() {
         });
     };
 
-    // Abrir modal para crear un nuevo producto
     const abrirModalCrear = () => {
         setModoEdicion(false);
 
         setFormProducto({
-            id: Date.now().toString(),
+            id: '',
             nombre: '',
             categoria: 'Consolas',
             precio: '',
@@ -87,15 +69,13 @@ export default function AdminProducto() {
         setModalAbierto(true);
     };
 
-    // Abrir modal para editar un producto existente
     const abrirModalEditar = (prod) => {
         setModoEdicion(true);
         setFormProducto({ ...prod });
         setModalAbierto(true);
     };
 
-    // Guardar producto (agregar o actualizar)
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!formProducto.nombre || !formProducto.precio) {
@@ -103,41 +83,56 @@ export default function AdminProducto() {
             return;
         }
 
-        let nuevosProductos;
+        const payload = {
+            id: formProducto.id || undefined,
+            nombre: formProducto.nombre.trim(),
+            categoria: formProducto.categoria,
+            categoriaSlug: formProducto.categoria.toLowerCase().replace(/ /g, '-'),
+            precio: Number(formProducto.precio),
+            stock: Number(formProducto.stock) || 0,
+            imagen: formProducto.imagen || '/img/productos/default.jpg',
+            descripcionCorta: formProducto.descripcion || formProducto.descripcionCorta || '',
+            descripcionLarga: formProducto.descripcion || formProducto.descripcionLarga || ''
+        };
 
-        if (modoEdicion) {
-            // Actualizar producto existente
-            nuevosProductos = productos.map((p) =>
-                p.id === formProducto.id ? formProducto : p
+        try {
+            if (modoEdicion) {
+                await api.put(`/productos/${formProducto.id}`, payload);
+            } else {
+                await api.post('/productos', payload);
+            }
+            await cargarProductos();
+            setModalAbierto(false);
+            alert(
+                modoEdicion
+                    ? '¡Producto actualizado correctamente!'
+                    : '¡Producto agregado al inventario!'
             );
-        } else {
-            // Agregar nuevo producto
-            nuevosProductos = [...productos, formProducto];
+        } catch (err) {
+            console.error('Error al guardar producto en API:', err);
+            const msg = err.response?.data?.error || err.response?.data?.message || 'Error al comunicarse con el servidor';
+            alert(`No se pudo guardar el producto: ${msg}`);
         }
-
-        guardarProductos(nuevosProductos);
-        setModalAbierto(false);
-
-        alert(
-            modoEdicion
-                ? '¡Producto actualizado correctamente!'
-                : '¡Producto agregado al inventario!'
-        );
     };
 
-    // Eliminar producto
-    const handleEliminar = (id, nombre) => {
+    const handleEliminar = async (id, nombre) => {
         if (
             window.confirm(
                 `¿Seguro que deseas eliminar "${nombre}" del catálogo?`
             )
         ) {
-            const nuevos = productos.filter((p) => p.id !== id);
-            guardarProductos(nuevos);
+            try {
+                await api.delete(`/productos/${id}`);
+                await cargarProductos();
+                alert(`Producto "${nombre}" eliminado correctamente.`);
+            } catch (err) {
+                console.error('Error al eliminar en API:', err);
+                const msg = err.response?.data?.error || err.response?.data?.message || 'No se pudo eliminar del servidor';
+                alert(`Error al eliminar: ${msg}`);
+            }
         }
     };
 
-    // Filtrar productos según la búsqueda
     const productosFiltrados = productos.filter((p) => {
         const coincideBusqueda =
             (p.nombre && p.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
@@ -147,13 +142,12 @@ export default function AdminProducto() {
 
         return coincideBusqueda && (!mostrarSoloCriticos || esCritico);
         });
-    
 
     return (
         <main className="container py-4">
+
             {/* Encabezado y botón Agregar */}
             <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4">
-
                 <div>
                     <h2>Gestión de Inventario</h2>
                     <p>
@@ -182,7 +176,20 @@ export default function AdminProducto() {
                 </div>
             </div>
 
-            {/* Tabla de productos */}
+            {errorCarga && (
+                <div className="alert alert-danger d-flex justify-content-between align-items-center mb-3">
+                    <div><i className="bi bi-exclamation-octagon-fill me-2"></i>{errorCarga}</div>
+                    <button className="btn btn-sm btn-outline-light" onClick={cargarProductos}>Reintentar</button>
+                </div>
+            )}
+
+            {cargando && (
+                <div className="text-center py-4">
+                    <div className="spinner-border text-info" role="status"></div>
+                    <p className="text-muted mt-2">Cargando inventario oficial...</p>
+                </div>
+            )}
+
             <div className="table-responsive">
                 <table className="table table-dark table-striped table-hover align-middle">
                     <thead>
@@ -301,7 +308,6 @@ export default function AdminProducto() {
                 </table>
             </div>
 
-            {/* Formulario / Modal para Agregar y Editar */}
             {modalAbierto && (
                 <div
                     className="modal d-block"
@@ -329,7 +335,6 @@ export default function AdminProducto() {
                             <form onSubmit={handleSubmit}>
                                 <div className="modal-body">
                                     <div className="row g-3">
-                                        {/* Nombre */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="nombre"
@@ -349,7 +354,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Categoría */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="categoria"
@@ -385,7 +389,6 @@ export default function AdminProducto() {
                                             </select>
                                         </div>
 
-                                        {/* Precio */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="precio"
@@ -406,7 +409,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Stock */}
                                         <div className="col-md-6">
                                             <label
                                                 htmlFor="stock"
@@ -426,7 +428,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Imagen */}
                                         <div className="col-12">
                                             <label
                                                 htmlFor="imagen"
@@ -446,7 +447,6 @@ export default function AdminProducto() {
                                             />
                                         </div>
 
-                                        {/* Descripción */}
                                         <div className="col-12">
                                             <label
                                                 htmlFor="descripcion"

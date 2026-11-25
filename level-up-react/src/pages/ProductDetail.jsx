@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getProductById, PRODUCTOS_DATA, getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
+import { getProductReviewsInfo, obtenerTodasLasResenas } from '../data/productsData';
+import api from '../services/api';
 import { formatCLP } from '../utils/formatters';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -25,19 +26,64 @@ export const ProductDetail = () => {
   const [esFavorito, setEsFavorito] = useState(false);
 
   const idProducto = id || 'CO001';
-  const producto = getProductById(idProducto);
+  const [producto, setProducto] = useState(null);
+  const [cargandoProducto, setCargandoProducto] = useState(true);
+  const [errorProducto, setErrorProducto] = useState(null);
+  const [relacionados, setRelacionados] = useState([]);
 
-  const cargarResenas = () => {
+  useEffect(() => {
+    let activo = true;
+    api.get('/productos')
+      .then((res) => {
+        if (activo && Array.isArray(res.data) && producto) {
+          const rel = res.data
+            .filter((p) => p.id !== producto.id)
+            .sort((a) => (a.categoriaSlug === producto.categoriaSlug ? -1 : 1))
+            .slice(0, 4);
+          setRelacionados(rel);
+        }
+      })
+      .catch(() => {});
+    return () => { activo = false; };
+  }, [producto]);
+
+  useEffect(() => {
+    let activo = true;
+    setCargandoProducto(true);
+    setErrorProducto(null);
+    api.get(`/productos/${idProducto}`)
+      .then((res) => {
+        if (activo && res.data) {
+          setProducto(res.data);
+        }
+      })
+      .catch((err) => {
+        if (activo) {
+          if (err.response && err.response.status === 404) {
+            setErrorProducto('El producto solicitado no existe en el catálogo.');
+          } else {
+            setErrorProducto('No fue posible conectar con el servidor para obtener los detalles del producto.');
+          }
+          setProducto(null);
+        }
+      })
+      .finally(() => {
+        if (activo) setCargandoProducto(false);
+      });
+    return () => { activo = false; };
+  }, [idProducto]);
+
+  const cargarResenas = useCallback(() => {
     const todas = obtenerTodasLasResenas();
     const filtradas = todas.filter((r) => r.idProducto === idProducto);
     setResenasProducto(filtradas);
-  };
+  }, [idProducto]);
 
   useEffect(() => {
     setCantidad(1);
     cargarResenas();
     window.scrollTo(0, 0);
-  }, [idProducto]);
+  }, [cargarResenas]);
 
   useEffect(() => {
     if (usuario && producto) {
@@ -128,14 +174,7 @@ export const ProductDetail = () => {
     }
   };
 
-  const handleCantidadInput = (e) => {
-    let val = parseInt(e.target.value, 10);
-    if (isNaN(val) || val < 1) val = 1;
-    if (val > producto.stock) val = producto.stock;
-    setCantidad(val);
-  };
-
-  const handleAgregar = () => {
+const handleAgregar = () => {
     agregarAlCarrito(producto, cantidad);
     mostrarAviso(`¡Agregaste ${cantidad} unidad(es) de ${producto.nombre} al carrito!`, 'success');
   };
@@ -186,12 +225,32 @@ export const ProductDetail = () => {
     mostrarAviso('¡Gracias por tu reseña! Tu opinión ha sido publicada con éxito.', 'success');
   };
 
+  if (cargandoProducto) {
+    return (
+      <main className="container my-5 flex-grow-1 text-center py-5">
+        <div className="spinner-border text-info mb-3" role="status"></div>
+        <h4 className="text-white">Cargando producto...</h4>
+      </main>
+    );
+  }
+
+  if (errorProducto || !producto) {
+    return (
+      <main className="container my-5 flex-grow-1">
+        <div className="card gamer-card p-5 text-center my-4">
+          <i className="bi bi-exclamation-circle-fill fs-1 text-warning mb-3"></i>
+          <h3 className="text-white">Producto no encontrado</h3>
+          <p className="text-muted mb-4">{errorProducto || 'El producto que buscas no existe en la base de datos oficial.'}</p>
+          <div>
+            <Link to="/catalogo" className="btn btn-outline-info">Volver al Catálogo</Link>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   const urlActual = encodeURIComponent(window.location.href);
   const textoCompartir = encodeURIComponent(`¡Mira este producto en Level-Up Gamer: ${producto.nombre}!`);
-
-  const relacionados = PRODUCTOS_DATA.filter((p) => p.id !== producto.id)
-    .sort((a, b) => (a.categoriaSlug === producto.categoriaSlug ? -1 : 1))
-    .slice(0, 4);
 
   return (
     <main className="container my-5 flex-grow-1">

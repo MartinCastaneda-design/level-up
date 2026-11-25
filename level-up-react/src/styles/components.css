@@ -1,4 +1,4 @@
-/* Tarjetas gamer interactivas */
+
 .gamer-card {
   background-color: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -17,7 +17,6 @@
   color: var(--text-muted);
 }
 
-/* Banner Hero Principal */
 .hero-banner {
   background: linear-gradient(135deg, rgba(0, 139, 139, 0.2) 0%, rgba(13, 110, 253, 0.2) 100%), #0d1117;
   border-radius: 16px;
@@ -25,7 +24,6 @@
   overflow: hidden;
 }
 
-/* Badges e insignias */
 .badge-category {
   background-color: rgba(0, 210, 211, 0.15);
   color: var(--accent-cyan);
@@ -78,14 +76,12 @@
   border-radius: 6px;
 }
 
-/* Etiqueta de precio formateado */
 .price-tag {
   color: #20b2aa;
   font-family: 'Orbitron', sans-serif;
   font-weight: 700;
 }
 
-/* Mensajes de error y validación */
 .invalid-feedback-custom {
   font-size: 0.85rem;
   color: #ff6b6b;
@@ -97,7 +93,6 @@
   box-shadow: 0 0 0 0.2rem rgba(255, 71, 87, 0.25) !important;
 }
 
-/* Auth Cards */
 .auth-page .card {
   background-color: rgba(20, 24, 31, 0.92);
   border: 1px solid var(--card-border);

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export const ReviewCard = ({ autor, nombreProducto, calificacion = 5, comentario, fecha }) => {
   const estrellas = '⭐'.repeat(calificacion || 5);
 
@@ -22,7 +20,7 @@ export const ReviewCard = ({ autor, nombreProducto, calificacion = 5, comentario
         </div>
       </div>
       <hr className="border-secondary my-2" />
-      <p className="text-light mb-0 mt-2">"{comentario}"</p>
+      <p className="text-light mb-0 mt-2">&ldquo;{comentario}&rdquo;</p>
     </div>
   );
 };

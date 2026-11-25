@@ -1,6 +1,3 @@
-/**
- * Servicio centralizado para persistencia y lectura en LocalStorage
- */
 
 const STORAGE_KEYS = {
   USUARIO_ACTIVO: 'usuario_activo',
@@ -12,7 +9,6 @@ const STORAGE_KEYS = {
 };
 
 export const storageService = {
-  // --- USUARIOS & SESIÓN ---
   getUsuarioActivo() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.USUARIO_ACTIVO)) || null;
@@ -41,7 +37,6 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.REGISTROS, JSON.stringify(usuarios || []));
   },
 
-  // --- RESEÑAS ---
   getResenasGuardadas() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.RESENAS)) || [];
@@ -57,7 +52,6 @@ export const storageService = {
     return actualizadas;
   },
 
-  // --- ÓRDENES ---
   getOrdenes() {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDENES)) || [];

@@ -1,7 +1,4 @@
-import React from "react";
-
 export default function AdminRespaldo() {
-  // 1. Lógica para exportar el LocalStorage a un archivo .json
   const handleExportar = () => {
     const copiaSeguridad = {
       levelup_productos: localStorage.getItem('levelup_productos'),
@@ -22,15 +19,13 @@ export default function AdminRespaldo() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    alert('¡Copia de seguridad descargada con éxito!');
+    alert('¡Respaldo local del navegador descargado con éxito!');
   };
 
-  // 2. Lógica para activar el input de archivo oculto
   const triggerFileInput = () => {
     document.getElementById('inputArchivo').click();
   };
 
-  // 3. Lógica para importar y restaurar el archivo JSON
   const handleImportar = (event) => {
     const archivo = event.target.files[0];
     if (!archivo) return;
@@ -49,9 +44,9 @@ export default function AdminRespaldo() {
         if (datosRestaurados.levelup_cupon)
           localStorage.setItem('levelup_cupon', datosRestaurados.levelup_cupon);
 
-        alert('¡Base de datos restaurada con éxito! La página se recargará.');
+        alert('¡Datos locales del navegador restaurados con éxito! La página se recargará.');
         window.location.reload();
-      } catch (err) {
+      } catch {
         alert('Error: El archivo no es un JSON válido o está corrupto.');
       }
     };
@@ -61,26 +56,26 @@ export default function AdminRespaldo() {
 
   return (
     <div className="container py-4">
-      <h2 className="mb-3">Copias de Seguridad</h2>
+      <h2 className="mb-3">Respaldo de Preferencias Locales</h2>
       <p className="text-muted mb-4">
-        Exporta un respaldo completo de los datos de la tienda (productos, usuarios,
-        carrito y cupones) o restaura un respaldo anterior desde un archivo .json.
+        Exporta o restaura las preferencias locales del navegador (carrito y configuración de prueba).
+        <strong className="text-info d-block mt-1">
+          Nota de arquitectura: La base de datos oficial y las órdenes reales residen en el backend Spring Boot + H2. Este respaldo no sustituye la base de datos del servidor.
+        </strong>
       </p>
 
       <div className="d-flex flex-column flex-sm-row gap-3">
 
         {/* Conectamos el evento onClick */}
         <button className="btn btn-primary" onClick={handleExportar}>
-          <i className="bi bi-download me-2"></i>Exportar respaldo
+          <i className="bi bi-download me-2"></i>Exportar respaldo local
         </button>
 
-        {/* Conectamos el evento onClick */}
         <button className="btn btn-success" onClick={triggerFileInput}>
-          <i className="bi bi-upload me-2"></i>Importar respaldo
+          <i className="bi bi-upload me-2"></i>Importar respaldo local
         </button>
       </div>
 
-      {/* Etiqueta cerrada correctamente con onChange */}
       <input
         type="file"
         id="inputArchivo"

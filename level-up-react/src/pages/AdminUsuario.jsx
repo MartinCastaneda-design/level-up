@@ -1,90 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../services/api';
 
 export default function AdminUsuario() {
-  // 1. Estado para almacenar la lista de usuarios y la búsqueda
   const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [errorCarga, setErrorCarga] = useState(null);
 
   const [compras, setCompras] = useState([]);
+  const [cargandoCompras, setCargandoCompras] = useState(false);
+  const [errorComprasModal, setErrorComprasModal] = useState(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
 
-  // 2. useEffect: Carga únicamente los usuarios reales guardados en localStorage
   useEffect(() => {
-    const registrosGuardados = localStorage.getItem('registros');
-    if (registrosGuardados) {
-      try {
-        setUsuarios(JSON.parse(registrosGuardados));
-      } catch (e) {
-        console.error("Error al parsear usuarios:", e);
+    cargarUsuarios();
+  }, []);
+
+  const cargarUsuarios = async () => {
+    setCargando(true);
+    setErrorCarga(null);
+    try {
+      const res = await api.get('/usuarios');
+      if (res.data && Array.isArray(res.data)) {
+        setUsuarios(res.data);
+      } else {
         setUsuarios([]);
       }
-    } else {
-      // Si está vacío, simplemente dejamos la lista vacía
+    } catch (e) {
+      console.error("Error al cargar usuarios desde la API:", e);
+      setErrorCarga("No fue posible cargar el listado de usuarios desde el servidor.");
       setUsuarios([]);
+    } finally {
+      setCargando(false);
     }
-  }, []);
+  };
 
-  // 3. useEffect: Carga únicamente las compras reales guardados en localStorage
-  useEffect(() => {
-    const comprasGuardadas = localStorage.getItem('levelup_compras');
-    if (comprasGuardadas) {
-      try {
-        setCompras(JSON.parse(comprasGuardadas));
-      } catch (e) {
-        console.error("Error al parsear la compra: ", e);
+  const handleCambiarRol = async (u, nuevoRol) => {
+    if (!u.id) {
+      alert("Error: El usuario no tiene un ID oficial asignado por el servidor.");
+      return;
+    }
+
+    const rolFormateado = nuevoRol.startsWith('ROLE_') ? nuevoRol : `ROLE_${nuevoRol}`;
+    const confirmar = window.confirm(`¿Estás seguro de cambiar el rol de ${u.nombre || u.correo} a ${rolFormateado.replace('ROLE_', '')}?`);
+    if (!confirmar) return;
+
+    try {
+      await api.patch(`/usuarios/${u.id}/rol`, { rol: rolFormateado });
+      await cargarUsuarios();
+      alert(`Rol actualizado a ${rolFormateado.replace('ROLE_', '')} correctamente.`);
+    } catch (err) {
+      console.error('Error al actualizar rol en API:', err);
+      const msg = err.response?.data?.error || err.response?.data?.message || 'No se pudo actualizar el rol en el servidor.';
+      alert(`Error: ${msg}`);
+    }
+  };
+
+  const abrirModalCompras = async (u) => {
+    setUsuarioSeleccionado(u);
+    setCargandoCompras(true);
+    setErrorComprasModal(null);
+    setCompras([]);
+
+    try {
+      const res = await api.get(`/usuarios/${u.id}/ordenes`);
+      if (res.data && Array.isArray(res.data)) {
+        setCompras(res.data);
+      } else {
         setCompras([]);
       }
-    } else {
-      setCompras([]);
-    }
-  }, []);
-
-  // Función para guardar cambios en localStorage y actualizar la vista
-  const guardarUsuarios = (nuevosUsuarios) => {
-    setUsuarios(nuevosUsuarios);
-    localStorage.setItem('registros', JSON.stringify(nuevosUsuarios));
-  };
-
-  // 3. Cambiar Rol (Cliente <-> Admin)
-  const toggleRol = (email) => {
-    const nuevos = usuarios.map(u => {
-      if (u.correo === email) {
-        const nuevoRol = u.rol === 'admin' ? 'cliente' : 'admin';
-        return { ...u, rol: nuevoRol };
-      }
-      return u;
-    });
-    guardarUsuarios(nuevos);
-  };
-
-  // 4. Cambiar Estado (Activo <-> Suspendido)
-  const toggleEstado = (email) => {
-    const nuevos = usuarios.map(u => {
-      if (u.correo === email) {
-        const nuevoEstado = u.estado === 'suspendido' ? 'activo' : 'suspendido';
-        return { ...u, estado: nuevoEstado };
-      }
-      return u;
-    });
-    guardarUsuarios(nuevos);
-  };
-
-  // 5. Eliminar usuario
-  const eliminarUsuario = (email) => {
-    if (window.confirm(`¿Seguro que deseas eliminar al usuario ${email}?`)) {
-      const nuevos = usuarios.filter(u => u.correo !== email);
-      guardarUsuarios(nuevos);
+    } catch (err) {
+      console.error("Error al cargar órdenes del usuario:", err);
+      setErrorComprasModal("No fue posible cargar el historial de órdenes de este usuario.");
+    } finally {
+      setCargandoCompras(false);
     }
   };
 
-  // Filtrado de usuarios según la caja de búsqueda
   const usuariosFiltrados = usuarios.filter(u =>
     (u.nombre && u.nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
-    (u.correo && u.correo.toLowerCase().includes(busqueda.toLowerCase()))
+    (u.correo && u.correo.toLowerCase().includes(busqueda.toLowerCase())) ||
+    (u.username && u.username.toLowerCase().includes(busqueda.toLowerCase()))
   );
-
-  const usuarioData = usuarios.find(u => u.correo === usuarioSeleccionado);
-  const comprasDelUsuario = compras.filter(c => c.correo === usuarioSeleccionado);
 
   return (
     <main className="container py-4">
@@ -92,12 +89,11 @@ export default function AdminUsuario() {
         <div>
           <h2>Gestión de Usuarios</h2>
           <p className="text-muted mb-0">
-            Administra los roles y estados de los usuarios registrados en la plataforma.
+            Administra los roles oficiales (CLIENTE, VENDEDOR, ADMIN) de los usuarios en la base de datos.
           </p>
         </div>
 
-        {/* Buscador controlado */}
-        <div>
+        <div className="d-flex gap-2">
           <input
             type="text"
             className="form-control"
@@ -105,109 +101,145 @@ export default function AdminUsuario() {
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
+          <button className="btn btn-outline-info" onClick={cargarUsuarios} title="Recargar lista">
+            <i className="bi bi-arrow-clockwise"></i>
+          </button>
         </div>
       </div>
 
-      {/* Tabla de Usuarios */}
-      <div className="table-responsive">
-        <table className="table table-dark table-hover align-middle">
-          <thead>
-            <tr>
-              <th>Usuario / Nombre</th>
-              <th>Correo Electrónico</th>
-              <th>Rol</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuariosFiltrados.length === 0 ? (
+      {errorCarga && (
+        <div className="alert alert-danger d-flex justify-content-between align-items-center">
+          <div><i className="bi bi-exclamation-octagon-fill me-2"></i>{errorCarga}</div>
+          <button className="btn btn-sm btn-outline-light" onClick={cargarUsuarios}>Reintentar</button>
+        </div>
+      )}
+
+      {cargando ? (
+        <div className="text-center py-5">
+          <div className="spinner-border text-info" role="status"></div>
+          <p className="text-muted mt-2">Cargando usuarios desde el servidor...</p>
+        </div>
+      ) : (
+        <div className="table-responsive">
+          <table className="table table-dark table-hover align-middle">
+            <thead>
               <tr>
-                <td colSpan="5" className="text-center text-muted py-4">
-                  No se encontraron usuarios registrados en el sistema.
-                </td>
+                <th>ID</th>
+                <th>Usuario / Nombre</th>
+                <th>Correo Electrónico</th>
+                <th>Rol Oficial</th>
+                <th>Puntos</th>
+                <th>Acciones</th>
               </tr>
-            ) : (
-              usuariosFiltrados.map((u, index) => (
-                <tr key={u.correo || index}>
-                  <td>{u.nombre || "Sin Nombre"}</td>
-                  <td>{u.correo}</td>
-                  <td>
-                    <span className={`badge ${u.rol === 'admin' ? 'bg-warning text-dark' : 'bg-secondary'}`}>
-                      {u.rol ? u.rol.toUpperCase() : 'CLIENTE'}
-                    </span>
-                  </td>
-                  <td>
-                    <span className={`badge ${u.estado === 'suspendido' ? 'bg-danger' : 'bg-success'}`}>
-                      {u.estado ? u.estado.toUpperCase() : 'ACTIVO'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="d-flex gap-2">
-                      <button
-                        className="btn btn-sm btn-outline-info"
-                        onClick={() => toggleRol(u.correo)}
-                        title="Cambiar rol"
-                      >
-                        <i className="bi bi-person-gear"></i>
-                      </button>
-
-                      <button
-                        className="btn btn-sm btn-outline-warning"
-                        onClick={() => toggleEstado(u.correo)}
-                        title="Activar / Suspender"
-                      >
-                        <i className="bi bi-slash-circle"></i>
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => eliminarUsuario(u.correo)}
-                        title="Eliminar usuario"
-                      >
-                        <i className="bi bi-trash"></i>
-                      </button>
-
-                      <button
-                        className="btn btn-sm btn-outline-info"
-                        onClick={() => setUsuarioSeleccionado(u.correo)}
-                        title="Ver historial de compras"
-                      >
-                        <i className='bi bi-receipt'></i>
-                      </button>
-                    </div>
+            </thead>
+            <tbody>
+              {usuariosFiltrados.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="text-center text-muted py-4">
+                    {errorCarga ? "Error de conexión." : "No se encontraron usuarios registrados en la base de datos."}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                usuariosFiltrados.map((u) => {
+                  const rolActual = (u.rol || 'ROLE_CLIENTE').toUpperCase();
+                  return (
+                    <tr key={u.id || u.correo}>
+                      <td>#{u.id}</td>
+                      <td>
+                        <strong>{u.nombre || "Sin Nombre"} {u.apellido || ""}</strong>
+                        <div className="small text-muted">@{u.username}</div>
+                      </td>
+                      <td>{u.correo}</td>
+                      <td>
+                        <span className={`badge ${rolActual.includes('ADMIN') ? 'bg-warning text-dark' : (rolActual.includes('VENDEDOR') ? 'bg-info text-dark' : 'bg-secondary')}`}>
+                          {rolActual.replace('ROLE_', '')}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="text-warning fw-bold">{u.puntosLevelUp || 0} pts</span>
+                      </td>
+                      <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <select
+                            className="form-select form-select-sm bg-dark text-white border-secondary"
+                            style={{ width: '130px' }}
+                            value={rolActual}
+                            onChange={(e) => handleCambiarRol(u, e.target.value)}
+                          >
+                            <option value="ROLE_CLIENTE">CLIENTE</option>
+                            <option value="ROLE_VENDEDOR">VENDEDOR</option>
+                            <option value="ROLE_ADMIN">ADMIN</option>
+                          </select>
+
+                          <button
+                            className="btn btn-sm btn-outline-info"
+                            onClick={() => abrirModalCompras(u)}
+                            title="Ver historial de órdenes en base de datos"
+                          >
+                            <i className='bi bi-receipt'></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {usuarioSeleccionado && (
-        <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">
+        <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div className="modal-content bg-dark text-white border-secondary">
+              <div className="modal-header border-secondary">
+                <h5 className="modal-title text-info">
                   <i className="bi bi-receipt me-2"></i>
-                  Compras de {usuarioData ? `${usuarioData.nombre} ${usuarioData.apellido}` : usuarioSeleccionado}
+                  Órdenes oficiales de {usuarioSeleccionado.nombre} ({usuarioSeleccionado.correo})
                 </h5>
                 <button
                   type="button"
-                  className="btn-close"
+                  className="btn-close btn-close-white"
                   onClick={() => setUsuarioSeleccionado(null)}
                 ></button>
               </div>
               <div className="modal-body">
-                {comprasDelUsuario.length === 0 ? (
-                  <p className="text-muted mb-0">Este usuario no tiene compras registradas.</p>
-                ) : (
-                  comprasDelUsuario.map((compra) => (
-                    <div key={compra.idOrden} className="border rounded p-2 mb-2">
-                      <strong>{compra.idOrden}</strong> — {compra.cantidadItems} artículo(s) — ${compra.totalPagado}
-                    </div>
-                  ))
+                {cargandoCompras && (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-info" role="status"></div>
+                    <p className="text-muted mt-2">Cargando órdenes del servidor...</p>
+                  </div>
                 )}
+
+                {errorComprasModal && (
+                  <div className="alert alert-danger">{errorComprasModal}</div>
+                )}
+
+                {!cargandoCompras && !errorComprasModal && compras.length === 0 && (
+                  <p className="text-muted text-center py-3 mb-0">Este usuario no tiene compras registradas en el backend.</p>
+                )}
+
+                {!cargandoCompras && !errorComprasModal && compras.length > 0 && (
+                  <div className="list-group list-group-flush border-secondary">
+                    {compras.map((compra) => (
+                      <div key={compra.id} className="list-group-item bg-dark text-white border-secondary d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>#{compra.numeroOrden}</strong>
+                          <div className="small text-muted">{compra.fecha ? new Date(compra.fecha).toLocaleString('es-CL') : 'Fecha no registrada'} — {compra.metodoPago}</div>
+                          <span className="badge bg-primary mt-1">{compra.estado}</span>
+                        </div>
+                        <div className="text-end">
+                          <div className="text-success fw-bold">${(compra.total || 0).toLocaleString('es-CL')}</div>
+                          <small className="text-muted">{compra.detalles ? compra.detalles.length : 0} producto(s)</small>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer border-secondary">
+                <button type="button" className="btn btn-secondary" onClick={() => setUsuarioSeleccionado(null)}>Cerrar</button>
               </div>
             </div>
           </div>

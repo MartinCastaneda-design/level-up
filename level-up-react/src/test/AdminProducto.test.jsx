@@ -1,4 +1,3 @@
-
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import AdminProducto from '../pages/AdminProducto';
@@ -11,7 +10,6 @@ describe('Prueba Unitaria: AdminProducto', () => {
     expect(screen.getByText(/Gestión de Inventario/i)).toBeInTheDocument();
     expect(screen.getByText(/Agregar producto/i)).toBeInTheDocument();
   });
-
 
   it('Debe permitir escribir en el filtro de búsqueda de productos', () => {
     render(<AdminProducto />);
